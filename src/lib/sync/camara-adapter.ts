@@ -4,6 +4,7 @@
  */
 
 import { camaraClient } from './http-client';
+import { createHash } from 'crypto';
 import type {
   ParlamentarNormalizado,
   PartidoNormalizado,
@@ -60,9 +61,16 @@ interface CamaraVoto {
 }
 
 interface CamaraDiscurso {
-  id: number;
-  dataHoraInicio: string;
-  tipoDiscurso: string;
+  id?: number;
+  dataHoraInicio?: string;
+  dataHoraFim?: string;
+  uriEvento?: string;
+  faseEvento?: {
+    titulo?: string;
+    dataHoraInicio?: string | null;
+    dataHoraFim?: string | null;
+  };
+  tipoDiscurso?: string;
   sumario?: string;
   transcricao?: string;
   urlTexto?: string;
@@ -109,14 +117,29 @@ function mapTipoVoto(camaraVoto: string): VotoNormalizado['tipo'] {
   return mapa[camaraVoto] || 'AUSENTE';
 }
 
-function mapTipoDiscurso(camaraTipo: string): DiscursoNormalizado['tipo'] {
-  const mapa: Record<string, DiscursoNormalizado['tipo']> = {
-    'Discurso em Ordem do Dia': 'ORDEM_DIA',
-    'Discurso em Plenário': 'PLENARIO',
-    'Discurso em Comissão': 'COMISSAO',
-    'Pronunciamento de Liderança': 'LIDERANCA',
-  };
-  return mapa[camaraTipo] || 'OUTRO';
+function mapTipoDiscurso(camaraTipo?: string, faseTitulo?: string): DiscursoNormalizado['tipo'] {
+  const texto = `${faseTitulo || ''} ${camaraTipo || ''}`.toLowerCase();
+  if (texto.includes('ordem do dia')) return 'ORDEM_DIA';
+  if (texto.includes('comiss')) return 'COMISSAO';
+  if (texto.includes('liderança') || texto.includes('lideranca')) return 'LIDERANCA';
+  if (texto.includes('plenário') || texto.includes('plenario')) return 'PLENARIO';
+  return 'OUTRO';
+}
+
+function hashString(input: string): string {
+  return createHash('md5').update(input).digest('hex').slice(0, 12);
+}
+
+// A API de discursos por deputado não expõe um id único. Montamos uma chave
+// determinística a partir dos campos disponíveis para permitir upsert idempotente.
+function makeDiscursoIdExterno(deputadoIdExterno: string, d: CamaraDiscurso): string {
+  const base = [
+    d.dataHoraInicio || '',
+    d.tipoDiscurso || '',
+    d.urlTexto || '',
+    (d.sumario || '').slice(0, 200),
+  ].join('|');
+  return `CAMARA-${deputadoIdExterno}-${hashString(base)}`;
 }
 
 function mapStatusProposicao(camaraStatus?: string): ProposicaoNormalizada['status'] {
@@ -332,14 +355,14 @@ export class CamaraAdapter {
       for (const d of page as CamaraDiscurso[]) {
         const textoCompleto = d.transcricao || d.sumario || '';
         discursos.push({
-          idExterno: String(d.id),
+          idExterno: makeDiscursoIdExterno(deputadoIdExterno, d),
           parlamentarIdExterno: deputadoIdExterno,
           casa: 'CAMARA',
-          tipo: mapTipoDiscurso(d.tipoDiscurso),
+          tipo: mapTipoDiscurso(d.tipoDiscurso, d.faseEvento?.titulo),
           data: toDate(d.dataHoraInicio)!,
-          hora: d.dataHoraInicio ? d.dataHoraInicio.substring(11, 19) : undefined,
+          hora: d.dataHoraInicio ? d.dataHoraInicio.substring(11, 16) : undefined,
           resumo: textoCompleto.substring(0, 1000),
-          urlOriginal: d.urlTexto || `https://www.camara.leg.br/deputados/${deputadoIdExterno}/discursos/${d.id}`,
+          urlOriginal: d.urlTexto || `https://www.camara.leg.br/deputados/${deputadoIdExterno}/discursos/${d.id || ''}`,
           tema: extractTema(textoCompleto),
           duracaoSegundos: undefined, // Não disponível na API
         });
