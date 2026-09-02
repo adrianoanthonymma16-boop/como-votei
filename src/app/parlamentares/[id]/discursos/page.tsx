@@ -72,7 +72,7 @@ function ParlamentarHeader({ parlamentar }: { parlamentar: any }) {
           {parlamentar.fotoUrl ? (
             <img src={parlamentar.fotoUrl} alt={parlamentar.nome} className="w-full h-full rounded-full object-cover" />
           ) : (
-            parlamentar.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            parlamentar.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
           )}
         </div>
         <div className="flex-1">
