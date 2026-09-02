@@ -42,7 +42,7 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="space-y-4">
         {Array.from({ length: limit }).map((_, i) => (
           <ParlamentarCardSkeleton key={i} />
         ))}
@@ -59,7 +59,7 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="space-y-4">
       {parlamentares.map((parlamentar) => (
         <ParlamentarCard key={parlamentar.id} parlamentar={parlamentar} />
       ))}
@@ -70,12 +70,17 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
 function ParlamentarCardSkeleton() {
   return (
     <div className="parlamentar-card animate-pulse pointer-events-none">
-      <div className="flex items-start gap-4">
-        <div className="w-16 h-16 rounded-full bg-muted" />
-        <div className="flex-1 min-w-0 space-y-3">
-          <div className="h-5 w-3/4 bg-muted rounded" />
-          <div className="h-4 w-1/2 bg-muted rounded" />
-          <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-6">
+        <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
+          <div className="w-full h-full rounded-full bg-muted" />
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+            <div className="h-6 w-3/4 bg-muted rounded" />
+            <div className="h-5 w-20 bg-muted rounded" />
+            <div className="h-5 w-16 bg-muted rounded" />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border w-full sm:w-auto sm:border-t-0 sm:border-l sm:pl-4 sm:ml-auto">
             <div className="h-8 w-20 bg-muted rounded" />
             <div className="h-8 w-20 bg-muted rounded" />
             <div className="h-8 w-20 bg-muted rounded" />
