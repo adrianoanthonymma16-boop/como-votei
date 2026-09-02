@@ -4,11 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { getInitials } from '@/lib/utils';
-import { ParlamentarTabs } from './components/ParlamentarTabs';
-import { VotacoesTab } from './components/VotacoesTab';
-import { ProposicoesTab } from './components/ProposicoesTab';
-import { DiscursosTab } from './components/DiscursosTab';
-import { DashboardTab } from './components/DashboardTab';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentarDetailProps {
@@ -22,6 +17,13 @@ interface ParlamentarDetailProps {
 export function ParlamentarDetail({ parlamentar }: ParlamentarDetailProps) {
   const searchParams = useSearchParams();
   const activeTab = (searchParams.get('tab') as 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard') || 'votacoes';
+
+  const tabs = [
+    { id: 'votacoes', label: 'Votações', count: parlamentar._count.votos, href: `/parlamentares/${parlamentar.id}/votacoes`, color: 'blue' },
+    { id: 'proposicoes', label: 'Projetos', count: parlamentar._count.proposicoes, href: `/parlamentares/${parlamentar.id}/proposicoes`, color: 'green' },
+    { id: 'discursos', label: 'Discursos', count: parlamentar._count.discursos, href: `/parlamentares/${parlamentar.id}/discursos`, color: 'purple' },
+    { id: 'dashboard', label: 'Dashboard', count: null, href: `/parlamentares/${parlamentar.id}/dashboard`, color: 'amber' },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -79,26 +81,42 @@ export function ParlamentarDetail({ parlamentar }: ParlamentarDetailProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="stat-card">
+        <Link href={`/parlamentares/${parlamentar.id}/votacoes`} className="stat-card group">
           <p className="text-sm text-muted-foreground mb-1">Votações</p>
-          <p className="text-3xl font-bold text-foreground">{parlamentar._count.votos.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="stat-card">
+          <p className="text-3xl font-bold text-foreground group-hover:text-blue-600 transition-colors">{parlamentar._count.votos.toLocaleString('pt-BR')}</p>
+        </Link>
+        <Link href={`/parlamentares/${parlamentar.id}/discursos`} className="stat-card group">
           <p className="text-sm text-muted-foreground mb-1">Discursos</p>
-          <p className="text-3xl font-bold text-foreground">{parlamentar._count.discursos.toLocaleString('pt-BR')}</p>
-        </div>
-        <div className="stat-card">
+          <p className="text-3xl font-bold text-foreground group-hover:text-purple-600 transition-colors">{parlamentar._count.discursos.toLocaleString('pt-BR')}</p>
+        </Link>
+        <Link href={`/parlamentares/${parlamentar.id}/proposicoes`} className="stat-card group">
           <p className="text-sm text-muted-foreground mb-1">Proposições</p>
-          <p className="text-3xl font-bold text-foreground">{parlamentar._count.proposicoes.toLocaleString('pt-BR')}</p>
-        </div>
+          <p className="text-3xl font-bold text-foreground group-hover:text-green-600 transition-colors">{parlamentar._count.proposicoes.toLocaleString('pt-BR')}</p>
+        </Link>
       </div>
 
-      <ParlamentarTabs activeTab={activeTab} />
-
-      {activeTab === 'votacoes' && <VotacoesTab parlamentarId={parlamentar.id} />}
-      {activeTab === 'proposicoes' && <ProposicoesTab parlamentarId={parlamentar.id} />}
-      {activeTab === 'discursos' && <DiscursosTab parlamentarId={parlamentar.id} />}
-      {activeTab === 'dashboard' && <DashboardTab parlamentarId={parlamentar.id} />}
+      <nav className="mb-6" aria-label="Navegação entre seções">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.id}
+              href={tab.href}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === tab.id
+                  ? 'bg-accent text-on-accent shadow-sm'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+              {tab.count !== null && (
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-muted/50 text-muted-foreground">
+                  {tab.count.toLocaleString('pt-BR')}
+                </span>
+              )}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

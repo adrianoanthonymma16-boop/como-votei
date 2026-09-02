@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { ParlamentarDetail } from './ParlamentarDetail';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -34,18 +33,12 @@ export default async function ParlamentarPage({ params }: PageProps) {
   
   const parlamentar = await prisma.parlamentar.findUnique({
     where: { id },
-    include: {
-      partido: true,
-      uf: true,
-      _count: {
-        select: { votos: true, discursos: true, proposicoes: true },
-      },
-    },
   });
 
   if (!parlamentar) {
-    notFound();
+    redirect('/parlamentares');
   }
 
-  return <ParlamentarDetail parlamentar={parlamentar} />;
+  // Redirect to votacoes page as default
+  redirect(`/parlamentares/${id}/votacoes`);
 }
