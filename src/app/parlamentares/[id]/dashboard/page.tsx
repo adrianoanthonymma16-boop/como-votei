@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { DashboardTab } from './components/DashboardTab';
+import { DashboardTab } from '../components/DashboardTab';
 import { Badge } from '@/components/ui/Badge';
 
 interface PageProps {

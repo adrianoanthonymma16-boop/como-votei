@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { VotacoesTab } from './components/VotacoesTab';
+import { VotacoesTab } from '../components/VotacoesTab';
 import { Badge } from '@/components/ui/Badge';
 
 interface PageProps {
