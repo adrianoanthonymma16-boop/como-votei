@@ -45,59 +45,54 @@ export default async function DashboardPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px_6 lg:px_8 py_8">
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><Link href="/" className="hover:text-foreground">Início</Link></li>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground flex-wrap">
+          <li><Link href="/" className="hover:text-foreground transition-colors">Início</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href="/parlamentares" className="hover:text-foreground">Parlamentares</Link></li>
+          <li><Link href="/parlamentares" className="hover:text-foreground transition-colors">Parlamentares</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href={`/parlamentares/${id}`} className="hover:text-foreground">{parlamentar.nome}</Link></li>
+          <li><Link href={`/parlamentares/${id}`} className="hover:text-foreground transition-colors">{parlamentar.nome}</Link></li>
           <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium" aria-current="page">Dashboard</li>
+          <li className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">Dashboard</li>
         </ol>
       </nav>
 
-      <ParlamentarHeader parlamentar={parlamentar} />
-      <DashboardTab parlamentarId={parlamentar.id} />
-    </div>
-  );
-}
-
-function ParlamentarHeader({ parlamentar }: { parlamentar: any }) {
-  return (
-    <div className="mb-8">
-      <div className="flex flex-col md:flex-row md:items-center gap-6">
-        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl md:text-3xl flex-shrink-0">
-          {parlamentar.fotoUrl ? (
-            <img src={parlamentar.fotoUrl} alt={parlamentar.nome} className="w-full h-full rounded-full object-cover" />
-          ) : (
-            parlamentar.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-          )}
-        </div>
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-foreground">{parlamentar.nome}</h1>
-            {parlamentar.partido && (
-              <Badge
-                variant="outline"
-                className="text-sm"
-                style={{ borderColor: parlamentar.partido.cor || undefined, color: parlamentar.partido.cor || undefined }}
-              >
-                {parlamentar.partido.sigla}
-              </Badge>
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-xl sm:text-2xl md:text-3xl flex-shrink-0 ring-2 ring-border">
+            {parlamentar.fotoUrl ? (
+              <img src={parlamentar.fotoUrl} alt={parlamentar.nome} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              parlamentar.nome.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
             )}
-            {parlamentar.uf && (
-              <Badge variant="secondary" className="text-sm">
-                {parlamentar.uf.sigla}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{parlamentar.nome}</h1>
+              {parlamentar.partido && (
+                <Badge
+                  variant="outline"
+                  className="text-xs sm:text-sm shrink-0"
+                  style={{ borderColor: parlamentar.partido.cor || undefined, color: parlamentar.partido.cor || undefined }}
+                >
+                  {parlamentar.partido.sigla}
+                </Badge>
+              )}
+              {parlamentar.uf && (
+                <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">
+                  {parlamentar.uf.sigla}
+                </Badge>
+              )}
+              <Badge variant={parlamentar.casa === 'CAMARA' ? 'info' : 'success'} className="text-xs sm:text-sm shrink-0">
+                {parlamentar.casa === 'CAMARA' ? 'Câmara dos Deputados' : 'Senado Federal'}
               </Badge>
-            )}
-            <Badge variant={parlamentar.casa === 'CAMARA' ? 'info' : 'success'} className="text-sm">
-              {parlamentar.casa === 'CAMARA' ? 'Câmara dos Deputados' : 'Senado Federal'}
-            </Badge>
+            </div>
           </div>
         </div>
       </div>
+
+      <DashboardTab parlamentarId={parlamentar.id} />
     </div>
   );
 }

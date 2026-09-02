@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
 import { formatNumber } from '@/lib/utils';
 
 interface StatsData {
@@ -43,21 +42,21 @@ export function StatsCards() {
   }
 
   const cards = [
-    { label: 'Parlamentares', value: stats.parlamentares, icon: '👥', color: 'primary' },
-    { label: 'Votações', value: stats.votacoes, icon: '🗳️', color: 'secondary' },
-    { label: 'Discursos', value: stats.discursos, icon: '🎤', color: 'success' },
-    { label: 'Proposições', value: stats.proposicoes, icon: '📋', color: 'info' },
+    { label: 'Parlamentares', value: stats.parlamentares, icon: '👥', color: 'text-primary' },
+    { label: 'Votações', value: stats.votacoes, icon: '🗳️', color: 'text-blue-500' },
+    { label: 'Discursos', value: stats.discursos, icon: '🎤', color: 'text-purple-500' },
+    { label: 'Proposições', value: stats.proposicoes, icon: '📋', color: 'text-green-500' },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow">
+        <div key={card.label} className="stat-card group">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-500">{card.label}</span>
+            <span className="text-sm font-medium text-muted-foreground">{card.label}</span>
             <span className="text-2xl" aria-hidden="true">{card.icon}</span>
           </div>
-          <div className="text-3xl font-bold text-gray-900">
+          <div className={`text-3xl font-bold ${card.color} transition-colors`}>
             {formatNumber(stats[card.label.toLowerCase() as keyof StatsData] || 0)}
           </div>
         </div>
@@ -68,11 +67,11 @@ export function StatsCards() {
 
 function StatsCardsSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl p-6 border border-gray-200">
-          <div className="animate-pulse rounded-md bg-gray-200 h-8 w-24 mb-4" />
-          <div className="animate-pulse rounded-md bg-gray-200 h-12 w-32" />
+        <div key={i} className="stat-card animate-pulse pointer-events-none">
+          <div className="h-4 w-24 bg-muted rounded mb-4" />
+          <div className="h-8 w-32 bg-muted rounded" />
         </div>
       ))}
     </div>

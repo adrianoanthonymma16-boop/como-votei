@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Atkinson_Hyperlegible } from 'next/font/google';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import Link from 'next/link';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ['latin'],
+  variable: '--font-atkinson',
+  weight: ['400', '700'],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -43,7 +50,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#102a43',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -55,12 +65,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} font-sans`}>
+    <html lang="pt-BR" className={`${atkinson.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="min-h-screen bg-gray-50">{children}</body>
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+        <ThemeProvider>
+          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
+              <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+                <span className="text-primary">Como</span>
+                <span className="text-accent">Votei</span>
+              </Link>
+              <nav className="hidden sm:flex items-center gap-6 text-sm">
+                <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Parlamentares
+                </Link>
+                <Link href="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Sobre
+                </Link>
+              </nav>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+              </div>
+            </div>
+          </header>
+          <main className="min-h-[calc(100vh-3.5rem)]">
+            {children}
+          </main>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

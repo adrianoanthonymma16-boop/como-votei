@@ -14,7 +14,7 @@ interface PaginationProps {
 export function Pagination({ hasMore, nextCursor, onLoadMore, isLoading, label = 'Carregar mais' }: PaginationProps) {
   if (!hasMore) {
     return (
-      <div className="flex items-center justify-center py-4 text-gray-500 text-sm">
+      <div className="flex items-center justify-center py-4 text-muted-foreground text-sm">
         Fim da lista
       </div>
     );

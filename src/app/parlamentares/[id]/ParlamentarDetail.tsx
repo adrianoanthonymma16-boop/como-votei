@@ -26,90 +26,94 @@ export function ParlamentarDetail({ parlamentar }: ParlamentarDetailProps) {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><Link href="/" className="hover:text-foreground">Início</Link></li>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground flex-wrap">
+          <li><Link href="/" className="hover:text-foreground transition-colors">Início</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href="/parlamentares" className="hover:text-foreground">Parlamentares</Link></li>
+          <li><Link href="/parlamentares" className="hover:text-foreground transition-colors">Parlamentares</Link></li>
           <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium" aria-current="page">{parlamentar.nome}</li>
+          <li className="text-foreground font-medium truncate max-w-[200px]" aria-current="page">{parlamentar.nome}</li>
         </ol>
       </nav>
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
-          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl md:text-3xl flex-shrink-0 ring-2 ring-border">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-xl sm:text-2xl md:text-3xl flex-shrink-0 ring-2 ring-border">
             {parlamentar.fotoUrl ? (
               <img src={parlamentar.fotoUrl} alt={parlamentar.nome} className="w-full h-full rounded-full object-cover" />
             ) : (
               getInitials(parlamentar.nome)
             )}
           </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-foreground">{parlamentar.nome}</h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{parlamentar.nome}</h1>
               {parlamentar.partido && (
                 <Badge
                   variant="outline"
-                  className="text-sm"
+                  className="text-xs sm:text-sm shrink-0"
                   style={{ borderColor: parlamentar.partido.cor || undefined, color: parlamentar.partido.cor || undefined }}
                 >
                   {parlamentar.partido.sigla}
                 </Badge>
               )}
               {parlamentar.uf && (
-                <Badge variant="secondary" className="text-sm">
+                <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">
                   {parlamentar.uf.sigla}
                 </Badge>
               )}
-              <Badge variant={parlamentar.casa === 'CAMARA' ? 'info' : 'success'} className="text-sm">
+              <Badge variant={parlamentar.casa === 'CAMARA' ? 'info' : 'success'} className="text-xs sm:text-sm shrink-0">
                 {parlamentar.casa === 'CAMARA' ? 'Câmara dos Deputados' : 'Senado Federal'}
               </Badge>
             </div>
             {parlamentar.nomeCivil && (
-              <p className="text-muted-foreground">Nome civil: {parlamentar.nomeCivil}</p>
+              <p className="text-sm text-muted-foreground mb-2">Nome civil: {parlamentar.nomeCivil}</p>
             )}
-            <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
-              {parlamentar.email && <span>📧 {parlamentar.email}</span>}
-              {parlamentar.telefone && <span>📞 {parlamentar.telefone}</span>}
+            <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+              {parlamentar.email && <span className="truncate">{parlamentar.email}</span>}
+              {parlamentar.telefone && <span>{parlamentar.telefone}</span>}
               <span>Legislatura {parlamentar.legislatura}</span>
-              <span>Situação: {parlamentar.situacao || 'EXERCICIO'}</span>
+              <span>Situação: {parlamentar.situacao || 'EXERCÍCIO'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Link href={`/parlamentares/${parlamentar.id}/votacoes`} className="stat-card group">
-          <p className="text-sm text-muted-foreground mb-1">Votações</p>
-          <p className="text-3xl font-bold text-foreground group-hover:text-blue-600 transition-colors">{parlamentar._count.votos.toLocaleString('pt-BR')}</p>
+      {/* Stats cards */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <Link href={`/parlamentares/${parlamentar.id}/votacoes`} className="stat-card group text-center sm:text-left">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Votações</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{parlamentar._count.votos.toLocaleString('pt-BR')}</p>
         </Link>
-        <Link href={`/parlamentares/${parlamentar.id}/discursos`} className="stat-card group">
-          <p className="text-sm text-muted-foreground mb-1">Discursos</p>
-          <p className="text-3xl font-bold text-foreground group-hover:text-purple-600 transition-colors">{parlamentar._count.discursos.toLocaleString('pt-BR')}</p>
+        <Link href={`/parlamentares/${parlamentar.id}/discursos`} className="stat-card group text-center sm:text-left">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Discursos</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{parlamentar._count.discursos.toLocaleString('pt-BR')}</p>
         </Link>
-        <Link href={`/parlamentares/${parlamentar.id}/proposicoes`} className="stat-card group">
-          <p className="text-sm text-muted-foreground mb-1">Proposições</p>
-          <p className="text-3xl font-bold text-foreground group-hover:text-green-600 transition-colors">{parlamentar._count.proposicoes.toLocaleString('pt-BR')}</p>
+        <Link href={`/parlamentares/${parlamentar.id}/proposicoes`} className="stat-card group text-center sm:text-left">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Proposições</p>
+          <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{parlamentar._count.proposicoes.toLocaleString('pt-BR')}</p>
         </Link>
       </div>
 
+      {/* Tab navigation - mobile scrollable, desktop flex */}
       <nav className="mb-6" aria-label="Navegação entre seções">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide">
           {tabs.map((tab) => (
             <Link
               key={tab.id}
               href={tab.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-accent text-on-accent shadow-sm'
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              className={`tab-trigger whitespace-nowrap shrink-0 ${
+                activeTab === tab.id ? 'tab-trigger-active' : 'tab-trigger-inactive'
               }`}
             >
               {tab.label}
               {tab.count !== null && (
-                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-muted/50 text-muted-foreground">
+                <span className={`ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${
+                  activeTab === tab.id 
+                    ? 'bg-accent-foreground/20 text-accent-foreground' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
                   {tab.count.toLocaleString('pt-BR')}
                 </span>
               )}
