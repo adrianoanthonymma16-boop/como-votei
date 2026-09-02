@@ -29,13 +29,25 @@ async function syncCamara(options: SyncOptions = {}) {
   const camara = NormalizerFactory.getCamara();
   camara.resetStats();
 
+  // Quando nenhum "apenas*" está definido, sincroniza tudo.
+  // Quando um ou mais "apenas*" estão definidos, sincroniza somente aqueles.
+  const onlyFlags = [
+    options.apenasParlamentares,
+    options.apenasVotacoes,
+    options.apenasDiscursos,
+    options.apenasProposicoes,
+    options.apenasFrequencia,
+  ];
+  const hasOnly = onlyFlags.some(Boolean);
+  const sync = (flag?: boolean) => !hasOnly || !!flag;
+
   console.log(`\n🏛️  INICIANDO SYNC CÂMARA DOS DEPUTADOS - Ano ${ano}`);
   console.log(`⏰ ${new Date().toISOString()}`);
   console.log('='.repeat(60));
 
   try {
     // 1. Sincronizar Partidos (referência)
-    if (!options.apenasVotacoes && !options.apenasDiscursos && !options.apenasProposicoes && !options.apenasFrequencia) {
+    if (sync(options.apenasParlamentares)) {
       console.log('\n📋 Sincronizando partidos...');
       const partidos = await camara.fetchPartidos();
       
@@ -50,7 +62,7 @@ async function syncCamara(options: SyncOptions = {}) {
     }
 
     // 2. Sincronizar Deputados
-    if (!options.apenasVotacoes && !options.apenasDiscursos && !options.apenasProposicoes && !options.apenasFrequencia) {
+    if (sync(options.apenasParlamentares)) {
       console.log('\n👥 Sincronizando deputados...');
       const deputados = await camara.fetchDeputados(57);
       
@@ -129,7 +141,7 @@ async function syncCamara(options: SyncOptions = {}) {
     console.log(`\n📊 ${deputadosDb.length} deputados ativos para sincronizar`);
 
     // 3. Sincronizar Votações e Votos
-    if (!options.apenasParlamentares && !options.apenasDiscursos && !options.apenasProposicoes && !options.apenasFrequencia) {
+    if (sync(options.apenasVotacoes)) {
       console.log('\n🗳️  Sincronizando votações e votos...');
       
       let totalVotacoes = 0, totalVotos = 0;
@@ -202,7 +214,7 @@ async function syncCamara(options: SyncOptions = {}) {
     }
 
     // 4. Sincronizar Discursos, Proposições e Frequência por deputado
-    if (!options.apenasParlamentares && !options.apenasVotacoes) {
+    if (sync(options.apenasDiscursos || options.apenasProposicoes || options.apenasFrequencia)) {
       console.log('\n🎤 Sincronizando discursos, proposições e frequência...');
       
       let totalDiscursos = 0, totalProposicoes = 0, totalFrequencias = 0;
@@ -213,7 +225,7 @@ async function syncCamara(options: SyncOptions = {}) {
         
         await Promise.all(batch.map(async (dep) => {
           // Discursos
-          if (!options.apenasProposicoes && !options.apenasFrequencia) {
+          if (sync(options.apenasDiscursos)) {
             for await (const discursos of camara.fetchDiscursosDeputado(dep.idExterno, ano)) {
               for (const d of discursos) {
                 await prisma.discurso.upsert({
@@ -238,7 +250,7 @@ async function syncCamara(options: SyncOptions = {}) {
           }
 
           // Proposições
-          if (!options.apenasDiscursos && !options.apenasFrequencia) {
+          if (sync(options.apenasProposicoes)) {
             for await (const proposicoes of camara.fetchProposicoesDeputado(dep.idExterno, ano)) {
               for (const p of proposicoes) {
                 await prisma.proposicao.upsert({
@@ -268,7 +280,7 @@ async function syncCamara(options: SyncOptions = {}) {
           }
 
           // Frequência
-          if (!options.apenasDiscursos && !options.apenasProposicoes) {
+          if (sync(options.apenasFrequencia)) {
             const freq = await camara.fetchFrequencia(dep.idExterno, ano);
             if (freq) {
               await prisma.frequencia.upsert({
