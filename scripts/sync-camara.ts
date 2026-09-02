@@ -119,7 +119,10 @@ async function syncCamara(options: SyncOptions = {}) {
 
     // Buscar todos os deputados ativos para syncs subsequentes
     const deputadosDb = await prisma.parlamentar.findMany({
-      where: { casa: Casa.CAMARA, situacao: 'EXERCICIO' },
+      where: {
+        casa: Casa.CAMARA,
+        OR: [{ situacao: 'EXERCICIO' }, { situacao: null }],
+      },
       select: { id: true, idExterno: true, nome: true },
     });
 

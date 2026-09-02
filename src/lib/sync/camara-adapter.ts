@@ -362,7 +362,7 @@ export class CamaraAdapter {
       idDeputadoAutor: deputadoIdExterno,
       ano,
       itens: ITENS_POR_PAGINA,
-      ordenarPor: 'dataApresentacao',
+      ordenarPor: 'id',
       ordem: 'DESC',
     })) {
       for (const p of page as CamaraProposicao[]) {
