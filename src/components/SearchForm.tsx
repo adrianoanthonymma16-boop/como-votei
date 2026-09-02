@@ -11,7 +11,7 @@ export function SearchForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [query, setQuery] = useState(searchParams.get('search') || '');
   const [casa, setCasa] = useState(searchParams.get('casa') || '');
   const [partidoId, setPartidoId] = useState(searchParams.get('partidoId') || '');
   const [ufId, setUfId] = useState(searchParams.get('ufId') || '');
@@ -21,7 +21,7 @@ export function SearchForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (debouncedQuery) params.set('q', debouncedQuery);
+    if (debouncedQuery) params.set('search', debouncedQuery);
     if (casa) params.set('casa', casa);
     if (partidoId) params.set('partidoId', partidoId);
     if (ufId) params.set('ufId', ufId);

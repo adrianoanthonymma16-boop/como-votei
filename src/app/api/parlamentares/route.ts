@@ -41,17 +41,20 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  const parlamentares = await prisma.parlamentar.findMany({
-    where,
-    take: limit + 1,
-    cursor: cursor ? { id: cursor } : undefined,
-    orderBy: { nome: 'asc' },
-    include: {
-      partido: { select: { id: true, sigla: true, nome: true, cor: true } },
-      uf: { select: { id: true, sigla: true, nome: true, regiao: true } },
-      _count: { select: { votos: true, discursos: true, proposicoes: true } },
-    },
-  });
+  const [parlamentares, total] = await Promise.all([
+    prisma.parlamentar.findMany({
+      where,
+      take: limit + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: { nome: 'asc' },
+      include: {
+        partido: { select: { id: true, sigla: true, nome: true, cor: true } },
+        uf: { select: { id: true, sigla: true, nome: true, regiao: true } },
+        _count: { select: { votos: true, discursos: true, proposicoes: true } },
+      },
+    }),
+    prisma.parlamentar.count({ where }),
+  ]);
 
   let nextCursor: string | undefined;
   if (parlamentares.length > limit) {
@@ -61,6 +64,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     data: parlamentares,
+    total,
     nextCursor,
     hasMore: !!nextCursor,
   });

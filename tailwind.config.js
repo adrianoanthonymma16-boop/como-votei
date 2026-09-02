@@ -35,7 +35,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Atkinson Hyperlegible', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-atkinson)', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '18': '4.5rem',

@@ -20,9 +20,6 @@ interface ParlamentarCardProps {
 }
 
 export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
-  const alinhamento = parlamentar._count?.votos ? 
-    Math.floor(Math.random() * 30) + 70 : null;
-
   return (
     <div className="parlamentar-card group w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -79,59 +76,47 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
           </p>
 
           {/* Action buttons - 4 funcionalidades */}
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href={`/parlamentares/${parlamentar.id}/votacoes`}
               className="action-btn-votacoes"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
               <span className="action-label">Votações</span>
-              <span className="action-count">{parlamentar._count?.votos || 0}</span>
             </Link>
             
             <Link
               href={`/parlamentares/${parlamentar.id}/proposicoes`}
               className="action-btn-proposicoes"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
               <span className="action-label">Projetos</span>
-              <span className="action-count">{parlamentar._count?.proposicoes || 0}</span>
             </Link>
             
             <Link
               href={`/parlamentares/${parlamentar.id}/discursos`}
               className="action-btn-discursos"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
               <span className="action-label">Discursos</span>
-              <span className="action-count">{parlamentar._count?.discursos || 0}</span>
             </Link>
             
             <Link
               href={`/parlamentares/${parlamentar.id}/dashboard`}
               className="action-btn-dashboard"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
               <span className="action-label">Dashboard</span>
             </Link>
           </div>
-
-          {/* Alinhamento partidário */}
-          {alinhamento !== null && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Alinhamento partidário</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${alinhamento}%`,
-                        backgroundColor: alinhamento >= 80 ? '#16A34A' : alinhamento >= 60 ? '#CA8A04' : '#DC2626'
-                      }}
-                    />
-                  </div>
-                  <span className="font-medium text-foreground">{alinhamento}%</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

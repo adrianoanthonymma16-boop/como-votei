@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import {
+  computeFrequencia,
+  computeAlinhamento,
+  computeAtividadeMensal,
+  computeTemas,
+  type AlinhamentoResult,
+} from '@/lib/dashboard';
 
 const querySchema = z.object({
   ano: z.coerce.number().default(() => new Date().getFullYear()),
@@ -22,12 +29,13 @@ export async function GET(
   }
 
   const { ano } = parsed.data;
+  const dataInicio = new Date(ano, 0, 1);
+  const dataFim = new Date(ano, 11, 31, 23, 59, 59);
 
-  // Buscar parlamentar com relacionamentos
   const parlamentar = await prisma.parlamentar.findUnique({
     where: { id },
     include: {
-      partido: { select: { sigla: true, cor: true } },
+      partido: { select: { id: true, sigla: true, cor: true } },
       uf: { select: { sigla: true } },
     },
   });
@@ -39,149 +47,106 @@ export async function GET(
     );
   }
 
-  const dataInicio = new Date(`${ano}-01-01`);
-  const dataFim = new Date(`${ano}-12-31`);
-
-  // 1. Frequência (buscar da view ou calcular)
-  const votosNoPeriodo = await prisma.voto.findMany({
+  // Votos do parlamentar no período
+  const votos = await prisma.voto.findMany({
     where: {
       parlamentarId: id,
-      votacao: {
-        data: { gte: dataInicio, lte: dataFim },
-      },
+      votacao: { data: { gte: dataInicio, lte: dataFim } },
     },
     include: {
-      votacao: { select: { data: true } },
+      votacao: { select: { id: true, data: true, tema: true } },
     },
   });
 
-  const totalSessoes = new Set(votosNoPeriodo.map(v => v.votacao.data.toISOString().split('T')[0])).size;
-  const presencas = votosNoPeriodo.filter(v => ['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO'].includes(v.tipo)).length;
-  const faltasJustificadas = votosNoPeriodo.filter(v => ['LICENCA', 'MISSAO'].includes(v.tipo)).length;
-  const faltasInjustificadas = votosNoPeriodo.filter(v => ['AUSENTE'].includes(v.tipo)).length;
-  const taxaPresenca = totalSessoes > 0 ? (presencas / totalSessoes) * 100 : 0;
-
-  // 2. Alinhamento partidário
-  const alinhamentoData = await prisma.$queryRawUnsafe<{ total_votacoes: bigint; votos_alinhados: bigint; percentual_alinhamento: number }[]>(`
-    SELECT 
-      COUNT(*) as total_votacoes,
-      SUM(alinhado)::int as votos_alinhados,
-      ROUND((SUM(alinhado)::numeric / COUNT(*) * 100), 2) as percentual_alinhamento
-    FROM "alinhamento_partidario"
-    WHERE "parlamentarId" = $1
-      AND data_votacao >= $2
-      AND data_votacao <= $3
-  `, id, dataInicio, dataFim);
-
-  const alinhamento = alinhamentoData[0] || { total_votacoes: 0, votos_alinhados: 0, percentual_alinhamento: 0 };
-
-  // Ranking no partido
-  let rankingPartido: number | undefined;
-  let totalPartido: number | undefined;
-  
-  if (parlamentar.partidoId) {
-    const rankingData = await prisma.$queryRawUnsafe<{ rank: bigint; total: bigint }[]>(`
-      WITH ranked AS (
-        SELECT 
-          "parlamentarId",
-          ROUND((SUM(alinhado)::numeric / COUNT(*) * 100), 2) as pct,
-          ROW_NUMBER() OVER (ORDER BY ROUND((SUM(alinhado)::numeric / COUNT(*) * 100), 2) DESC) as rank,
-          COUNT(*) OVER () as total
-        FROM "alinhamento_partidario"
-        WHERE "partidoId" = $1
-          AND data_votacao >= $2
-          AND data_votacao <= $3
-        GROUP BY "parlamentarId"
-      )
-      SELECT rank, total FROM ranked WHERE "parlamentarId" = $4
-    `, parlamentar.partidoId, dataInicio, dataFim, id);
-    
-    if (rankingData.length > 0) {
-      rankingPartido = Number(rankingData[0].rank);
-      totalPartido = Number(rankingData[0].total);
-    }
-  }
-
-  // 3. Atividade mensal
-  const atividadeMensal = await prisma.$queryRawUnsafe<{ mes: number; votações: bigint; discursos: bigint; proposicoes: bigint }[]>(`
-    SELECT 
-      EXTRACT(MONTH FROM data)::int as mes,
-      COUNT(DISTINCT v.id) as votações,
-      COUNT(DISTINCT d.id) as discursos,
-      COUNT(DISTINCT p.id) as proposicoes
-    FROM (SELECT 1) dummy
-    LEFT JOIN "Voto" v ON v."parlamentarId" = $1 AND v."votacaoId" IN (
-      SELECT id FROM "Votacao" WHERE data >= $2 AND data <= $3
-    )
-    LEFT JOIN "Discurso" d ON d."parlamentarId" = $1 AND d.data >= $2 AND d.data <= $3
-    LEFT JOIN "Proposicao" p ON p."parlamentarId" = $1 AND p."dataApresentacao" >= $2 AND p."dataApresentacao" <= $3
-    GROUP BY EXTRACT(MONTH FROM COALESCE(v."createdAt", d.data, p."dataApresentacao"))
-    ORDER BY mes
-  `, id, dataInicio, dataFim);
-
-  // Completar meses vazios
-  const mesesMap = new Map(atividadeMensal.map(a => [Number(a.mes), a]));
-  const porMes = Array.from({ length: 12 }, (_, i) => {
-    const m = i + 1;
-    const data = mesesMap.get(m) || { votações: 0, discursos: 0, proposicoes: 0 };
-    return {
-      mes: m.toString().padStart(2, '0'),
-      votações: Number(data.votações),
-      discursos: Number(data.discursos),
-      proposicoes: Number(data.proposicoes),
-    };
+  // Discursos e proposições no período
+  const discursos = await prisma.discurso.findMany({
+    where: {
+      parlamentarId: id,
+      data: { gte: dataInicio, lte: dataFim },
+    },
+    select: { data: true, tema: true },
   });
 
-  // 4. Temas principais
-  const temasData = await prisma.$queryRawUnsafe<{ tema: string; total: bigint; votações: bigint; discursos: bigint; proposicoes: bigint }[]>(`
-    SELECT 
-      COALESCE(v.tema, d.tema, p.tema, 'Sem tema') as tema,
-      COUNT(DISTINCT v.id) + COUNT(DISTINCT d.id) + COUNT(DISTINCT p.id) as total,
-      COUNT(DISTINCT v.id) as votações,
-      COUNT(DISTINCT d.id) as discursos,
-      COUNT(DISTINCT p.id) as proposicoes
-    FROM (SELECT 1) dummy
-    LEFT JOIN "Voto" vt ON vt."parlamentarId" = $1
-    LEFT JOIN "Votacao" v ON v.id = vt."votacaoId" AND v.data >= $2 AND v.data <= $3
-    LEFT JOIN "Discurso" d ON d."parlamentarId" = $1 AND d.data >= $2 AND d.data <= $3
-    LEFT JOIN "Proposicao" p ON p."parlamentarId" = $1 AND p."dataApresentacao" >= $2 AND p."dataApresentacao" <= $3
-    GROUP BY COALESCE(v.tema, d.tema, p.tema, 'Sem tema')
-    ORDER BY total DESC
-    LIMIT 10
-  `, id, dataInicio, dataFim);
+  const proposicoes = await prisma.proposicao.findMany({
+    where: {
+      parlamentarId: id,
+      dataApresentacao: { gte: dataInicio, lte: dataFim },
+    },
+    select: { dataApresentacao: true, tema: true },
+  });
 
-  const temas = temasData.map(t => ({
-    tema: t.tema,
-    total: Number(t.total),
-    votações: Number(t.votações),
-    discursos: Number(t.discursos),
-    proposicoes: Number(t.proposicoes),
-  }));
+  // Frequência
+  const frequencia = computeFrequencia(
+    votos.map((v) => ({ tipo: v.tipo, data: v.votacao.data }))
+  );
+
+  // Alinhamento partidário
+  const votacoesIds = votos
+    .filter((v) => ['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO'].includes(v.tipo))
+    .map((v) => v.votacaoId);
+
+  let alinhamento: AlinhamentoResult = {
+    totalVotacoes: 0,
+    votosAlinhados: 0,
+    percentualAlinhamento: 0,
+    rankingPartido: undefined,
+    totalPartido: undefined,
+  };
+
+  if (parlamentar.partidoId && votacoesIds.length > 0) {
+    const votosPartido = await prisma.voto.findMany({
+      where: {
+        votacaoId: { in: votacoesIds },
+        parlamentar: { partidoId: parlamentar.partidoId },
+      },
+      select: { votacaoId: true, tipo: true, parlamentarId: true },
+    });
+
+    alinhamento = computeAlinhamento(
+      votos
+        .filter((v) => votacoesIds.includes(v.votacaoId))
+        .map((v) => ({ votacaoId: v.votacaoId, tipo: v.tipo })),
+      votosPartido.map((v) => ({
+        votacaoId: v.votacaoId,
+        tipo: v.tipo,
+        parlamentarId: v.parlamentarId,
+      })),
+      id
+    );
+  }
+
+  // Atividade mensal
+  const atividadeMensal = computeAtividadeMensal(
+    votos.map((v) => ({ votacaoId: v.votacaoId, tipo: v.tipo, data: v.votacao.data })),
+    discursos.map((d) => ({ data: d.data })),
+    proposicoes.map((p) => ({ data: p.dataApresentacao }))
+  );
+
+  // Temas (votações distintas)
+  const votacoesDistintas = new Map<string, { tema?: string | null }>();
+  for (const v of votos) {
+    if (!votacoesDistintas.has(v.votacaoId)) {
+      votacoesDistintas.set(v.votacaoId, { tema: v.votacao.tema });
+    }
+  }
+  const temas = computeTemas(
+    Array.from(votacoesDistintas.values()),
+    discursos.map((d) => ({ tema: d.tema })),
+    proposicoes.map((p) => ({ tema: p.tema }))
+  );
 
   return NextResponse.json({
     parlamentar: {
       id: parlamentar.id,
       nome: parlamentar.nome,
       casa: parlamentar.casa,
-      partido: parlamentar.partido,
-      uf: parlamentar.uf,
+      partido: parlamentar.partido ? { sigla: parlamentar.partido.sigla, cor: parlamentar.partido.cor } : null,
+      uf: parlamentar.uf ? { sigla: parlamentar.uf.sigla } : null,
       legislatura: parlamentar.legislatura,
     },
-    frequencia: {
-      totalSessoes,
-      presencas,
-      faltasJustificadas,
-      faltasInjustificadas,
-      taxaPresenca: Math.round(taxaPresenca * 10) / 10,
-    },
-    alinhamento: {
-      totalVotacoes: Number(alinhamento.total_votacoes),
-      votosAlinhados: Number(alinhamento.votos_alinhados),
-      percentualAlinhamento: alinhamento.percentual_alinhamento,
-      rankingPartido,
-      totalPartido,
-    },
-    atividade: { porMes },
+    frequencia,
+    alinhamento,
+    atividade: { porMes: atividadeMensal },
     temas,
   });
 }

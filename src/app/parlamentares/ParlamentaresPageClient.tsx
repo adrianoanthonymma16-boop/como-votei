@@ -24,7 +24,7 @@ export function ParlamentaresPageClient() {
   const [totalCount, setTotalCount] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
   
-  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [query, setQuery] = useState(searchParams.get('search') || '');
   const [casa, setCasa] = useState(searchParams.get('casa') || '');
   const [partidoId, setPartidoId] = useState(searchParams.get('partidoId') || '');
   const [ufId, setUfId] = useState(searchParams.get('ufId') || '');
@@ -69,7 +69,7 @@ export function ParlamentaresPageClient() {
       const params = new URLSearchParams({
         limit: '50',
         ...(cursorParam && { cursor: cursorParam }),
-        ...(debouncedQuery && { q: debouncedQuery }),
+        ...(debouncedQuery && { search: debouncedQuery }),
         ...(casa && { casa }),
         ...(partidoId && { partidoId }),
         ...(ufId && { ufId }),
