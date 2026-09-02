@@ -258,4 +258,3 @@ ALTER TABLE "tramitacoes" ADD CONSTRAINT "tramitacoes_proposicao_id_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "frequencias" ADD CONSTRAINT "frequencias_parlamentar_id_fkey" FOREIGN KEY ("parlamentar_id") REFERENCES "parlamentares"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
