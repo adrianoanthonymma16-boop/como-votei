@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Casa {
+  CAMARA
+  SENADO
+}
+
+enum TipoVoto {
+  SIM
+  NAO
+  ABSTENCAO
+  ARTICULACAO
+  OBSTRUCAO
+  AUSENTE
+  LICENCA
+  MISSAO
+}
+
+enum TipoDiscurso {
+  ORDEM_DIA
+  PLENARIO
+  COMISSAO
+  LIDERANCA
+  OUTRO
+}
+
+enum StatusProposicao {
+  APRESENTADA
+  EM_TRAMITACAO
+  APROVADA_CAMARA
+  APROVADA_SENADO
+  SANCIONADA
+  VETADA
+  ARQUIVADA
+  RETIRADA
+}
+
+model Partido {
+  id        String   @id @default(cuid())
+  sigla     String   @unique
+  nome      String
+  ideologia String?
+  cor       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parlamentares Parlamentar[]
+}
+
+model Uf {
+  id        String   @id @default(cuid())
+  sigla     String   @unique
+  nome      String
+  regiao    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parlamentares Parlamentar[]
+}
+
+model Parlamentar {
+  id              String       @id @default(cuid())
+  idExterno       String       @unique @map("id_externo")
+  cpf             String?      @unique
+  nome            String
+  nomeCivil       String?      @map("nome_civil")
+  casa            Casa
+  partidoId       String       @map("partido_id")
+  ufId            String       @map("uf_id")
+  legislatura     Int          @default(57)
+  fotoUrl         String?      @map("foto_url")
+  email           String?
+  telefone        String?
+  gabinetes       Json?        // JSON para PostgreSQL
+  situacao        String?
+  dataNascimento  DateTime?    @map("data_nascimento")
+  naturalidade    String?
+  ufNaturalidade  String?      @map("uf_naturalidade")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  partido         Partido      @relation(fields: [partidoId], references: [id])
+  uf              Uf           @relation(fields: [ufId], references: [id])
+  votos           Voto[]
+  discursos       Discurso[]
+  proposicoes     Proposicao[]
+  frequencias     Frequencia[]
+
+  @@index([casa, partidoId])
+  @@index([casa, ufId])
+  @@index([legislatura])
+  @@index([situacao])
+  @@map("parlamentares")
+}
+
+model Votacao {
+  id              String       @id @default(cuid())
+  idExterno       String       @unique @map("id_externo")
+  casa            Casa
+  legislatura     Int
+  sessao          Int?
+  numero          Int
+  data            DateTime
+  descricao       String
+  ementa          String?
+  tema            String?
+  resultado       String?
+  quorum          Int?
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  votos           Voto[]
+
+  @@index([casa, data])
+  @@index([tema])
+  @@index([legislatura])
+  @@map("votacoes")
+}
+
+model Voto {
+  id              String     @id @default(cuid())
+  parlamentarId    String     @map("parlamentar_id")
+  votacaoId       String     @map("votacao_id")
+  tipo            TipoVoto
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  parlamentar      Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  votacao         Votacao     @relation(fields: [votacaoId], references: [id], onDelete: Cascade)
+
+  @@unique([parlamentarId, votacaoId])
+  @@index([parlamentarId, tipo])
+  @@index([votacaoId])
+  @@map("votos")
+}
+
+model Discurso {
+  id              String       @id @default(cuid())
+  idExterno       String       @unique @map("id_externo")
+  parlamentarId    String       @map("parlamentar_id")
+  casa            Casa
+  tipo            TipoDiscurso
+  data            DateTime
+  hora            String?
+  resumo          String       @db.Text
+  urlOriginal     String       @map("url_original")
+  tema            String?
+  duracaoSegundos Int?         @map("duracao_segundos")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  parlamentar      Parlamentar  @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@index([parlamentarId, data])
+  @@index([casa, data])
+  @@index([tema])
+  @@map("discursos")
+}
+
+model Proposicao {
+  id              String            @id @default(cuid())
+  idExterno       String            @unique @map("id_externo")
+  parlamentarId    String            @map("parlamentar_id")
+  casa            Casa
+  tipo            String            // PL, PEC, MPL, REQ, etc.
+  numero          Int
+  ano             Int
+  ementa          String            @db.Text
+  autorPrincipal  Boolean           @default(true) @map("autor_principal")
+  status          StatusProposicao  @default(APRESENTADA)
+  dataApresentacao DateTime         @map("data_apresentacao")
+  urlOriginal     String            @map("url_original")
+  tema            String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  parlamentar      Parlamentar       @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  tramitacoes     Tramitacao[]
+
+  @@index([parlamentarId, status])
+  @@index([casa, tipo, ano])
+  @@index([tema])
+  @@map("proposicoes")
+}
+
+model Tramitacao {
+  id              String       @id @default(cuid())
+  proposicaoId    String       @map("proposicao_id")
+  data            DateTime
+  descricao       String
+  orgao           String?
+  situacao        String
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  proposicao      Proposicao   @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+
+  @@index([proposicaoId, data])
+  @@map("tramitacoes")
+}
+
+model Frequencia {
+  id                   String   @id @default(cuid())
+  parlamentarId         String   @map("parlamentar_id")
+  ano                  Int
+  totalSessoes         Int      @map("total_sessoes")
+  presencas            Int
+  faltasJustificadas   Int      @map("faltas_justificadas")
+  faltasInjustificadas Int      @map("faltas_injustificadas")
+  taxaPresenca         Float    @map("taxa_presenca")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  parlamentar           Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([parlamentarId, ano])
+  @@map("frequencias")
+}

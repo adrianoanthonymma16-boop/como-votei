@@ -1,0 +1,114 @@
+{
+  "economia": [
+    "economia", "orcamento", "fiscal", "tribut", "imposto", "tax", "receita", "despesa",
+    "deficit", "superavit", "divida", "pib", "inflacao", "juros", "cambio", "moeda",
+    "banco central", "bacen", "selic", "credito", "financiamento", "investimento",
+    "produtividade", "competitividade", "comercio exterior", "exportacao", "importacao",
+    "balanca comercial", "zonas francas", "incentivo fiscal", "renuncia fiscal",
+    "simplificacao tributaria", "reforma tributaria", "imposto de renda", "irpf", "irpj",
+    "csll", "cofins", "pis", "ipim", "icms", "iss", "itbi", "itcmd", "iop"
+  ],
+  "saude": [
+    "saude", "sus", "hospital", "medicamento", "vacina", "epidemiologia", "pandemia",
+    "atencao basica", "atenção básica", "urologia", "cardiologia", "oncologia",
+    "transplante", "sangue", "hemoterapia", "vigilancia sanitaria", "anvisa",
+    "farmacia popular", "farmácia popular", "mais medicos", "mais médicos",
+    "saude mental", "saúde mental", "hanseniase", "tuberculose", "hiv", "aids",
+    "dengue", "zika", "chikungunya", "malaria", "covid", "coronavirus"
+  ],
+  "educacao": [
+    "educacao", "educação", "escola", "universidade", "faculdade", "ensino", "aluno",
+    "professor", "merenda", "fnf", "fies", "prouni", "enem", "sisu", "capes", "cnpq",
+    "pos-graduacao", "pós-graduação", "mestrado", "doutorado", "bolsa", "pesquisa",
+    "ciencia", "ciência", "tecnologia", "inovacao", "inovação", "tecnico", "técnico",
+    "formacao", "formação", "qualificacao", "qualificação", "eja", "educacao infantil",
+    "educação infantil", "ensino medio", "ensino médio", "ensino fundamental"
+  ],
+  "direitos_civis": [
+    "direitos humanos", "direitos civis", "liberdade", "igualdade", "discriminacao",
+    "discriminação", "racismo", "homofobia", "transfobia", "misoginia", "feminicidio",
+    "feminicídio", "violencia domestica", "violência doméstica", "maria da penha",
+    "lgbtqia", "lgbt", "genero", "gênero", "identidade de genero", "identidade de gênero",
+    "orientacao sexual", "orientação sexual", "quilombola", "indigena", "indígena",
+    "povos tradicionais", "terras indigenas", "terras indígenas", "demarcacao",
+    "demarcação", "trabalho escravo", "trabalho infantil", "protecao", "proteção"
+  ],
+  "seguranca_publica": [
+    "seguranca publica", "segurança pública", "policial", "policia", "polícia",
+    "prisao", "prisão", "penitenciaria", "penitenciária", "sistema penitenciario",
+    "sistema penitenciário", "crime", "criminalidade", "homicidio", "homicídio",
+    "roubo", "furto", "trafico", "tráfico", "drogas", "armas", "municao", "munição",
+    "guarda municipal", "forca nacional", "força nacional", "exercito", "exército",
+    "marinha", "aeronautica", "aeronáutica", "inteligencia", "inteligência"
+  ],
+  "meio_ambiente": [
+    "meio ambiente", "meio-ambiente", "ambiental", "floresta", "amazonia", "amazônia",
+    "desmatamento", "queimada", "incendio", "incêndio", "biodiversidade", "bioma",
+    "pantanal", "cerrado", "caatinga", "mata atlantica", "mata atlântica",
+    "unidade de conservacao", "unidade de conservação", "parque nacional",
+    "reserva extrativista", "terra indigena", "terra indígena", "licenciamento ambiental",
+    "eia", "rima", "ibama", "icmbio", "mudanca climatica", "mudança climática",
+    "carbono", "emissao", "emissão", "sustentabilidade", "reciclagem", "lixo",
+    "residuos", "resíduos", "saneamento", "agua", "água", "rio", "bacia hidrografica"
+  ],
+  "trabalho_previdencia": [
+    "trabalho", "emprego", "desemprego", "carteira", "clt", "fgts", "pis", "pasep",
+    "salario minimo", "salário mínimo", "hora extra", "ferias", "férias", "decimo terceiro",
+    "décimo terceiro", "previdencia", "previdência", "inss", "aposentadoria", "pensao",
+    "pensão", "beneficio", "benefício", "auxilio", "auxílio", "doenca", "doença",
+    "acidente trabalho", "acidente de trabalho", "seguro desemprego", "seguro-desemprego",
+    "qualificacao", "qualificação", "requalificacao", "requalificação", "jovem aprendiz",
+    "estagio", "estágio", "terceirizacao", "terceirização", "pejotizacao", "pejotização"
+  ],
+  "infraestrutura": [
+    "infraestrutura", "transporte", "rodovia", "ferrovia", "porto", "aeroporto",
+    "logistica", "logística", "mobilidade", "urbana", "metro", "metrô", "brt",
+    "ciclovia", "ciclofaixa", "calçada", "pavimentacao", "pavimentação",
+    "saneamento basico", "saneamento básico", "agua e esgoto", "água e esgoto",
+    "energia", "eletrica", "elétrica", "petroleo", "petróleo", "gas natural", "gás natural",
+    "renovavel", "renovável", "solar", "eolica", "eólica", "hidreletrica", "hidrelétrica",
+    "nuclear", "transmissao", "transmissão", "distribuicao", "distribuição"
+  ],
+  "agricultura": [
+    "agricultura", "agronegocio", "agronegócio", "agro", "produtor rural", "propriedade rural",
+    "incra", "reforma agraria", "reforma agrária", "assentamento", "credito rural",
+    "crédito rural", "pronaf", "pronamp", "seguro agricola", "seguro agrícola",
+    "colheita", "plantio", "safra", "commodity", "soja", "milho", "cafe", "café",
+    "algodao", "algodão", "cana", "carne", "frango", "suino", "suíno", "leite",
+    "pescado", "florestal", "madeira", "papel", "celulose", "bioenergia", "etanol",
+    "biodiesel", "fertilizante", "defensivo", "agrotoxico", "agrotóxico"
+  ],
+  "tecnologia": [
+    "tecnologia", "digital", "internet", "dados", "privacidade", "lgpd", "protecao de dados",
+    "proteção de dados", "ciberseguranca", "cibersegurança", "hacker", "vazamento",
+    "inteligencia artificial", "inteligência artificial", "ia", "machine learning",
+    "blockchain", "criptomoeda", "bitcoin", "fintech", "startup", "inovacao", "inovação",
+    "pesquisa desenvolvimento", "p&d", "patente", "marca", "direito autoral", "copyright",
+    "software", "hardware", "semicondutor", "chip", "5g", "6g", "fibra optica", "fibra óptica",
+    "banda larga", "inclusao digital", "inclusão digital", "governo digital", "gov.br"
+  ],
+  "cultura": [
+    "cultura", "cultural", "patrimonio", "patrimônio", "historico", "histórico",
+    "artistico", "artístico", "museu", "biblioteca", "arquivo", "monumento",
+    "festividade", "festa popular", "carnaval", "sao joao", "são joão", "folclore",
+    "artes", "musica", "música", "teatro", "danca", "dança", "cinema", "audiovisual",
+    "livro", "leitura", "literatura", "editora", "autor", "direitos autorais",
+    "lei rouanet", "lei aldeir blanc", "fundo nacional cultura", "fnc", "procultura"
+  ],
+  "desenvolvimento_regional": [
+    "desenvolvimento regional", "regiao", "região", "nordeste", "norte", "centro-oeste",
+    "sudeste", "sul", "sudene", "sudam", "amazonia legal", "amazônia legal",
+    "zonas de fronteira", "municipio", "município", "consorcio", "consórcio",
+    "intermunicipal", "metropolitano", "aglomerado urbano", "cidade media", "cidade média",
+    "pequeno municipio", "pequeno município", "desigualdade regional", "fundo constitucional",
+    "fne", "fno", "fco", "bnf", "bnb", "basade", "investimento regional"
+  ],
+  "direitos_sociais": [
+    "assistencia social", "assistência social", "suas", "cras", "creas", "bolsa familia",
+    "bolsa família", "auxilio brasil", "auxílio brasil", "cadastro unico", "cadastro único",
+    "cadunico", "beneficio de prestacao continuada", "benefício de prestação continuada",
+    "bpc", "loas", "idoso", "pessoa com deficiencia", "pessoa com deficiência", "pcd",
+    "crianca", "criança", "adolescente", "eja", "convivencia", "convivência",
+    "acolhimento", "abrigamento", "adocao", "adoção", "guarda", "tutela"
+  ]
+}

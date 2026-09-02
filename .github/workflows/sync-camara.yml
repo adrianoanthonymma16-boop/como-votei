@@ -1,0 +1,90 @@
+name: Sync Câmara dos Deputados
+
+on:
+  schedule:
+    # Diário às 03:00 UTC (00:00 BRT)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano para sincronizar (padrão: ano atual)'
+        required: false
+        type: string
+      apenas-parlamentares:
+        description: 'Sincronizar apenas parlamentares'
+        required: false
+        type: boolean
+      apenas-votacoes:
+        description: 'Sincronizar apenas votações'
+        required: false
+        type: boolean
+      apenas-discursos:
+        description: 'Sincronizar apenas discursos'
+        required: false
+        type: boolean
+      apenas-proposicoes:
+        description: 'Sincronizar apenas proposições'
+        required: false
+        type: boolean
+      apenas-frequencia:
+        description: 'Sincronizar apenas frequência'
+        required: false
+        type: boolean
+
+jobs:
+  sync-camara:
+    name: Sync Câmara
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
+      NODE_ENV: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+
+      - name: Sync Câmara dos Deputados
+        run: |
+          npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts \
+            ${{
+              format('
+                {0}
+                {1}
+                {2}
+                {3}
+                {4}
+                {5}
+              ', 
+                github.event.inputs.ano && `--ano=${github.event.inputs.ano}` || '',
+                github.event.inputs.apenas-parlamentares && '--apenas-parlamentares' || '',
+                github.event.inputs.apenas-votacoes && '--apenas-votacoes' || '',
+                github.event.inputs.apenas-discursos && '--apenas-discursos' || '',
+                github.event.inputs.apenas-proposicoes && '--apenas-proposicoes' || '',
+                github.event.inputs.apenas-frequencia && '--apenas-frequencia' || ''
+              )
+            }}
+
+      - name: Log completion
+        if: always()
+        run: |
+          echo "✅ Sync Câmara concluído em $(date)"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run: ${{ github.run_id }}"
