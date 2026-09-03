@@ -367,7 +367,10 @@ function DashboardSkeleton() {
           <div className="h-64 flex items-end gap-2">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full bg-muted rounded-t" style={{ height: `${Math.random() * 150 + 20}px` }} />
+                <div
+                  className="w-full bg-muted rounded-t"
+                  style={{ height: `${60 + ((i * 37) % 5) * 34 + 20}px` }}
+                />
               </div>
             ))}
           </div>
