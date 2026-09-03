@@ -4,11 +4,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
+import { DashboardFilters } from './DashboardFilters';
 
 interface DashboardData {
   ano: number;
   anos: number[];
   semDados?: boolean;
+  filtros?: {
+    tipoVoto: string[] | null;
+    tipoDiscurso: string[] | null;
+    disponiveis: { tipoVoto: Array<{ tipo: string; total: number }>; tipoDiscurso: Array<{ tipo: string; total: number }> };
+  };
   parlamentar: {
     id: string;
     nome: string;
@@ -47,19 +53,22 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // null = ainda não escolhido: a API escolhe o ano mais recente com dados.
   const [ano, setAno] = useState<number | null>(null);
   const [anos, setAnos] = useState<number[]>([]);
+  const [filtros, setFiltros] = useState<{ tipoVoto: string[]; tipoDiscurso: string[] }>({ tipoVoto: [], tipoDiscurso: [] });
+  const [filtrosDisponiveis, setFiltrosDisponiveis] = useState<{ tipoVoto: Array<{ tipo: string; total: number }>; tipoDiscurso: Array<{ tipo: string; total: number }> } | null>(null);
   const anoCarregadoRef = useRef<number | null>(null);
 
-  const loadData = useCallback(async (alvo: number | null, mostrarLoading = true, signal?: AbortSignal) => {
+  const loadData = useCallback(async (alvo: number | null, filtro: { tipoVoto: string[]; tipoDiscurso: string[] }, mostrarLoading = true, signal?: AbortSignal) => {
     try {
       if (mostrarLoading) setIsLoading(true);
       setError(null);
 
-      const url = alvo
-        ? `/api/parlamentares/${parlamentarId}/dashboard?ano=${alvo}`
-        : `/api/parlamentares/${parlamentarId}/dashboard`;
+      const params = new URLSearchParams();
+      if (alvo) params.set('ano', String(alvo));
+      filtro.tipoVoto.forEach((t) => params.append('tipoVoto', t));
+      filtro.tipoDiscurso.forEach((t) => params.append('tipoDiscurso', t));
+      const url = `/api/parlamentares/${parlamentarId}/dashboard?${params.toString()}`;
       const response = await fetch(url, { cache: 'no-store', signal });
 
       if (!response.ok) {
@@ -69,9 +78,9 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
       const result = await response.json();
       setData(result);
       setAnos(Array.isArray(result.anos) ? result.anos : result.ano ? [result.ano] : []);
+      setFiltrosDisponiveis(result.filtros?.disponiveis ?? null);
       anoCarregadoRef.current = result.ano;
 
-      // Primeira carga (sem ?ano): reflete o ano escolhido pelo servidor.
       if (alvo === null && typeof result.ano === 'number') {
         setAno(result.ano);
       }
@@ -84,18 +93,17 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   }, [parlamentarId]);
 
   useEffect(() => {
-    // Guard: skip re-fetch when ano matches the last server-chosen value and data is already loaded
     if (ano !== null && ano === anoCarregadoRef.current && data) return;
     const controller = new AbortController();
-    loadData(ano, true, controller.signal);
+    loadData(ano, filtros, true, controller.signal);
     return () => controller.abort();
-  }, [ano, loadData, data]);
+  }, [ano, filtros, loadData, data]);
 
   if (error) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => loadData(ano)}>Tentar novamente</button>
+        <button className="btn-outline" onClick={() => loadData(ano, filtros)}>Tentar novamente</button>
       </div>
     );
   }
@@ -120,6 +128,15 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Filtros interativos */}
+      <DashboardFilters
+        filtros={filtros}
+        disponiveis={filtrosDisponiveis}
+        onFilterChange={(tipo, valores) => {
+          setFiltros((prev) => ({ ...prev, [tipo]: valores }));
+        }}
+      />
+
       {/* Header com seletor de ano */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>

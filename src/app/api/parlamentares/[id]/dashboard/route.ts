@@ -12,19 +12,35 @@ export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
   ano: z.coerce.number().optional(),
+  tipoVoto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO', 'LICENCA', 'MISSAO', 'AUSENTE']).array().optional(),
+  tipoDiscurso: z.enum(['ORDEM_DIA', 'PLENARIO', 'COMISSAO', 'LIDERANCA', 'OUTRO']).array().optional(),
 });
+
+async function anosComDadosGlobais(): Promise<number[]> {
+  const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
+    `SELECT DISTINCT EXTRACT(YEAR FROM "data")::int AS ano FROM (
+      SELECT data FROM "votacoes"
+      UNION SELECT data FROM "discursos"
+      UNION SELECT "data_apresentacao" FROM "proposicoes"
+      UNION SELECT NOW() AS data
+    ) a WHERE EXTRACT(YEAR FROM "data") >= 2023 GROUP BY ano ORDER BY ano DESC`
+  );
+  return rows.map((r) => r.ano);
+}
 
 async function anosComDados(parlamentarId: string): Promise<number[]> {
   const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
     `SELECT DISTINCT EXTRACT(YEAR FROM a.dt)::int AS ano FROM (
-       SELECT v.data AS dt FROM "votacoes" v JOIN "votos" x ON x."votacao_id" = v.id WHERE x."parlamentar_id" = $1
-       UNION SELECT d.data FROM "discursos" d WHERE d."parlamentar_id" = $1
-       UNION SELECT p."data_apresentacao" FROM "proposicoes" p WHERE p."parlamentar_id" = $1
-     ) a ORDER BY ano DESC`,
+      SELECT v.data AS dt FROM "votacoes" v JOIN "votos" x ON x."votacao_id" = v.id WHERE x."parlamentar_id" = $1
+      UNION SELECT d.data FROM "discursos" d WHERE d."parlamentar_id" = $1
+      UNION SELECT p."data_apresentacao" FROM "proposicoes" p WHERE p."parlamentar_id" = $1
+    ) a ORDER BY ano DESC`,
     parlamentarId
   );
   return rows.map((r) => r.ano);
 }
+
+const ANOS_GLOBAL = await anosComDadosGlobais();
 
 export async function GET(
   request: NextRequest,
@@ -56,34 +72,51 @@ export async function GET(
     );
   }
 
-  // Sem ?ano, usa o ano mais recente com registros na base — nunca o ano corrente
-  // vazio (que fazia o dashboard retornar tudo 0).
+  // Sem ?ano, usa 2026 se houver dados globais para esse ano;
+  // senão o ano mais recente com registros do parlamentar;
+  // nunca o ano corrente vazio.
   const anos = await anosComDados(id);
-  const ano = parsed.data.ano ?? anos[0] ?? new Date().getFullYear();
+  const ano = parsed.data.ano ?? (ANOS_GLOBAL.includes(2026) ? 2026 : anos[0] ?? new Date().getFullYear());
   const temDados = anos.length > 0;
 
   const dataInicio = new Date(ano, 0, 1);
   const dataFim = new Date(ano, 11, 31, 23, 59, 59);
 
-  // Votos do parlamentar no período
-  const votos = await prisma.voto.findMany({
+  const { tipoVoto, tipoDiscurso } = parsed.data;
+
+  // Votos do parlamentar no período (filtrados por tipo)
+  let votosRaw = await prisma.voto.findMany({
     where: {
       parlamentarId: id,
       votacao: { data: { gte: dataInicio, lte: dataFim } },
+      ...(tipoVoto && tipoVoto.length > 0 ? { tipo: { in: tipoVoto } } : {}),
     },
     include: {
       votacao: { select: { id: true, data: true, tema: true } },
     },
   });
 
-  // Discursos e proposições no período
-  const discursos = await prisma.discurso.findMany({
+  // Discursos no período (filtrados por tipo)
+  let discursosRaw = await prisma.discurso.findMany({
     where: {
       parlamentarId: id,
       data: { gte: dataInicio, lte: dataFim },
+      ...(tipoDiscurso && tipoDiscurso.length > 0 ? { tipo: { in: tipoDiscurso } } : {}),
     },
-    select: { data: true, tema: true },
+    select: { data: true, tema: true, tipo: true },
   });
+
+  // Contagens para os filtros (independentes do filtro aplicado)
+  const [votosPorTipo, discursosPorTipo] = await Promise.all([
+    prisma.$queryRawUnsafe<{ tipo: string; cnt: bigint }[]>(
+      `SELECT v."tipo", count(*)::bigint as cnt FROM "votos" x JOIN "votacoes" v ON v.id = x."votacao_id" WHERE x."parlamentar_id" = $1 AND v."data" >= $2 AND v."data" <= $3 GROUP BY v."tipo" ORDER BY cnt DESC`,
+      [id, dataInicio.toISOString(), dataFim.toISOString()]
+    ),
+    prisma.$queryRawUnsafe<{ tipo: string; cnt: bigint }[]>(
+      `SELECT "tipo", count(*)::bigint as cnt FROM "discursos" WHERE "parlamentar_id" = $1 AND "data" >= $2 AND "data" <= $3 GROUP BY "tipo" ORDER BY cnt DESC`,
+      [id, dataInicio.toISOString(), dataFim.toISOString()]
+    ),
+  ]);
 
   const proposicoes = await prisma.proposicao.findMany({
     where: {
@@ -92,6 +125,10 @@ export async function GET(
     },
     select: { dataApresentacao: true, tema: true },
   });
+
+  // Aplicar filtros aos dados para computação
+  const votos = tipoVoto?.length ? votosRaw.filter((v) => tipoVoto.includes(v.tipo)) : votosRaw;
+  const discursos = tipoDiscurso?.length ? discursosRaw.filter((d) => tipoDiscurso.includes(d.tipo)) : discursosRaw;
 
   // Frequência — SOMENTE dados oficiais da tabela `frequencias`
   // (populada pelo sync). Sem registro oficial, retorna zeros e o
@@ -175,6 +212,14 @@ export async function GET(
     ano,
     anos,
     semDados: !temDados,
+    filtros: {
+      tipoVoto: tipoVoto ?? null,
+      tipoDiscurso: tipoDiscurso ?? null,
+      disponiveis: {
+        tipoVoto: votosPorTipo.map((r) => ({ tipo: r.tipo, total: Number(r.cnt) })),
+        tipoDiscurso: discursosPorTipo.map((r) => ({ tipo: r.tipo, total: Number(r.cnt) })),
+      },
+    },
     parlamentar: {
       id: parlamentar.id,
       nome: parlamentar.nome,
