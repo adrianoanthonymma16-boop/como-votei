@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const querySchema = z.object({
   cursor: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().min(1).max(100).default(20),
   ano: z.coerce.number().optional(),
   status: z.string().optional(),
@@ -25,7 +26,7 @@ export async function GET(
     );
   }
 
-  const { cursor, limit, ano, status, tema } = parsed.data;
+  const { cursor, page, limit, ano, status, tema } = parsed.data;
 
   const parlamentar = await prisma.parlamentar.findUnique({
     where: { id },
@@ -53,6 +54,54 @@ export async function GET(
 
   if (tema) {
     where.tema = { contains: tema, mode: 'insensitive' };
+  }
+
+  if (page) {
+    const total = await prisma.proposicao.count({ where } as any);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const paginaSegura = Math.min(page, totalPages);
+    const proposicoes = await prisma.proposicao.findMany({
+      where,
+      skip: (paginaSegura - 1) * limit,
+      take: limit,
+      orderBy: { dataApresentacao: 'desc' },
+      include: {
+        tramitacoes: {
+          orderBy: { data: 'desc' },
+          take: 5,
+          select: {
+            data: true,
+            descricao: true,
+            orgao: true,
+            situacao: true,
+          },
+        },
+      },
+    });
+    const data = proposicoes.map((p) => ({
+      id: p.id,
+      idExterno: p.idExterno,
+      tipo: p.tipo,
+      numero: p.numero,
+      ano: p.ano,
+      ementa: p.ementa,
+      autorPrincipal: p.autorPrincipal,
+      status: p.status,
+      dataApresentacao: p.dataApresentacao,
+      urlOriginal: p.urlOriginal,
+      tema: p.tema,
+      casa: p.casa,
+      tramitacoes: p.tramitacoes,
+    }));
+    return NextResponse.json({
+      data,
+      total,
+      page: paginaSegura,
+      totalPages,
+      perPage: limit,
+      nextCursor: undefined,
+      hasMore: paginaSegura < totalPages,
+    });
   }
 
   const proposicoes = await prisma.proposicao.findMany({

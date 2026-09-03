@@ -4,6 +4,30 @@ import { useState, useEffect } from 'react';
 import { ParlamentarCard } from '@/components/ParlamentarCard';
 import { Badge } from '@/components/ui/Badge';
 
+function CrownIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" focusable="false">
+      <path
+        d="M3 16L5.2 8.2L9.6 12L12 5.5L14.4 12L18.8 8.2L21 16H3Z"
+        fill="#facc15"
+        stroke="#ca8a04"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      <path d="M4 16.8H20" stroke="#92400e" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="12" cy="7.2" r="1.3" fill="white" stroke="#ca8a04" strokeWidth="0.7" />
+      <circle cx="6.2" cy="9.5" r="0.9" fill="white" stroke="#ca8a04" strokeWidth="0.6" />
+      <circle cx="17.8" cy="9.5" r="0.9" fill="white" stroke="#ca8a04" strokeWidth="0.6" />
+    </svg>
+  );
+}
+
+const RANK_STYLE: Record<number, string> = {
+  0: 'bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-amber-950 border-amber-300 shadow-[0_4px_12px_rgba(245,158,11,0.35)]',
+  1: 'bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 text-slate-800 border-slate-300 shadow-sm',
+  2: 'bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700 text-white border-amber-600 shadow-sm',
+};
+
 export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
   const [parlamentares, setParlamentares] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,21 +82,65 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
   }
 
   return (
-    <ol className="space-y-4" aria-label="Ranking de produtividade">
+    <ol className="space-y-5" aria-label="Ranking de produtividade">
       {parlamentares.map((parlamentar, idx) => {
         const score = parlamentar.produtividade?.pontuacao ?? 0;
+        const isTop = idx === 0;
+        const rankClass =
+          RANK_STYLE[idx] ??
+          'bg-card text-muted-foreground border-border hover:border-accent/40 hover:text-foreground';
         return (
-          <li key={parlamentar.id} className="relative">
-            <div className="absolute -left-1 top-3 hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-sm ring-2 ring-background">
-              {idx + 1}
+          <li key={parlamentar.id} className="relative flex gap-3 sm:gap-4 group">
+            {/* Trilha / número */}
+            <div className="hidden sm:flex flex-col items-center pt-1 shrink-0">
+              <div className="relative">
+                {isTop && (
+                  <span className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none select-none drop-shadow-sm" aria-hidden="true">
+                    <CrownIcon className="w-7 h-7" />
+                  </span>
+                )}
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-black tracking-tight transition-all duration-200 ${rankClass} ${
+                    isTop ? 'scale-110' : 'group-hover:scale-[1.03]'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {idx + 1}
+                </div>
+              </div>
+              <div className="mt-2 h-full w-px bg-gradient-to-b from-border to-transparent hidden sm:block" aria-hidden="true" />
             </div>
-            <div className="sm:pl-6">
-              <ParlamentarCard parlamentar={parlamentar} />
-              <div className="mt-2 flex flex-wrap items-center gap-2 pl-1 text-xs">
-                <Badge variant="outline" className="gap-1">
-                  Pontuação {score.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+
+            {/* Card + métrica */}
+            <div className="flex-1 min-w-0">
+              {/* Número mobile */}
+              <div className="sm:hidden mb-2 flex items-center gap-2">
+                <span
+                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold ${rankClass}`}
+                >
+                  {idx + 1}
+                </span>
+                {isTop && <CrownIcon className="w-5 h-5" />}
+                <span className="text-xs font-medium text-muted-foreground">#{idx + 1} mais produtivo</span>
+              </div>
+
+              <div className={`rounded-xl transition-all duration-200 ${isTop ? 'ring-1 ring-amber-300/50 shadow-md' : ''}`}>
+                <ParlamentarCard parlamentar={parlamentar} />
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={`gap-1.5 font-mono text-xs px-2.5 py-1 border ${
+                    isTop
+                      ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200'
+                      : 'bg-card'
+                  }`}
+                >
+                  <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                  {score.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} pts
                 </Badge>
-                <span className="text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {parlamentar.produtividade
                     ? `${parlamentar.produtividade.plApresentados} PL · ${parlamentar.produtividade.plAprovados} aprov. · ${parlamentar.produtividade.votosSimNao} votos SIM/NÃO · ${parlamentar.produtividade.discursos} discursos · ${parlamentar.produtividade.faltas} faltas`
                     : null}

@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const querySchema = z.object({
   cursor: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().min(1).max(100).default(20),
   ano: z.coerce.number().optional(),
   tema: z.string().optional(),
@@ -24,7 +25,7 @@ export async function GET(
     );
   }
 
-  const { cursor, limit, ano, tema } = parsed.data;
+  const { cursor, page, limit, ano, tema } = parsed.data;
 
   // Verificar se parlamentar existe
   const parlamentar = await prisma.parlamentar.findUnique({
@@ -58,6 +59,52 @@ export async function GET(
       ...(where.votacao as Record<string, unknown> || {}),
       tema: { contains: tema, mode: 'insensitive' },
     };
+  }
+
+  if (page) {
+    const total = await prisma.voto.count({ where } as any);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const paginaSegura = Math.min(page, totalPages);
+    const votos = await prisma.voto.findMany({
+      where,
+      skip: (paginaSegura - 1) * limit,
+      take: limit,
+      orderBy: { votacao: { data: 'desc' } },
+      include: {
+        votacao: {
+          select: {
+            id: true,
+            idExterno: true,
+            data: true,
+            descricao: true,
+            ementa: true,
+            tema: true,
+            resultado: true,
+            casa: true,
+          },
+        },
+      },
+    });
+    const data = votos.map((v) => ({
+      id: v.votacao.id,
+      idExterno: v.votacao.idExterno,
+      data: v.votacao.data,
+      descricao: v.votacao.descricao,
+      ementa: v.votacao.ementa,
+      tema: v.votacao.tema,
+      resultado: v.votacao.resultado,
+      casa: v.votacao.casa,
+      voto: v.tipo,
+    }));
+    return NextResponse.json({
+      data,
+      total,
+      page: paginaSegura,
+      totalPages,
+      perPage: limit,
+      nextCursor: undefined,
+      hasMore: paginaSegura < totalPages,
+    });
   }
 
   const votos = await prisma.voto.findMany({
