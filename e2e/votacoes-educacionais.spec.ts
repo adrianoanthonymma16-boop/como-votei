@@ -53,11 +53,17 @@ test.describe('Votações educacionais', () => {
     const botaoFechar = page.locator('button[aria-label="Fechar manifesto"]');
     await expect(botaoFechar).toBeVisible();
 
-    // Fechar manifesto
+    // Fechar manifesto (saída retrátil)
     await botaoFechar.click();
 
-    // Verificar que desapareceu
+    // A tira de releitura aparece no lugar
+    const tira = page.locator('button[aria-label="Reler manifesto pelo voto consciente"]');
+    await expect(tira).toBeVisible({ timeout: 5000 });
     await expect(titulo).not.toBeVisible();
+
+    // Reler reabre o manifesto
+    await tira.click();
+    await expect(page.locator('text=Voto não é torcida.')).toBeVisible();
   });
 
   test('métrica de produtividade expande e mostra pesos', async ({ page }) => {
