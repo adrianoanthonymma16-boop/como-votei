@@ -12,10 +12,10 @@ const ITENS = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
     ),
-    detalhe: 'Cada Projeto de Lei (PL) de autoria do parlamentar. Mostra iniciativa legislativa.',
+    detalhe: 'Cada Projeto de Lei (PL) de autoria própria do parlamentar (autorPrincipal). Mostra iniciativa legislativa.',
   },
   {
-    rotulo: 'PL aprovado',
+    rotulo: 'PL aprovado (autoral)',
     peso: '+1,0',
     cor: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
     icone: (
@@ -23,7 +23,7 @@ const ITENS = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
       </svg>
     ),
-    detalhe: 'PL com situação aprovada/sancionada. Mostra capacidade de levar a ideia até o fim.',
+    detalhe: 'PL de autoria própria com situação aprovada/sancionada. Mostra capacidade de levar a ideia até o fim.',
   },
   {
     rotulo: 'Falta (ausência)',

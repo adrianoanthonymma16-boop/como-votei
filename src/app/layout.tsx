@@ -88,6 +88,9 @@ export default function RootLayout({
                 <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors">
                   Parlamentares
                 </Link>
+                <Link href="/votacoes" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Votações
+                </Link>
                 <Link href="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">
                   Sobre
                 </Link>
@@ -96,6 +99,17 @@ export default function RootLayout({
                 <ThemeToggle />
               </div>
             </div>
+            <nav className="flex sm:hidden items-center gap-4 border-t px-4 py-2 text-sm overflow-x-auto">
+              <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+                Parlamentares
+              </Link>
+              <Link href="/votacoes" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+                Votações
+              </Link>
+              <Link href="/sobre" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+                Sobre
+              </Link>
+            </nav>
           </header>
           <main className="min-h-[calc(100vh-3.5rem)]">
             {children}

@@ -2,8 +2,8 @@
  * Métrica de produtividade — idealização do desenvolvedor.
  *
  * Pontuação por parlamentar (PL aprovado em destaque):
- *  - PL apresentado           +0,05
- *  - PL aprovado              +1     (status SANCIONADA/APROVADA_*)
+ *  - PL apresentado (autoral)           +0,05  — autorPrincipal = true
+ *  - PL aprovado (autoral)              +1     — autorPrincipal = true + status SANCIONADA/APROVADA_*
  *  - falta (AUSENTE)          -0,02
  *  - voto SIM/NAO              +0,03
  *  - discurso                  +0,005

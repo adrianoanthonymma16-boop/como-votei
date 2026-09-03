@@ -70,12 +70,12 @@ export async function GET(request: NextRequest) {
     const [plApresentados, plAprovados, faltas, votosSimNao, discursos] = await Promise.all([
       prisma.proposicao.groupBy({
         by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: 'PL' },
+        where: { parlamentarId: { in: ids }, tipo: 'PL', autorPrincipal: true },
         _count: { _all: true },
       }),
       prisma.proposicao.groupBy({
         by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: 'PL', status: { in: [...STATUS_PL_APROVADO] as any } },
+        where: { parlamentarId: { in: ids }, tipo: 'PL', autorPrincipal: true, status: { in: [...STATUS_PL_APROVADO] as any } },
         _count: { _all: true },
       }),
       prisma.voto.groupBy({
