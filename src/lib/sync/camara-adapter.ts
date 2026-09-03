@@ -5,6 +5,7 @@
 
 import { camaraClient } from './http-client';
 import { createHash } from 'crypto';
+import { extrairTemaPrincipal } from '@/lib/temas';
 import type {
   ParlamentarNormalizado,
   PartidoNormalizado,
@@ -157,19 +158,6 @@ function mapStatusProposicao(camaraStatus?: string): ProposicaoNormalizada['stat
   return mapa[camaraStatus] || 'EM_TRAMITACAO';
 }
 
-function extractTema(texto: string): string | undefined {
-  const temas = [
-    'economia', 'saúde', 'educação', 'direitos civis', 'segurança pública',
-    'meio ambiente', 'trabalho', 'previdência', 'infraestrutura', 'agricultura',
-    'tecnologia', 'cultura', 'desenvolvimento regional', 'direitos sociais'
-  ];
-  const lower = texto.toLowerCase();
-  for (const tema of temas) {
-    if (lower.includes(tema)) return tema;
-  }
-  return undefined;
-}
-
 function toDate(dateStr?: string): Date | undefined {
   if (!dateStr) return undefined;
   const d = new Date(dateStr);
@@ -314,7 +302,7 @@ export class CamaraAdapter {
             data: toDate(v.data)!,
             descricao: v.descricao,
             ementa: v.ementa || prop?.ementa,
-            tema: extractTema(v.descricao || prop?.ementa || ''),
+            tema: extrairTemaPrincipal(v.descricao || prop?.ementa || ''),
             resultado: v.aprovacao === 1 ? 'APROVADA' : v.aprovacao === 0 ? 'REJEITADA' : undefined,
             quorum: undefined,
           });
@@ -363,7 +351,7 @@ export class CamaraAdapter {
           hora: d.dataHoraInicio ? d.dataHoraInicio.substring(11, 16) : undefined,
           resumo: textoCompleto.substring(0, 1000),
           urlOriginal: d.urlTexto || `https://www.camara.leg.br/deputados/${deputadoIdExterno}/discursos/${d.id || ''}`,
-          tema: extractTema(textoCompleto),
+          tema: extrairTemaPrincipal(textoCompleto),
           duracaoSegundos: undefined, // Não disponível na API
         });
       }
@@ -404,7 +392,7 @@ export class CamaraAdapter {
           status: mapStatusProposicao(p.statusProposicao?.descricaoSituacao),
           dataApresentacao: toDate(p.dataApresentacao)!,
           urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
-          tema: extractTema(p.ementa),
+          tema: extrairTemaPrincipal(p.ementa),
         });
 
         // Tramitações

@@ -6,6 +6,7 @@ import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, cn } from '@/lib/utils';
+import { temaCor, classificarTemas, descreverTipoProposicao } from '@/lib/temas';
 
 interface Votacao {
   id: string;
@@ -27,6 +28,38 @@ interface VotacoesTabProps {
 }
 
 const PER_PAGE = 10;
+
+/** Extrai tipo e número do PL a partir da descrição (ex: "PL 1234/2024") */
+function extrairInfoProposicao(descricao: string, ementa?: string): { tipo?: string; numero?: string; texto?: string } {
+  const texto = ementa || descricao;
+  // Padrão: "PL 1234/2024" ou "PL nº 1234/2024"
+  const match = texto.match(/\b(PL|PLP|PEC|PLV|PLVC|PDL|PRC|REQ|RIC|DEC|OFE)\s*(?:nº\s*)?(\d[\d./]*)/i);
+  if (match) {
+    return {
+      tipo: match[1].toUpperCase(),
+      numero: match[2],
+      texto: descreverTipoProposicao(match[1].toUpperCase()),
+    };
+  }
+  return {};
+}
+
+/** Gera um resumo educacional curto a partir da ementa */
+function gerarResumo(ementa?: string, descricao?: string): string {
+  const texto = ementa || descricao || '';
+  if (!texto) return 'Votação sem detalhes disponíveis na fonte oficial.';
+
+  // Se a ementa já é curta (até 200 chars), usar direto
+  if (texto.length <= 200) return texto;
+
+  // Cortar em frase completa até ~180 chars
+  const cortado = texto.substring(0, 180);
+  const ultimoPonto = cortado.lastIndexOf('.');
+  if (ultimoPonto > 100) return cortado.substring(0, ultimoPonto + 1);
+
+  const ultimoEspaco = cortado.lastIndexOf(' ');
+  return cortado.substring(0, ultimoEspaco > 100 ? ultimoEspaco : 180) + '...';
+}
 
 export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
   const [votacoes, setVotacoes] = useState<Votacao[]>([]);
@@ -108,6 +141,15 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
     return 'text-red-700 dark:text-red-400';
   };
 
+  const getResultadoBadge = (resultado?: string) => {
+    if (!resultado) return null;
+    const variants: Record<string, 'success' | 'danger' | 'warning'> = {
+      APROVADA: 'success',
+      REJEITADA: 'danger',
+    };
+    return <Badge variant={variants[resultado] || 'secondary'}>{resultado}</Badge>;
+  };
+
   if (error) {
     return (
       <div className="text-center py-8">
@@ -120,7 +162,7 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Toque em uma votação para ler o resumo e entender o que foi decidido.
+        Toque em uma votação para entender o que foi votado e por que importa.
       </p>
 
       {votacoes.length === 0 && !isLoading ? (
@@ -131,27 +173,65 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
         <ol className="space-y-3" aria-label="Votações do parlamentar">
           {votacoes.map((v) => {
             const aberta = abertas.has(v.id);
+            const info = extrairInfoProposicao(v.descricao, v.ementa);
+            const temas = classificarTemas(v.ementa || v.descricao || '');
+            const temaPrincipal = temas[0]?.tema || v.tema;
+            const resumo = gerarResumo(v.ementa, v.descricao);
+
             return (
               <li key={v.id} className="rounded-xl border border-border bg-card overflow-hidden">
+                {/* Header clicável */}
                 <button
                   type="button"
                   onClick={() => alternar(v.id)}
                   aria-expanded={aberta}
                   aria-controls={`votacao-${v.id}`}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <span className="w-24 shrink-0 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  {/* Data */}
+                  <span className="w-20 sm:w-24 shrink-0 text-xs font-medium text-muted-foreground whitespace-nowrap mt-0.5">
                     {formatDate(v.data)}
                   </span>
+
+                  {/* Conteúdo principal */}
                   <span className="flex-1 min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {v.ementa || v.descricao}
+                    {/* Tipo + número */}
+                    {info.tipo && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-accent mb-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        {info.texto || info.tipo} {info.numero && `nº ${info.numero}`}
+                      </span>
+                    )}
+
+                    {/* Ementa / resumo */}
+                    <span className="block text-sm font-medium text-foreground leading-snug">
+                      {resumo}
                     </span>
-                    <span className="block text-xs text-muted-foreground truncate mt-0.5">
-                      {v.descricao !== (v.ementa || v.descricao) ? v.descricao : v.tema || `Votação ${v.idExterno}`}
-                    </span>
+
+                    {/* Tags de tema */}
+                    {temaPrincipal && (
+                      <span className="inline-flex items-center gap-1.5 mt-1.5">
+                        {temas.slice(0, 2).map((t) => (
+                          <span
+                            key={t.tema}
+                            className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium capitalize ${temaCor(t.tema)}`}
+                          >
+                            {t.tema}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </span>
-                  <span className="shrink-0">{getVotoBadge(v.voto)}</span>
+
+                  {/* Voto + resultado */}
+                  <span className="shrink-0 flex flex-col items-end gap-1">
+                    {getVotoBadge(v.voto)}
+                    {getResultadoBadge(v.resultado)}
+                  </span>
+
+                  {/* Chevron */}
                   <span
                     className={`shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
                       aberta ? 'rotate-180 text-accent border-accent' : ''
@@ -163,40 +243,71 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
                   </span>
                 </button>
 
+                {/* Painel expandido — contexto educacional */}
                 {aberta && (
-                  <div id={`votacao-${v.id}`} className="border-t border-border bg-muted/20 px-4 py-4 animate-fade-in">
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {nome ? <strong>{nome}</strong> : <strong>O parlamentar</strong>} votou{' '}
-                      <strong>{v.voto || '—'}</strong> nesta deliberação.
-                    </p>
-                    <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                      <span className="font-medium text-foreground">Sobre o que foi: </span>
-                      {v.ementa || v.descricao || 'Votação sem ementa disponível.'}
-                    </p>
-                    {v.descricao && v.descricao !== v.ementa && (
-                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{v.descricao}</p>
+                  <div id={`votacao-${v.id}`} className="border-t border-border bg-muted/20 px-4 py-5 animate-fade-in">
+                    {/* Contexto do voto */}
+                    <div className="rounded-lg bg-background border border-border p-4">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-4 h-4 mt-0.5 shrink-0 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {nome ? <strong>{nome}</strong> : <strong>O parlamentar</strong>} votou{' '}
+                            <strong className={v.voto === 'SIM' ? 'text-green-700 dark:text-green-400' : v.voto === 'NAO' ? 'text-red-700 dark:text-red-400' : ''}>
+                              {v.voto || '—'}
+                            </strong>{' '}
+                            nesta votação.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* O que é este projeto */}
+                    <div className="mt-4">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                        O que foi votado
+                      </h4>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {v.ementa || v.descricao || 'Votação sem detalhes disponíveis na fonte oficial.'}
+                      </p>
+                    </div>
+
+                    {/* Descrição da Câmara (se diferente da ementa) */}
+                    {v.descricao && v.descricao !== v.ementa && v.descricao.length > 10 && (
+                      <div className="mt-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                          Identificação oficial
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{v.descricao}</p>
+                      </div>
                     )}
+
+                    {/* Metadados */}
                     <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                      <div className="rounded-lg border border-border bg-background px-3 py-2">
-                        <dt className="text-xs text-muted-foreground">Data</dt>
-                        <dd className="font-medium text-foreground">{formatDate(v.data)}</dd>
+                      <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+                        <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Data</dt>
+                        <dd className="font-medium text-foreground mt-0.5">{formatDate(v.data)}</dd>
                       </div>
-                      <div className="rounded-lg border border-border bg-background px-3 py-2">
-                        <dt className="text-xs text-muted-foreground">Tema</dt>
-                        <dd className="font-medium text-foreground capitalize">{v.tema || 'Sem tema'}</dd>
+                      <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+                        <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tema</dt>
+                        <dd className="font-medium text-foreground mt-0.5 capitalize">{temaPrincipal || 'Sem classificação'}</dd>
                       </div>
-                      <div className="rounded-lg border border-border bg-background px-3 py-2">
-                        <dt className="text-xs text-muted-foreground">Resultado</dt>
-                        <dd className="font-medium text-foreground">{v.resultado || '—'}</dd>
+                      <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+                        <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Resultado</dt>
+                        <dd className="font-medium text-foreground mt-0.5">{v.resultado || '—'}</dd>
                       </div>
-                      <div className="rounded-lg border border-border bg-background px-3 py-2">
-                        <dt className="text-xs text-muted-foreground">Alinhamento</dt>
-                        <dd className={cn('font-medium', getAlinhamentoColor(v.alinhamento))}>
+                      <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+                        <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Alinhamento</dt>
+                        <dd className={cn('font-medium mt-0.5', getAlinhamentoColor(v.alinhamento))}>
                           {v.alinhamento !== undefined ? `${v.alinhamento}%` : '—'}
                         </dd>
                       </div>
                     </dl>
-                    <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+
+                    {/* Fonte oficial */}
+                    <p className="mt-4 flex items-start gap-1.5 text-xs text-muted-foreground">
                       <svg className="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
@@ -213,7 +324,7 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
       {isLoading && votacoes.length === 0 && (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
       )}

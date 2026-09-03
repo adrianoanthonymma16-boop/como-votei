@@ -4,6 +4,7 @@
  */
 
 import { senadoClient } from './http-client';
+import { extrairTemaPrincipal } from '@/lib/temas';
 import type {
   ParlamentarNormalizado,
   VotacaoNormalizada,
@@ -124,19 +125,6 @@ function mapTipoDiscursoSenado(tipo: string): 'ORDEM_DIA' | 'PLENARIO' | 'COMISS
   if (t.includes('COMISSAO') || t.includes('COMISSÃO')) return 'COMISSAO';
   if (t.includes('LIDERANCA') || t.includes('LIDERANÇA')) return 'LIDERANCA';
   return 'OUTRO';
-}
-
-function extractTema(texto: string): string | undefined {
-  const temas = [
-    'economia', 'saúde', 'educação', 'direitos civis', 'segurança pública',
-    'meio ambiente', 'trabalho', 'previdência', 'infraestrutura', 'agricultura',
-    'tecnologia', 'cultura', 'desenvolvimento regional', 'direitos sociais'
-  ];
-  const lower = texto.toLowerCase();
-  for (const tema of temas) {
-    if (lower.includes(tema)) return tema;
-  }
-  return undefined;
 }
 
 function toDate(dateStr?: string): Date | undefined {
@@ -332,7 +320,7 @@ export class SenadoAdapter {
           data: toDate(v.dataSessao)!,
           descricao: v.identificacao || 'Votação',
           ementa: v.descricaoVotacao || v.ementa,
-          tema: extractTema(v.descricaoVotacao || v.ementa || ''),
+          tema: extrairTemaPrincipal(v.descricaoVotacao || v.ementa || ''),
           resultado: undefined,
           quorum: undefined,
         });
@@ -414,7 +402,7 @@ export class SenadoAdapter {
           hora: undefined,
           resumo: textoCompleto.substring(0, 1000),
           urlOriginal: d.UrlTexto || '',
-          tema: extractTema(textoCompleto),
+          tema: extrairTemaPrincipal(textoCompleto),
           duracaoSegundos: undefined,
         });
       }
