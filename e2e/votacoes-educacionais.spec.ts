@@ -36,22 +36,28 @@ test.describe('Votações educacionais', () => {
     await expect(contextoVoto).toBeVisible();
   });
 
-  test('banner anti-polarização está presente', async ({ page }) => {
+  test('manifesto pelo voto consciente está presente', async ({ page }) => {
     await page.goto('/');
 
-    // Verificar que o banner existe
-    const banner = page.locator('text=Diga não à polarização');
-    await expect(banner).toBeVisible();
+    // Verificar que o manifesto existe
+    const titulo = page.locator('text=Voto não é torcida.');
+    await expect(titulo).toBeVisible();
+    await expect(page.locator('text=Todo o poder emana do povo')).toBeVisible();
+
+    // CTA leva aos parlamentares
+    const cta = page.locator('a:has-text("Começar a estudar")');
+    await expect(cta).toBeVisible();
+    expect(await cta.getAttribute('href')).toBe('/parlamentares');
 
     // Verificar botão de fechar
-    const botaoFechar = page.locator('button[aria-label="Fechar aviso"]');
+    const botaoFechar = page.locator('button[aria-label="Fechar manifesto"]');
     await expect(botaoFechar).toBeVisible();
 
-    // Fechar banner
+    // Fechar manifesto
     await botaoFechar.click();
 
     // Verificar que desapareceu
-    await expect(banner).not.toBeVisible();
+    await expect(titulo).not.toBeVisible();
   });
 
   test('métrica de produtividade expande e mostra pesos', async ({ page }) => {
