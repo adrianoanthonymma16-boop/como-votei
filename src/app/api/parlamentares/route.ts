@@ -19,7 +19,8 @@ const querySchema = z.object({
   situacao: z.string().optional(),
   search: z.string().optional(),
   // "recent" ordena pelos mais recentemente atualizados na base
-  sort: z.enum(['nome', 'recent']).optional().default('nome'),
+  // "ativos" ordena por número de votações (mais ativos primeiro)
+  sort: z.enum(['nome', 'recent', 'ativos']).optional().default('nome'),
 });
 
 export async function GET(request: NextRequest) {
@@ -51,7 +52,11 @@ export async function GET(request: NextRequest) {
       where,
       skip: (page - 1) * perPage,
       take: perPage,
-      orderBy: sort === 'recent' ? { updatedAt: 'desc' } : { nome: 'asc' },
+      orderBy: sort === 'recent'
+        ? { updatedAt: 'desc' }
+        : sort === 'ativos'
+          ? { votos: { _count: 'desc' } }
+          : { nome: 'asc' },
       include: {
         partido: { select: { id: true, sigla: true, nome: true, cor: true } },
         uf: { select: { id: true, sigla: true, nome: true, regiao: true } },

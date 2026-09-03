@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ParlamentaresRecent } from '@/components/ParlamentaresRecent';
+import { ParlamentaresAtivos } from '@/components/ParlamentaresAtivos';
 import { LogoMark } from '@/components/Logo';
 
 const StatsCards = dynamic(() => import('@/components/StatsCards').then((mod) => mod.StatsCards), {
@@ -83,27 +83,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recém-atualizados */}
+      {/* Parlamentares Mais Ativos */}
       <section className="py-10 sm:py-14 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Recém-atualizados</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Parlamentares Mais Ativos</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Parlamentares com os dados mais recentes na base.
+                Top 5 parlamentares com mais votações registradas na base.
               </p>
             </div>
             <Link
-              href="/parlamentares"
+              href="/parlamentares?sort=ativos"
               className="text-accent hover:text-accent/80 font-medium text-sm flex items-center gap-1 transition-colors"
             >
-              Ver todos
+              Ver ranking completo
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
-          <ParlamentaresRecent limit={10} />
+          <ParlamentaresAtivos limit={5} />
         </div>
       </section>
     </main>

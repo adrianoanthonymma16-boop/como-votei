@@ -101,7 +101,7 @@ export default function SobrePage() {
               </svg>
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/adrianoanthonymma16-boop/como-votei"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-lg border border-white/20 bg-white/10 px-6 py-3 font-medium text-white transition-colors hover:bg-white/20"
