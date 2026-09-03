@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
@@ -36,7 +36,7 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
   const [error, setError] = useState<string | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
 
-  const loadData = async (targetPage: number) => {
+  const loadData = useCallback(async (targetPage: number) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -56,11 +56,11 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [parlamentarId]);
 
   useEffect(() => {
     loadData(1);
-  }, [parlamentarId]);
+  }, [loadData]);
 
   const handlePageChange = (p: number) => {
     loadData(p);

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { getInitials } from '@/lib/utils';
 import type { Parlamentar } from '@prisma/client';
@@ -26,11 +27,13 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
         {/* Foto / Avatar */}
         <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
           {parlamentar.fotoUrl ? (
-            <img
+            <Image
               src={parlamentar.fotoUrl}
               alt={parlamentar.nome}
+              width={80}
+              height={80}
+              sizes="80px"
               className="w-full h-full rounded-full object-cover ring-2 ring-border"
-              loading="lazy"
             />
           ) : (
             <div className="w-full h-full rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium text-lg ring-2 ring-border">

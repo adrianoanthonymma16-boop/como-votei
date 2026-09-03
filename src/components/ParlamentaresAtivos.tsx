@@ -3,6 +3,25 @@
 import { useState, useEffect } from 'react';
 import { ParlamentarCard } from '@/components/ParlamentarCard';
 import { Badge } from '@/components/ui/Badge';
+import type { Parlamentar } from '@prisma/client';
+
+interface ParlamentarComProdutividade extends Parlamentar {
+  _count?: {
+    votos: number;
+    discursos: number;
+    proposicoes: number;
+  };
+  partido?: { sigla: string; nome: string; cor: string | null } | null;
+  uf?: { sigla: string; nome: string; regiao: string } | null;
+  produtividade?: {
+    pontuacao: number;
+    plApresentados: number;
+    plAprovados: number;
+    faltas: number;
+    votosSimNao: number;
+    discursos: number;
+  };
+}
 
 function CrownIcon({ className }: { className?: string }) {
   return (
@@ -29,7 +48,7 @@ const RANK_STYLE: Record<number, string> = {
 };
 
 export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
-  const [parlamentares, setParlamentares] = useState<any[]>([]);
+  const [parlamentares, setParlamentares] = useState<ParlamentarComProdutividade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
@@ -50,7 +50,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   const [anos, setAnos] = useState<number[]>([]);
   const anoCarregadoRef = useRef<number | null>(null);
 
-  const loadData = async (alvo: number | null, mostrarLoading = true) => {
+  const loadData = useCallback(async (alvo: number | null, mostrarLoading = true, signal?: AbortSignal) => {
     try {
       if (mostrarLoading) setIsLoading(true);
       setError(null);
@@ -58,7 +58,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
       const url = alvo
         ? `/api/parlamentares/${parlamentarId}/dashboard?ano=${alvo}`
         : `/api/parlamentares/${parlamentarId}/dashboard`;
-      const response = await fetch(url, { cache: 'no-store' });
+      const response = await fetch(url, { cache: 'no-store', signal });
 
       if (!response.ok) {
         throw new Error('Erro ao carregar dashboard');
@@ -74,18 +74,20 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
         setAno(result.ano);
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [parlamentarId]);
 
   useEffect(() => {
-    // Evita recarregar quando apenas refletimos o ano vindo da primeira resposta.
+    // Guard: skip re-fetch when ano matches the last server-chosen value and data is already loaded
     if (ano !== null && ano === anoCarregadoRef.current && data) return;
-    loadData(ano);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parlamentarId, ano]);
+    const controller = new AbortController();
+    loadData(ano, true, controller.signal);
+    return () => controller.abort();
+  }, [ano, loadData, data]);
 
   if (error) {
     return (
@@ -376,7 +378,7 @@ function FrequencyBar({ label, value, total, color }: { label: string; value: nu
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <div 
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%`, backgroundColor: color.replace('bg-', '').replace('-500', '-500') }}
+          style={{ width: `${percentage}%`, backgroundColor: color.replace('bg-', '') }}
         />
       </div>
     </div>
