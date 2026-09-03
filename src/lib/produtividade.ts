@@ -1,17 +1,17 @@
 /**
  * Métrica de produtividade — idealização do desenvolvedor.
  *
- * Pontuação por parlamentar (PL em destaque):
- *  - PL apresentado           +1
- *  - PL aprovado              +0,1  (status SANCIONADA/APROVADA_*)
+ * Pontuação por parlamentar (PL aprovado em destaque):
+ *  - PL apresentado           +0,05
+ *  - PL aprovado              +1     (status SANCIONADA/APROVADA_*)
  *  - falta (AUSENTE)          -0,02
  *  - voto SIM/NAO              +0,03
  *  - discurso                  +0,005
  */
 
 export const PESOS = {
-  PL_APRESENTADO: 1,
-  PL_APROVADO: 0.1,
+  PL_APRESENTADO: 0.05,
+  PL_APROVADO: 1,
   FALTA: -0.02,
   VOTO_SIM_NAO: 0.03,
   DISCURSO: 0.005,
