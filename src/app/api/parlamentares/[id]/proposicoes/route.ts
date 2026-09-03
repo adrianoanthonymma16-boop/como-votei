@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { filtroStatusAprovada } from '@/lib/produtividade';
 
 const querySchema = z.object({
   cursor: z.string().optional(),
@@ -8,6 +9,9 @@ const querySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   ano: z.coerce.number().optional(),
   status: z.string().optional(),
+  // aprovada=true -> status IN (SANCIONADA, APROVADA_CAMARA, APROVADA_SENADO)
+  // aprovada=false -> status NOT IN (...) — mesmo conjunto da métrica, sem inventar
+  aprovada: z.enum(['true', 'false']).optional(),
   tema: z.string().optional(),
 });
 
@@ -26,7 +30,7 @@ export async function GET(
     );
   }
 
-  const { cursor, page, limit, ano, status, tema } = parsed.data;
+  const { cursor, page, limit, ano, status, aprovada, tema } = parsed.data;
 
   const parlamentar = await prisma.parlamentar.findUnique({
     where: { id },
@@ -50,6 +54,11 @@ export async function GET(
 
   if (status) {
     where.status = status;
+  }
+
+  const filtroAprovada = filtroStatusAprovada(aprovada);
+  if (filtroAprovada) {
+    where.status = filtroAprovada;
   }
 
   if (tema) {
@@ -93,6 +102,18 @@ export async function GET(
       casa: p.casa,
       tramitacoes: p.tramitacoes,
     }));
+    // Temas existentes do parlamentar (dados oficiais da base, com contagem)
+    // para popular o filtro — ignora os filtros ativos, exceto o parlamentar.
+    const temasAgg = await prisma.proposicao.groupBy({
+      by: ['tema'],
+      where: { parlamentarId: id, tema: { not: null } },
+      _count: { tema: true },
+      orderBy: { _count: { tema: 'desc' } },
+    });
+    const temas = temasAgg
+      .filter((t) => t.tema && t.tema.trim())
+      .map((t) => ({ tema: t.tema as string, total: t._count.tema }));
+
     return NextResponse.json({
       data,
       total,
@@ -101,6 +122,7 @@ export async function GET(
       perPage: limit,
       nextCursor: undefined,
       hasMore: paginaSegura < totalPages,
+      temas,
     });
   }
 

@@ -1,4 +1,22 @@
-import { calcularPontuacao } from '@/lib/produtividade';
+import { calcularPontuacao, filtroStatusAprovada } from '@/lib/produtividade';
+
+describe('filtroStatusAprovada', () => {
+  it("aprovada=true filtra IN no conjunto oficial", () => {
+    expect(filtroStatusAprovada('true')).toEqual({
+      in: ['APROVADA_CAMARA', 'APROVADA_SENADO', 'SANCIONADA'],
+    });
+  });
+
+  it("aprovada=false filtra NOT IN no mesmo conjunto", () => {
+    expect(filtroStatusAprovada('false')).toEqual({
+      notIn: ['APROVADA_CAMARA', 'APROVADA_SENADO', 'SANCIONADA'],
+    });
+  });
+
+  it('sem filtro retorna undefined', () => {
+    expect(filtroStatusAprovada(undefined)).toBeUndefined();
+  });
+});
 
 describe('produtividade', () => {
   it('soma pesos corretamente', () => {

@@ -6,6 +6,7 @@ import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { descreverTipoProposicao } from '@/lib/temas';
 
 interface Proposicao {
   id: string;
@@ -29,23 +30,12 @@ interface ProposicoesTabProps {
 
 const CORES_TIPO: Record<string, string> = {
   PL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200',
+  PLP: 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200',
   PEC: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200',
-  MPL: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200',
+  MPV: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200',
   REQ: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
   PDC: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200',
-};
-
-const SIGLAS_TIPO: Record<string, string> = {
-  PL: 'Projeto de Lei',
-  PEC: 'Proposta de Emenda à Constituição',
-  PDC: 'Projeto de Decreto Legislativo',
-  PLP: 'Projeto de Lei Complementar',
-  MPL: 'Medida Provisória',
-  REQ: 'Requerimento',
-  IND: 'Indicação',
-  RIC: 'Requerimento de Informação',
-  RCP: 'Requerimento de Comissão Parlamentar',
-  SUG: 'Sugestão',
+  INC: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200',
 };
 
 const PER_PAGE = 10;
@@ -58,28 +48,39 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
+  // '' = todas | 'true' = aprovadas (SANCIONADA/APROVADA_*) | 'false' = não aprovadas
+  const [aprovada, setAprovada] = useState('');
+  const [tema, setTema] = useState('');
+  const [temas, setTemas] = useState<Array<{ tema: string; total: number }>>([]);
 
-  const loadData = useCallback(async (targetPage: number) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const params = new URLSearchParams({
-        page: String(targetPage),
-        limit: String(PER_PAGE),
-      });
-      const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`);
-      if (!response.ok) throw new Error('Erro ao carregar proposições');
-      const data = await response.json();
-      setProposicoes(data.data);
-      setTotal(data.total ?? data.data.length);
-      setTotalPages(data.totalPages ?? 1);
-      setPage(data.page ?? targetPage);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [parlamentarId]);
+  const loadData = useCallback(
+    async (targetPage: number, filtros?: { aprovada: string; tema: string }) => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const f = filtros ?? { aprovada, tema };
+        const params = new URLSearchParams({
+          page: String(targetPage),
+          limit: String(PER_PAGE),
+        });
+        if (f.aprovada) params.set('aprovada', f.aprovada);
+        if (f.tema) params.set('tema', f.tema);
+        const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`);
+        if (!response.ok) throw new Error('Erro ao carregar proposições');
+        const data = await response.json();
+        setProposicoes(data.data);
+        setTotal(data.total ?? data.data.length);
+        setTotalPages(data.totalPages ?? 1);
+        setPage(data.page ?? targetPage);
+        if (Array.isArray(data.temas)) setTemas(data.temas);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [parlamentarId, aprovada, tema]
+  );
 
   useEffect(() => {
     loadData(1);
@@ -89,6 +90,15 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     loadData(p);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleFiltro = (novaAprovada: string, novoTema: string) => {
+    setAprovada(novaAprovada);
+    setTema(novoTema);
+    setAbertas(new Set());
+    loadData(1, { aprovada: novaAprovada, tema: novoTema });
+  };
+
+  const filtrosAtivos = aprovada !== '' || tema !== '';
 
   const alternar = (id: string) =>
     setAbertas((prev) => {
@@ -141,6 +151,57 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         Toque em uma proposição para ler o que ela propõe e ver a tramitação oficial.
       </p>
 
+      {/* Filtros — situação oficial e tema oficial, sem inventar categorias */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <label className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
+          <span className="shrink-0 font-medium">Situação</span>
+          <select
+            value={aprovada}
+            onChange={(e) => handleFiltro(e.target.value, tema)}
+            aria-label="Filtrar por situação"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <option value="">Todas</option>
+            <option value="true">Aprovadas</option>
+            <option value="false">Não aprovadas</option>
+          </select>
+        </label>
+        <label className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
+          <span className="shrink-0 font-medium">Tema</span>
+          <select
+            value={tema}
+            onChange={(e) => handleFiltro(aprovada, e.target.value)}
+            aria-label="Filtrar por tema"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <option value="">Todos</option>
+            {temas.map((t) => (
+              <option key={t.tema} value={t.tema} className="capitalize">
+                {t.tema} ({t.total})
+              </option>
+            ))}
+          </select>
+        </label>
+        {filtrosAtivos && (
+          <button
+            type="button"
+            onClick={() => handleFiltro('', '')}
+            className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Limpar
+          </button>
+        )}
+      </div>
+
+      {filtrosAtivos && !isLoading && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {total} proposição(ões) encontrada(s)
+          {aprovada === 'true' && ' · aprovadas (sancionadas ou aprovadas em plenário)'}
+          {aprovada === 'false' && ' · não aprovadas'}
+          {tema && ` · tema ${tema}`}
+        </p>
+      )}
+
       {proposicoes.length === 0 && !isLoading ? (
         <div className="rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
           Nenhuma proposição encontrada para este parlamentar.
@@ -191,7 +252,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
                 {aberta && (
                   <div id={`proposicao-${p.id}`} className="border-t border-border bg-muted/20 px-4 py-4 animate-fade-in">
                     <p className="text-sm leading-relaxed text-foreground">
-                      <span className="font-medium">{SIGLAS_TIPO[p.tipo] || `Proposição de tipo ${p.tipo}`} </span>
+                      <span className="font-medium">{descreverTipoProposicao(p.tipo)} </span>
                       {p.numero}/{p.ano} — {p.autorPrincipal ? 'de autoria do parlamentar' : 'em coautoria'}.
                     </p>
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">

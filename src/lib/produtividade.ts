@@ -19,6 +19,18 @@ export const PESOS = {
 
 export const STATUS_PL_APROVADO = ['APROVADA_CAMARA', 'APROVADA_SENADO', 'SANCIONADA'] as const;
 
+/**
+ * Filtro "aprovadas / não aprovadas" — o MESMO conjunto da métrica,
+ * reutilizado pela API de proposições. Nada inventado: só o enum oficial.
+ */
+export function filtroStatusAprovada(
+  aprovada?: 'true' | 'false'
+): { in: string[] } | { notIn: string[] } | undefined {
+  if (aprovada === 'true') return { in: [...STATUS_PL_APROVADO] };
+  if (aprovada === 'false') return { notIn: [...STATUS_PL_APROVADO] };
+  return undefined;
+}
+
 export interface ContadoresProdutividade {
   plApresentados: number;
   plAprovados: number;
