@@ -68,13 +68,18 @@ describe('temas', () => {
   });
 
   describe('descreverTipoProposicao', () => {
-    it('traduz siglas conhecidas', () => {
+    it('traduz siglas oficiais (CAMARA_API_REFERENCE.md /siglaTipo)', () => {
       expect(descreverTipoProposicao('PL')).toBe('Projeto de Lei');
-      expect(descreverTipoProposicao('PEC')).toBe('Proposta de Emenda Constitucional');
+      expect(descreverTipoProposicao('PEC')).toBe('Proposta de Emenda à Constituição');
       expect(descreverTipoProposicao('PLP')).toBe('Projeto de Lei Complementar');
+      expect(descreverTipoProposicao('MPV')).toBe('Medida Provisória');
+      expect(descreverTipoProposicao('PLV')).toBe('Projeto de Lei de Conversão');
+      expect(descreverTipoProposicao('MSC')).toBe('Mensagem');
+      expect(descreverTipoProposicao('INC')).toBe('Indicação');
+      expect(descreverTipoProposicao('PDC')).toBe('Projeto de Decreto Legislativo');
     });
 
-    it('retorna sigla original para desconhecida', () => {
+    it('retorna sigla original para desconhecida (sem inventar)', () => {
       expect(descreverTipoProposicao('XYZ')).toBe('XYZ');
     });
   });

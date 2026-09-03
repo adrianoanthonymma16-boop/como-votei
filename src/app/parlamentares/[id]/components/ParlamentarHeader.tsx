@@ -27,6 +27,22 @@ const secoes: { id: SecaoId; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
 ];
 
+/** Humaniza códigos normalizados de situação (EXERCICIO -> Exercício). */
+function rotuloSituacao(situacao?: string | null): string {
+  if (!situacao) return 'Exercício';
+  const mapa: Record<string, string> = {
+    EXERCICIO: 'Exercício',
+    LICENCA: 'Licença',
+    AFASTADO: 'Afastado',
+    CONVOCADO: 'Convocado',
+    SUPLENCIA: 'Suplência',
+    SUSPENSO: 'Suspenso',
+    VACANCIA: 'Vacância',
+    FIMDEMANDATO: 'Fim de Mandato',
+  };
+  return mapa[situacao.toUpperCase()] ?? situacao;
+}
+
 const coresSecao: Record<SecaoId, string> = {
   votacoes: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
   proposicoes: 'group-hover:text-green-600 dark:group-hover:text-green-400',
@@ -122,7 +138,7 @@ export function ParlamentarHeader({
             )}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
               <span>Legislatura {parlamentar.legislatura}</span>
-              <span>Situação: {parlamentar.situacao || 'Exercício'}</span>
+              <span>Situação: {rotuloSituacao(parlamentar.situacao)}</span>
             </div>
           </div>
         </div>

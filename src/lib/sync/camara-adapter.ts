@@ -143,19 +143,55 @@ function makeDiscursoIdExterno(deputadoIdExterno: string, d: CamaraDiscurso): st
   return `CAMARA-${deputadoIdExterno}-${hashString(base)}`;
 }
 
-function mapStatusProposicao(camaraStatus?: string): ProposicaoNormalizada['status'] {
+/**
+ * Mapeia `statusProposicao.descricaoSituacao` da API da Câmara para o enum local.
+ * Fundamentado em CAMARA_API_REFERENCE.md (/referencias/situacoesProposicao,
+ * 99 estados oficiais) + amostragem de 100 proposições reais.
+ *
+ * Ordem importa: estados terminais e específicos primeiro, genéricos por último.
+ * "Aguardando Sanção/Remessa à Sanção" conta como SANCIONADA: a proposição já
+ * foi aprovada nas duas Casas (é o que alimenta o peso de PL aprovado).
+ */
+export function mapStatusProposicao(camaraStatus?: string): ProposicaoNormalizada['status'] {
   if (!camaraStatus) return 'APRESENTADA';
-  const mapa: Record<string, ProposicaoNormalizada['status']> = {
-    'Apresentada': 'APRESENTADA',
-    'Em Tramitação': 'EM_TRAMITACAO',
-    'Aprovada na Câmara': 'APROVADA_CAMARA',
-    'Aprovada no Senado': 'APROVADA_SENADO',
-    'Sancionada': 'SANCIONADA',
-    'Vetada': 'VETADA',
-    'Arquivada': 'ARQUIVADA',
-    'Retirada': 'RETIRADA',
-  };
-  return mapa[camaraStatus] || 'EM_TRAMITACAO';
+  const t = camaraStatus
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  // Convertida em norma / aguardando sanção ou promulgação
+  if (t.includes('norma juridica')) return 'SANCIONADA';
+  if (t.includes('sancao') || t.includes('sancionada')) return 'SANCIONADA';
+  if (t.includes('promulgacao') || t.includes('promulgada')) return 'SANCIONADA';
+  // Vetadas
+  if (t.includes('veto') || t.includes('vetad')) return 'VETADA';
+  // Aprovada na Câmara, aguardando o Senado
+  if (
+    t.includes('aprovada na camara') ||
+    t.includes('apreciacao pelo senado') ||
+    t.includes('enviada ao senado') ||
+    t.includes('envio ao senado') ||
+    t.includes('remessa ao senado')
+  ) {
+    return 'APROVADA_CAMARA';
+  }
+  if (t.includes('aprovada no senado')) return 'APROVADA_SENADO';
+  // Arquivadas
+  if (t.includes('arquiv') || t.includes('inativa sinopse')) return 'ARQUIVADA';
+  // Retiradas pelo autor
+  if (t.includes('retirad')) return 'RETIRADA';
+  // Encerradas sem aprovação
+  if (
+    t.includes('recusad') ||
+    t.includes('rejeitad') ||
+    t.includes('prejudicialidade') ||
+    t.includes('perdeu a eficacia') ||
+    t.includes('devolvida')
+  ) {
+    return 'ARQUIVADA';
+  }
+  if (t.includes('apresentada')) return 'APRESENTADA';
+  return 'EM_TRAMITACAO';
 }
 
 function toDate(dateStr?: string): Date | undefined {
@@ -232,10 +268,23 @@ export class CamaraAdapter {
 
   // ============ PARLAMENTARES ============
   
+  /**
+   * Normaliza `ultimoStatus.situacao` do detalhe do deputado para o mesmo
+   * vocabulário usado no Senado (ex.: "Exercício" -> "EXERCICIO").
+   * Referência: GET /referencias/situacoesDeputado (E=Exercício, L=Licença…).
+   */
+  private normalizarSituacao(situacao?: string): string | undefined {
+    if (!situacao) return undefined;
+    return situacao
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
+  }
+
   async fetchDeputados(legislatura = 57): Promise<ParlamentarNormalizado[]> {
     const deputados: ParlamentarNormalizado[] = [];
-    
-    for await (const page of this.paginate('deputados', { 
+
+    for await (const page of this.paginate('deputados', {
       idLegislatura: legislatura,
       ordenarPor: 'nome',
     })) {
@@ -259,7 +308,28 @@ export class CamaraAdapter {
         });
       }
     }
-    
+
+    // A listagem /deputados NÃO retorna `situacao` — ela só existe no detalhe
+    // /deputados/{id} (campo ultimoStatus.situacao). Enriquece em lotes para
+    // não estourar rate limit; falha individual não derruba o sync.
+    const lote = 5;
+    for (let i = 0; i < deputados.length; i += lote) {
+      await Promise.all(
+        deputados.slice(i, i + lote).map(async (dep) => {
+          try {
+            const response = await camaraClient.get(`${CAMARA_API_BASE}/deputados/${dep.idExterno}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const situacao = data?.dados?.ultimoStatus?.situacao;
+            const normalizada = this.normalizarSituacao(situacao);
+            if (normalizada) dep.situacao = normalizada;
+          } catch {
+            // mantém dados da listagem
+          }
+        })
+      );
+    }
+
     this.stats.parlamentares += deputados.length;
     return deputados;
   }

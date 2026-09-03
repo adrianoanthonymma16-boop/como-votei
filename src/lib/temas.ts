@@ -343,25 +343,43 @@ export function temaCor(tema: string): string {
 
 /**
  * Gera uma descrição amigável do tipo de proposição a partir da sigla.
+ * Fundamentado em CAMARA_API_REFERENCE.md (/referencias/proposicoes/siglaTipo).
+ * Siglas fora do mapa retornam a própria sigla (sem inventar significado).
  */
 export function descreverTipoProposicao(siglaTipo: string): string {
   const mapa: Record<string, string> = {
     'PL': 'Projeto de Lei',
     'PLP': 'Projeto de Lei Complementar',
-    'PEC': 'Proposta de Emenda Constitucional',
-    'PLV': 'Projeto de Lei (via Senado)',
-    'PLVC': 'Projeto de Lei de Conversão',
+    'PEC': 'Proposta de Emenda à Constituição',
+    'MPV': 'Medida Provisória',
+    'PLV': 'Projeto de Lei de Conversão',
     'PDL': 'Projeto de Decreto Legislativo',
-    'PRC': 'Projeto de Resolução da Câmara',
-    'PSF': 'Projeto de Sentença Normativa',
-    'MSC': 'Moção de Suspensão de Cargos',
+    'PDC': 'Projeto de Decreto Legislativo',
+    'PRC': 'Projeto de Resolução',
+    'MSC': 'Mensagem',
     'REQ': 'Requerimento',
     'RIC': 'Requerimento de Informação',
-    'RIS': 'Requerimento de Instauração de Inquérito',
-    'COD': 'Indicação',
-    'OFE': 'Ofício',
+    'RCP': 'Requerimento de Instituição de CPI',
+    'RQC': 'Requerimento de Convocação',
+    'INC': 'Indicação',
     'REC': 'Recurso',
-    'DEC': 'Decreto',
+    'PFC': 'Proposta de Fiscalização e Controle',
+    'SUG': 'Sugestão',
+    'EMC': 'Emenda na Comissão',
+    'EMP': 'Emenda de Plenário',
+    'EMS': 'Emenda/Substitutivo do Senado',
+    'EMD': 'Emenda',
+    'SBT': 'Substitutivo',
+    'TVR': 'Ato de Concessão de Rádio/TV',
+    'PRL': 'Parecer do Relator',
+    'PAR': 'Parecer de Comissão',
+    'OF': 'Ofício',
+    'OFE': 'Ofício',
+    'PET': 'Petição',
+    'REM': 'Reclamação',
+    'REP': 'Representação',
+    'DEN': 'Denúncia',
+    'DEC': 'Decisão',
   };
   return mapa[siglaTipo] || siglaTipo;
 }
