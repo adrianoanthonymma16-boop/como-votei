@@ -1,27 +1,50 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
-import { useDebounce } from '@/lib/utils';
+
+interface PartidoItem {
+  id: string;
+  sigla: string;
+  nome: string;
+}
+
+interface UfItem {
+  id: string;
+  sigla: string;
+  nome: string;
+}
 
 export function SearchForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  const [query, setQuery] = useState(searchParams.get('search') || '');
-  const [casa, setCasa] = useState(searchParams.get('casa') || '');
-  const [partidoId, setPartidoId] = useState(searchParams.get('partidoId') || '');
-  const [ufId, setUfId] = useState(searchParams.get('ufId') || '');
-  
-  const debouncedQuery = useDebounce(query, 300);
+
+  const [query, setQuery] = useState('');
+  const [casa, setCasa] = useState('');
+  const [partidoId, setPartidoId] = useState('');
+  const [ufId, setUfId] = useState('');
+  const [partidos, setPartidos] = useState<PartidoItem[]>([]);
+  const [ufs, setUfs] = useState<UfItem[]>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    async function carregar() {
+      const [resP, resU] = await Promise.all([fetch('/api/partidos'), fetch('/api/ufs')]);
+      if (ativo && resP.ok) setPartidos((await resP.json()).data ?? []);
+      if (ativo && resU.ok) setUfs((await resU.json()).data ?? []);
+    }
+    carregar().catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (debouncedQuery) params.set('search', debouncedQuery);
+    if (query.trim()) params.set('search', query.trim());
     if (casa) params.set('casa', casa);
     if (partidoId) params.set('partidoId', partidoId);
     if (ufId) params.set('ufId', ufId);
@@ -30,49 +53,45 @@ export function SearchForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
-          <label htmlFor="search" className="sr-only">Buscar parlamentar</label>
+          <label htmlFor="busca-inicial" className="sr-only">Buscar parlamentar</label>
           <Input
-            id="search"
+            id="busca-inicial"
             type="search"
-            placeholder="Nome, CPF ou ID..."
+            placeholder="Nome do parlamentar (ex.: Maria, AJ Albuquerque)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="max-w-md"
+            className="h-11"
           />
         </div>
-        <Select
-          id="casa"
-          value={casa}
-          onChange={(e) => setCasa(e.target.value)}
-          className="w-full sm:w-48"
-        >
-          <SelectOption value="">Todas as Casas</SelectOption>
+        <Button type="submit" className="h-11 px-6 shrink-0">
+          Buscar
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Select id="casa-busca" value={casa} onChange={(e) => setCasa(e.target.value)} className="h-11">
+          <SelectOption value="">Todas as casas</SelectOption>
           <SelectOption value="CAMARA">Câmara dos Deputados</SelectOption>
           <SelectOption value="SENADO">Senado Federal</SelectOption>
         </Select>
-        <Select
-          id="partido"
-          value={partidoId}
-          onChange={(e) => setPartidoId(e.target.value)}
-          className="w-full sm:w-56"
-        >
-          <SelectOption value="">Todos os Partidos</SelectOption>
-          {/* Options loaded dynamically */}
+        <Select id="partido-busca" value={partidoId} onChange={(e) => setPartidoId(e.target.value)} className="h-11">
+          <SelectOption value="">Todos os partidos</SelectOption>
+          {partidos.map((p) => (
+            <SelectOption key={p.id} value={p.id}>
+              {p.sigla} - {p.nome}
+            </SelectOption>
+          ))}
         </Select>
-        <Select
-          id="uf"
-          value={ufId}
-          onChange={(e) => setUfId(e.target.value)}
-          className="w-full sm:w-40"
-        >
-          <SelectOption value="">Todos os Estados</SelectOption>
-          {/* Options loaded dynamically */}
+        <Select id="uf-busca" value={ufId} onChange={(e) => setUfId(e.target.value)} className="h-11">
+          <SelectOption value="">Todos os estados</SelectOption>
+          {ufs.map((u) => (
+            <SelectOption key={u.id} value={u.id}>
+              {u.sigla} - {u.nome}
+            </SelectOption>
+          ))}
         </Select>
-        <Button type="submit" className="whitespace-nowrap">
-          Buscar
-        </Button>
       </div>
     </form>
   );

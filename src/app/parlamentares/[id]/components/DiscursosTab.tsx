@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination, InfiniteScroll } from '@/components/ui/Pagination';
+import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, truncate } from '@/lib/utils';
 
@@ -22,9 +23,10 @@ interface Discurso {
 
 interface DiscursosTabProps {
   parlamentarId: string;
+  casa: 'CAMARA' | 'SENADO';
 }
 
-export function DiscursosTab({ parlamentarId }: DiscursosTabProps) {
+export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
   const [discursos, setDiscursos] = useState<Discurso[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
@@ -197,6 +199,8 @@ export function DiscursosTab({ parlamentarId }: DiscursosTabProps) {
           />
         )}
       </InfiniteScroll>
+
+      <FonteOficial casa={casa} />
     </div>
   );
 }

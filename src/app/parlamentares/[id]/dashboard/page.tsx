@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { obterPresenca } from '@/lib/presenca';
 import { DashboardTab } from '../components/DashboardTab';
 import { ParlamentarHeader } from '../components/ParlamentarHeader';
 
@@ -42,10 +43,11 @@ export default async function DashboardPage({ params }: PageProps) {
   if (!parlamentar) {
     notFound();
   }
+  const presenca = await obterPresenca(parlamentar.id);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <ParlamentarHeader parlamentar={parlamentar} activeTab="dashboard" />
+      <ParlamentarHeader parlamentar={parlamentar} activeTab="dashboard" presenca={presenca} />
       <DashboardTab parlamentarId={parlamentar.id} />
     </div>
   );

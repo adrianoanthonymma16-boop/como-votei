@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ParlamentarCard } from '@/components/ParlamentarCard';
-import { Skeleton } from '@/components/ui/Skeleton';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentaresRecentProps {
@@ -16,26 +14,30 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let ativo = true;
     async function fetchData() {
       try {
-        const response = await fetch(`/api/parlamentares?limit=${limit}`);
+        // Sempre busca a versão mais recente na base (sem cache).
+        const response = await fetch(`/api/parlamentares?sort=recent&limit=${limit}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('Erro ao carregar');
         const data = await response.json();
-        setParlamentares(data.data);
+        if (ativo) setParlamentares(data.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
       } finally {
-        setIsLoading(false);
+        if (ativo) setIsLoading(false);
       }
     }
-
     fetchData();
+    return () => {
+      ativo = false;
+    };
   }, [limit]);
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-destructive mb-4">{error}</p>
+      <div className="rounded-xl border border-dashed border-border py-10 text-center">
+        <p className="text-destructive">{error}</p>
       </div>
     );
   }
@@ -43,7 +45,7 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: limit }).map((_, i) => (
+        {Array.from({ length: Math.min(limit, 5) }).map((_, i) => (
           <ParlamentarCardSkeleton key={i} />
         ))}
       </div>
@@ -52,8 +54,8 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
 
   if (parlamentares.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Nenhum parlamentar encontrado</p>
+      <div className="rounded-xl border border-dashed border-border py-10 text-center">
+        <p className="text-muted-foreground">Nenhum parlamentar encontrado.</p>
       </div>
     );
   }
@@ -70,21 +72,16 @@ export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
 function ParlamentarCardSkeleton() {
   return (
     <div className="parlamentar-card animate-pulse pointer-events-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 sm:p-6">
-        <div className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
-          <div className="w-full h-full rounded-full bg-muted" />
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-            <div className="h-6 w-3/4 bg-muted rounded" />
-            <div className="h-5 w-20 bg-muted rounded" />
-            <div className="h-5 w-16 bg-muted rounded" />
-          </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border w-full sm:w-auto sm:border-t-0 sm:border-l sm:pl-4 sm:ml-auto">
-            <div className="h-8 w-20 bg-muted rounded" />
-            <div className="h-8 w-20 bg-muted rounded" />
-            <div className="h-8 w-20 bg-muted rounded" />
-            <div className="h-8 w-24 bg-muted rounded" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted" />
+        <div className="flex-1 min-w-0 w-full space-y-3">
+          <div className="h-5 w-1/3 bg-muted rounded" />
+          <div className="h-4 w-1/4 bg-muted rounded" />
+          <div className="flex gap-2">
+            <div className="h-12 w-24 bg-muted rounded" />
+            <div className="h-12 w-24 bg-muted rounded" />
+            <div className="h-12 w-24 bg-muted rounded" />
+            <div className="h-12 w-28 bg-muted rounded" />
           </div>
         </div>
       </div>

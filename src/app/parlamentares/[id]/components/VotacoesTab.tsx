@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination, InfiniteScroll } from '@/components/ui/Pagination';
+import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
 import { formatNumber, cn } from '@/lib/utils';
@@ -23,9 +24,10 @@ interface Votacao {
 
 interface VotacoesTabProps {
   parlamentarId: string;
+  casa: 'CAMARA' | 'SENADO';
 }
 
-export function VotacoesTab({ parlamentarId }: VotacoesTabProps) {
+export function VotacoesTab({ parlamentarId, casa }: VotacoesTabProps) {
   const [votacoes, setVotacoes] = useState<Votacao[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
@@ -201,6 +203,8 @@ export function VotacoesTab({ parlamentarId }: VotacoesTabProps) {
           />
         )}
       </InfiniteScroll>
+
+      <FonteOficial casa={casa} />
     </div>
   );
 }

@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import {
+  buildParlamentarWhere,
+  parsePaginacao,
+  calcularPaginacao,
+} from '@/lib/parlamentar-query';
+
+export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
-  cursor: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.string().optional(),
+  limit: z.string().optional(),
   casa: z.enum(['CAMARA', 'SENADO']).optional(),
   partidoId: z.string().optional(),
   ufId: z.string().optional(),
   legislatura: z.coerce.number().optional(),
   situacao: z.string().optional(),
   search: z.string().optional(),
+  // "recent" ordena pelos mais recentemente atualizados na base
+  sort: z.enum(['nome', 'recent']).optional().default('nome'),
 });
 
 export async function GET(request: NextRequest) {
@@ -24,29 +33,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { cursor, limit, casa, partidoId, ufId, legislatura, situacao, search } = parsed.data;
+  const { casa, partidoId, ufId, legislatura, situacao, search, sort } = parsed.data;
 
-  const where: Record<string, unknown> = {};
-
-  if (casa) where.casa = casa;
-  if (partidoId) where.partidoId = partidoId;
-  if (ufId) where.ufId = ufId;
-  if (legislatura) where.legislatura = legislatura;
-  if (situacao) where.situacao = situacao;
-  if (search) {
-    where.OR = [
-      { nome: { contains: search, mode: 'insensitive' } },
-      { cpf: { contains: search } },
-      { idExterno: { contains: search } },
-    ];
+  const paginacao = parsePaginacao(parsed.data.page, parsed.data.limit);
+  if (!paginacao) {
+    return NextResponse.json(
+      { error: 'Parâmetros de paginação inválidos' },
+      { status: 400 }
+    );
   }
+  const { page, perPage } = paginacao;
+
+  const where = buildParlamentarWhere({ casa, partidoId, ufId, legislatura, situacao, search });
 
   const [parlamentares, total] = await Promise.all([
     prisma.parlamentar.findMany({
       where,
-      take: limit + 1,
-      cursor: cursor ? { id: cursor } : undefined,
-      orderBy: { nome: 'asc' },
+      skip: (page - 1) * perPage,
+      take: perPage,
+      orderBy: sort === 'recent' ? { updatedAt: 'desc' } : { nome: 'asc' },
       include: {
         partido: { select: { id: true, sigla: true, nome: true, cor: true } },
         uf: { select: { id: true, sigla: true, nome: true, regiao: true } },
@@ -56,18 +61,8 @@ export async function GET(request: NextRequest) {
     prisma.parlamentar.count({ where }),
   ]);
 
-  let nextCursor: string | undefined;
-  if (parlamentares.length > limit) {
-    const nextItem = parlamentares.pop();
-    nextCursor = nextItem!.id;
-  }
-
   return NextResponse.json({
     data: parlamentares,
-    total,
-    nextCursor,
-    hasMore: !!nextCursor,
+    ...calcularPaginacao(total, page, perPage),
   });
 }
-
-export const revalidate = 3600; // ISR 1 hora

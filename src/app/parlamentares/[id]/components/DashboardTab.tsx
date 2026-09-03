@@ -107,27 +107,27 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
         <StatCard
           label="Presença em Plenário"
           value={`${frequencia.taxaPresenca?.toFixed(1) || 0}%`}
-          icon="📅"
+          icon="calendario"
           trend={frequencia.taxaPresenca && frequencia.taxaPresenca >= 90 ? 'positive' : frequencia.taxaPresenca && frequencia.taxaPresenca >= 70 ? 'neutral' : 'negative'}
           subtitle={`${frequencia.presencas} de ${frequencia.totalSessoes} sessões`}
         />
         <StatCard
           label="Alinhamento Partidário"
           value={`${alinhamento.percentualAlinhamento?.toFixed(1) || 0}%`}
-          icon="🤝"
+          icon="maos"
           trend={alinhamento.percentualAlinhamento && alinhamento.percentualAlinhamento >= 80 ? 'positive' : alinhamento.percentualAlinhamento && alinhamento.percentualAlinhamento >= 60 ? 'neutral' : 'negative'}
           subtitle={`${alinhamento.votosAlinhados} de ${alinhamento.totalVotacoes} votações`}
         />
         <StatCard
           label="Votações no Período"
           value={formatNumber(alinhamento.totalVotacoes)}
-          icon="🗳️"
+          icon="votacao"
           subtitle={`${frequencia.totalSessoes} sessões deliberativas`}
         />
         <StatCard
           label="Atividade Legislativa"
           value={formatNumber(atividade.porMes.reduce((a, b) => a + b.votações + b.discursos + b.proposicoes, 0))}
-          icon="📊"
+          icon="grafico"
           subtitle={`${atividade.porMes.length} meses de dados`}
         />
       </div>
@@ -209,7 +209,7 @@ function StatCard({
 }: { 
   label: string; 
   value: string; 
-  icon: string; 
+  icon: 'calendario' | 'maos' | 'votacao' | 'grafico';
   trend?: 'positive' | 'neutral' | 'negative';
   subtitle?: string;
 }) {
@@ -219,11 +219,34 @@ function StatCard({
     negative: 'text-red-600',
   };
 
+  const icones = {
+    calendario: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    maos: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+      </svg>
+    ),
+    votacao: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    grafico: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  };
+
   return (
     <div className="stat-card">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className="text-2xl" aria-hidden="true">{icon}</span>
+        <span className="text-accent" aria-hidden="true">{icones[icon]}</span>
       </div>
       <div className="text-3xl font-bold text-foreground mb-1">{value}</div>
       {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
@@ -296,10 +319,10 @@ function TemasList({ temas }: { temas: Array<{ tema: string; total: number; vota
               style={{ width: `${(t.total / (temas[0]?.total || 1)) * 100}%` }}
             />
           </div>
-          <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
-            <span>🗳️ {t.votações}</span>
-            <span>🎤 {t.discursos}</span>
-            <span>📋 {t.proposicoes}</span>
+          <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" aria-hidden="true" /> {t.votações} votações</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" aria-hidden="true" /> {t.discursos} discursos</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500" aria-hidden="true" /> {t.proposicoes} proposições</span>
           </div>
         </div>
       ))}

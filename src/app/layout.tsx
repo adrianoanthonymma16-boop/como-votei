@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Atkinson_Hyperlegible } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 import './globals.css';
 
@@ -11,7 +12,10 @@ const atkinson = Atkinson_Hyperlegible({
   weight: ['400', '700'],
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://comovotei.vercel.app';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: {
     default: 'Como Votei — Transparência Legislativa',
     template: '%s | Como Votei',
@@ -22,10 +26,13 @@ export const metadata: Metadata = {
   creator: 'Como Votei',
   publisher: 'Como Votei',
   robots: 'index, follow',
+  icons: {
+    icon: '/icon.svg',
+  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://comovotei.vercel.app',
+    url: APP_URL,
     siteName: 'Como Votei',
     title: 'Como Votei — Transparência Legislativa',
     description: 'Analise como deputados e senadores brasileiros atuam no Congresso',
@@ -74,9 +81,8 @@ export default function RootLayout({
         <ThemeProvider>
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-              <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-                <span className="text-primary">Como</span>
-                <span className="text-accent">Votei</span>
+              <Link href="/" className="flex items-center gap-2" aria-label="Como Votei — Início">
+                <Logo />
               </Link>
               <nav className="hidden sm:flex items-center gap-6 text-sm">
                 <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors">
