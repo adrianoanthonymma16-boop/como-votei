@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
+import { PresencaCard } from '@/components/PresencaCard';
 
 export type SecaoId = 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard';
 
@@ -36,11 +37,9 @@ const coresSecao: Record<SecaoId, string> = {
 export function ParlamentarHeader({
   parlamentar,
   activeTab,
-  presenca = null,
 }: {
   parlamentar: ParlamentarHeaderData;
   activeTab: SecaoId;
-  presenca?: { taxaPresenca: number; totalSessoes: number; presencas: number } | null;
 }) {
   const count = parlamentar._count ?? { votos: 0, discursos: 0, proposicoes: 0 };
   const iniciais = parlamentar.nome
@@ -158,24 +157,7 @@ export function ParlamentarHeader({
             {count.proposicoes.toLocaleString('pt-BR')}
           </p>
         </Link>
-        <Link
-          href={`/parlamentares/${parlamentar.id}/dashboard`}
-          className={`stat-card group text-center sm:text-left ${coresSecao.dashboard}`}
-        >
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1">Presença em votações</p>
-          {presenca ? (
-            <>
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground transition-colors">
-                {presenca.taxaPresenca.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {presenca.presencas} de {presenca.totalSessoes} sessões
-              </p>
-            </>
-          ) : (
-            <p className="text-xl sm:text-2xl font-bold text-foreground/50 transition-colors">—</p>
-          )}
-        </Link>
+        <PresencaCard parlamentarId={parlamentar.id} />
       </div>
 
       {/* Navegação entre seções */}

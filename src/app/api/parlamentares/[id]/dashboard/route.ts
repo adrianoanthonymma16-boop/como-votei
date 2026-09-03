@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import {
-  computeFrequencia,
   computeAlinhamento,
   computeAtividadeMensal,
   computeTemas,
@@ -94,10 +93,28 @@ export async function GET(
     select: { dataApresentacao: true, tema: true },
   });
 
-  // Frequência
-  const frequencia = computeFrequencia(
-    votos.map((v) => ({ tipo: v.tipo, data: v.votacao.data }))
-  );
+  // Frequência — SOMENTE dados oficiais da tabela `frequencias`
+  // (populada pelo sync). Sem registro oficial, retorna zeros e o
+  // frontend exibe "sem dados oficiais" em vez de estimar via votos.
+  const frequenciaOficial = await prisma.frequencia.findUnique({
+    where: { parlamentarId_ano: { parlamentarId: id, ano } },
+    select: {
+      totalSessoes: true,
+      presencas: true,
+      faltasJustificadas: true,
+      faltasInjustificadas: true,
+      taxaPresenca: true,
+    },
+  });
+
+  const frequencia = frequenciaOficial ?? {
+    totalSessoes: 0,
+    presencas: 0,
+    faltasJustificadas: 0,
+    faltasInjustificadas: 0,
+    taxaPresenca: 0,
+  };
+  const semDadosOficiais = !frequenciaOficial;
 
   // Alinhamento partidário
   const votacoesIds = votos
@@ -167,6 +184,8 @@ export async function GET(
       legislatura: parlamentar.legislatura,
     },
     frequencia,
+    fonteFrequencia: 'oficial' as const,
+    semDadosOficiais,
     alinhamento,
     atividade: { porMes: atividadeMensal },
     temas,

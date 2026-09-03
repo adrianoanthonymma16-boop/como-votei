@@ -24,6 +24,8 @@ interface DashboardData {
     faltasInjustificadas: number;
     taxaPresenca: number;
   };
+  fonteFrequencia?: 'oficial';
+  semDadosOficiais?: boolean;
   alinhamento: {
     totalVotacoes: number;
     votosAlinhados: number;
@@ -142,10 +144,10 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Presença em Plenário"
-          value={`${frequencia.taxaPresenca?.toFixed(1) || 0}%`}
+          value={data.semDadosOficiais ? '—' : `${frequencia.taxaPresenca?.toFixed(1) || 0}%`}
           icon="calendario"
-          trend={frequencia.taxaPresenca && frequencia.taxaPresenca >= 90 ? 'positive' : frequencia.taxaPresenca && frequencia.taxaPresenca >= 70 ? 'neutral' : 'negative'}
-          subtitle={`${frequencia.presencas} de ${frequencia.totalSessoes} sessões`}
+          trend={data.semDadosOficiais ? undefined : frequencia.taxaPresenca && frequencia.taxaPresenca >= 90 ? 'positive' : frequencia.taxaPresenca && frequencia.taxaPresenca >= 70 ? 'neutral' : 'negative'}
+          subtitle={data.semDadosOficiais ? 'Sem dados oficiais' : `${frequencia.presencas} de ${frequencia.totalSessoes} sessões`}
         />
         <StatCard
           label="Alinhamento Partidário"
@@ -158,7 +160,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
           label="Votações no Período"
           value={formatNumber(alinhamento.totalVotacoes)}
           icon="votacao"
-          subtitle={`${frequencia.totalSessoes} sessões deliberativas`}
+          subtitle={data.semDadosOficiais ? 'Fonte oficial pendente' : `${frequencia.totalSessoes} sessões deliberativas`}
         />
         <StatCard
           label="Atividade Legislativa"
@@ -185,20 +187,37 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
 
       {/* Detalhes de frequência e alinhamento */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Frequência detalhada */}
+        {/* Frequência detalhada — somente dados oficiais */}
         <div className="bg-card rounded-xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Frequência em Plenário</h3>
-          <div className="space-y-4">
-            <FrequencyBar label="Presenças" value={frequencia.presencas} total={frequencia.totalSessoes} color="bg-green-500" />
-            <FrequencyBar label="Faltas Justificadas" value={frequencia.faltasJustificadas} total={frequencia.totalSessoes} color="bg-yellow-500" />
-            <FrequencyBar label="Faltas Injustificadas" value={frequencia.faltasInjustificadas} total={frequencia.totalSessoes} color="bg-red-500" />
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Frequência em Plenário</h3>
+            <span className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              Fonte oficial
+            </span>
           </div>
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg text-sm">
-            <span className="text-muted-foreground">Total de sessões: </span>
-            <span className="font-medium">{frequencia.totalSessoes}</span>
-            <span className="text-muted-foreground ml-4">Taxa de presença: </span>
-            <span className="font-medium text-green-700">{frequencia.taxaPresenca?.toFixed(1)}%</span>
-          </div>
+          {data.semDadosOficiais ? (
+            <div className="rounded-lg border border-dashed border-border py-8 px-4 text-center">
+              <p className="text-sm font-medium text-foreground">Sem dados oficiais de frequência em {ano}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Os registros de presença são sincronizados das fontes da Câmara e do Senado.
+                Não exibimos estimativas — apenas dados oficiais.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <FrequencyBar label="Presenças" value={frequencia.presencas} total={frequencia.totalSessoes} color="bg-green-500" />
+                <FrequencyBar label="Faltas Justificadas" value={frequencia.faltasJustificadas} total={frequencia.totalSessoes} color="bg-yellow-500" />
+                <FrequencyBar label="Faltas Injustificadas" value={frequencia.faltasInjustificadas} total={frequencia.totalSessoes} color="bg-red-500" />
+              </div>
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg text-sm">
+                <span className="text-muted-foreground">Total de sessões: </span>
+                <span className="font-medium">{frequencia.totalSessoes}</span>
+                <span className="text-muted-foreground ml-4">Taxa de presença: </span>
+                <span className="font-medium text-green-700">{frequencia.taxaPresenca?.toFixed(1)}%</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Alinhamento detalhado */}

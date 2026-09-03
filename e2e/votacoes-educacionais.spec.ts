@@ -74,6 +74,19 @@ test.describe('Votações educacionais', () => {
     await expect(page.locator('text=Idealização do desenvolvedor')).toBeVisible();
   });
 
+  test('card de presença mostra fonte oficial (com ou sem dados)', async ({ page }) => {
+    await page.goto('/parlamentares/cmtjl8hum002nwod5zhw6h2ny/votacoes');
+
+    // O card existe no header com o rótulo
+    const card = page.locator('text=Presença em votações').first();
+    await expect(card).toBeVisible();
+
+    // Ou há a barra empilhada com os 3 números, ou o estado "sem dados oficiais"
+    const barra = page.locator('[role="img"][aria-label*="sessões de"]');
+    const vazio = page.locator('text=Sem dados oficiais de presença');
+    await expect(barra.or(vazio).first()).toBeVisible({ timeout: 15000 });
+  });
+
   test('badges de voto são exibidos corretamente', async ({ page }) => {
     await page.goto('/parlamentares/cmtjl8hum002nwod5zhw6h2ny/votacoes');
 
