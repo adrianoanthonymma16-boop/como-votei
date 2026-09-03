@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ParlamentaresAtivos } from '@/components/ParlamentaresAtivos';
 import { MetricaProdutividadeInfo } from '@/components/MetricaProdutividadeInfo';
 import { LogoMark } from '@/components/Logo';
+import { AvisoBanner } from '@/components/AvisoBanner';
 
 const StatsCards = dynamic(() => import('@/components/StatsCards').then((mod) => mod.StatsCards), {
   ssr: true,
@@ -18,6 +19,9 @@ const SearchForm = dynamic(() => import('@/components/SearchForm').then((mod) =>
 export default function HomePage() {
   return (
     <main className="min-h-screen">
+      {/* Aviso anti-polarização */}
+      <AvisoBanner />
+
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary-950 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-primary-900" aria-hidden="true" />
