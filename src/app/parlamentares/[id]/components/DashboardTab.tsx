@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
 
 interface DashboardData {
+  ano: number;
+  anos: number[];
+  semDados?: boolean;
   parlamentar: {
     id: string;
     nome: string;
@@ -42,21 +45,34 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ano, setAno] = useState(new Date().getFullYear());
+  // null = ainda não escolhido: a API escolhe o ano mais recente com dados.
+  const [ano, setAno] = useState<number | null>(null);
+  const [anos, setAnos] = useState<number[]>([]);
+  const anoCarregadoRef = useRef<number | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (alvo: number | null, mostrarLoading = true) => {
     try {
-      setIsLoading(true);
+      if (mostrarLoading) setIsLoading(true);
       setError(null);
-      
-      const response = await fetch(`/api/parlamentares/${parlamentarId}/dashboard?ano=${ano}`);
-      
+
+      const url = alvo
+        ? `/api/parlamentares/${parlamentarId}/dashboard?ano=${alvo}`
+        : `/api/parlamentares/${parlamentarId}/dashboard`;
+      const response = await fetch(url, { cache: 'no-store' });
+
       if (!response.ok) {
         throw new Error('Erro ao carregar dashboard');
       }
-      
+
       const result = await response.json();
       setData(result);
+      setAnos(Array.isArray(result.anos) ? result.anos : result.ano ? [result.ano] : []);
+      anoCarregadoRef.current = result.ano;
+
+      // Primeira carga (sem ?ano): reflete o ano escolhido pelo servidor.
+      if (alvo === null && typeof result.ano === 'number') {
+        setAno(result.ano);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
@@ -65,20 +81,35 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   };
 
   useEffect(() => {
-    loadData();
+    // Evita recarregar quando apenas refletimos o ano vindo da primeira resposta.
+    if (ano !== null && ano === anoCarregadoRef.current && data) return;
+    loadData(ano);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parlamentarId, ano]);
 
   if (error) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={loadData}>Tentar novamente</button>
+        <button className="btn-outline" onClick={() => loadData(ano)}>Tentar novamente</button>
       </div>
     );
   }
 
   if (isLoading || !data) {
     return <DashboardSkeleton />;
+  }
+
+  if (data.semDados) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+        <p className="font-semibold text-foreground">Sem dados na base para este parlamentar</p>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+          Nenhuma votação, discurso ou proposição foi sincronizado para este parlamentar ainda.
+          Os dados são atualizados diariamente a partir das APIs oficiais.
+        </p>
+      </div>
+    );
   }
 
   const { parlamentar, frequencia, alinhamento, atividade, temas } = data;
@@ -89,17 +120,20 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Parlamentar</h2>
-          <p className="text-muted-foreground">Visão consolidada de atuação legislativa</p>
+          <p className="text-muted-foreground">Visão consolidada de atuação legislativa em {ano}</p>
         </div>
-        <select
-          value={ano}
-          onChange={(e) => setAno(Number(e.target.value))}
-          className="w-full sm:w-auto px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          {Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          Ano
+          <select
+            value={ano ?? ''}
+            onChange={(e) => setAno(Number(e.target.value))}
+            className="px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            {anos.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* Cards de métricas principais */}

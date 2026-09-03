@@ -9,9 +9,23 @@ import {
   type AlinhamentoResult,
 } from '@/lib/dashboard';
 
+export const dynamic = 'force-dynamic';
+
 const querySchema = z.object({
-  ano: z.coerce.number().default(() => new Date().getFullYear()),
+  ano: z.coerce.number().optional(),
 });
+
+async function anosComDados(parlamentarId: string): Promise<number[]> {
+  const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
+    `SELECT DISTINCT EXTRACT(YEAR FROM a.dt)::int AS ano FROM (
+       SELECT v.data AS dt FROM "votacoes" v JOIN "votos" x ON x."votacao_id" = v.id WHERE x."parlamentar_id" = $1
+       UNION SELECT d.data FROM "discursos" d WHERE d."parlamentar_id" = $1
+       UNION SELECT p."data_apresentacao" FROM "proposicoes" p WHERE p."parlamentar_id" = $1
+     ) a ORDER BY ano DESC`,
+    parlamentarId
+  );
+  return rows.map((r) => r.ano);
+}
 
 export async function GET(
   request: NextRequest,
@@ -28,10 +42,6 @@ export async function GET(
     );
   }
 
-  const { ano } = parsed.data;
-  const dataInicio = new Date(ano, 0, 1);
-  const dataFim = new Date(ano, 11, 31, 23, 59, 59);
-
   const parlamentar = await prisma.parlamentar.findUnique({
     where: { id },
     include: {
@@ -46,6 +56,15 @@ export async function GET(
       { status: 404 }
     );
   }
+
+  // Sem ?ano, usa o ano mais recente com registros na base — nunca o ano corrente
+  // vazio (que fazia o dashboard retornar tudo 0).
+  const anos = await anosComDados(id);
+  const ano = parsed.data.ano ?? anos[0] ?? new Date().getFullYear();
+  const temDados = anos.length > 0;
+
+  const dataInicio = new Date(ano, 0, 1);
+  const dataFim = new Date(ano, 11, 31, 23, 59, 59);
 
   // Votos do parlamentar no período
   const votos = await prisma.voto.findMany({
@@ -136,6 +155,9 @@ export async function GET(
   );
 
   return NextResponse.json({
+    ano,
+    anos,
+    semDados: !temDados,
     parlamentar: {
       id: parlamentar.id,
       nome: parlamentar.nome,
@@ -150,5 +172,3 @@ export async function GET(
     temas,
   });
 }
-
-export const revalidate = 3600;
