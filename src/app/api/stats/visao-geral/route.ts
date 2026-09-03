@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const [parlamentares, votacoes, discursos, proposicoes] = await Promise.all([
     prisma.parlamentar.count(),
@@ -16,5 +18,3 @@ export async function GET() {
     proposicoes,
   });
 }
-
-export const revalidate = 3600; // ISR 1 hora
