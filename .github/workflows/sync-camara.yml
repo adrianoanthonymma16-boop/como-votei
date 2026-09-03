@@ -36,7 +36,7 @@ jobs:
     name: Sync Câmara
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    
+
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
@@ -61,26 +61,39 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
 
-      - name: Sync Câmara dos Deputados
+      # Agendado (sem inputs): executa cada fase separadamente para evitar
+      # conflito de rate-limit entre discursos e proposições no mesmo processo.
+      - name: Sync base (partidos + parlamentares)
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-parlamentares
+
+      - name: Sync votações
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes
+
+      - name: Sync discursos
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-discursos
+
+      - name: Sync proposições
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes
+
+      - name: Sync frequência
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-frequencia
+
+      # Execução manual: respeita os inputs escolhidos (uma única invocação).
+      - name: Sync Câmara (manual)
+        if: github.event_name == 'workflow_dispatch'
         run: |
           npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts \
-            ${{
-              format('
-                {0}
-                {1}
-                {2}
-                {3}
-                {4}
-                {5}
-              ', 
-                github.event.inputs.ano && `--ano=${github.event.inputs.ano}` || '',
-                github.event.inputs.apenas-parlamentares && '--apenas-parlamentares' || '',
-                github.event.inputs.apenas-votacoes && '--apenas-votacoes' || '',
-                github.event.inputs.apenas-discursos && '--apenas-discursos' || '',
-                github.event.inputs.apenas-proposicoes && '--apenas-proposicoes' || '',
-                github.event.inputs.apenas-frequencia && '--apenas-frequencia' || ''
-              )
-            }}
+            ${{ github.event.inputs.ano && format('--ano={0}', github.event.inputs.ano) || '' }} \
+            ${{ github.event.inputs.apenas-parlamentares && '--apenas-parlamentares' || '' }} \
+            ${{ github.event.inputs.apenas-votacoes && '--apenas-votacoes' || '' }} \
+            ${{ github.event.inputs.apenas-discursos && '--apenas-discursos' || '' }} \
+            ${{ github.event.inputs.apenas-proposicoes && '--apenas-proposicoes' || '' }} \
+            ${{ github.event.inputs.apenas-frequencia && '--apenas-frequencia' || '' }}
 
       - name: Log completion
         if: always()
