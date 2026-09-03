@@ -5,7 +5,7 @@
 
 import { camaraClient } from './http-client';
 import { createHash } from 'crypto';
-import { extrairTemaPrincipal } from '@/lib/temas';
+import { extrairTemaPrincipal } from '../temas';
 import type {
   ParlamentarNormalizado,
   PartidoNormalizado,
@@ -429,7 +429,10 @@ export class CamaraAdapter {
       const extrair = (rotulo: string) => {
         const i = html.indexOf(rotulo);
         if (i < 0) return null;
-        const m = html.slice(i, i + 500).match(/<td>\s*([\d.,]+)/);
+        // Tolerante a <td> com atributos e valores em <strong>/percentuais:
+        // pega o primeiro número inteiro da célula seguinte ao rótulo.
+        const trecho = html.slice(i, i + 800);
+        const m = trecho.match(/<td[^>]*>\s*(?:<strong>)?\s*([\d.]+)\s*(?:<\/strong>)?/);
         return m ? parseInt(m[1].replace(/\./g, ''), 10) : null;
       };
       

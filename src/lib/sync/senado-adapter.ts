@@ -4,7 +4,7 @@
  */
 
 import { senadoClient } from './http-client';
-import { extrairTemaPrincipal } from '@/lib/temas';
+import { extrairTemaPrincipal } from '../temas';
 import type {
   ParlamentarNormalizado,
   VotacaoNormalizada,
