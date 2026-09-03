@@ -2,6 +2,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ParlamentaresAtivos } from '@/components/ParlamentaresAtivos';
+import { MetricaProdutividadeInfo } from '@/components/MetricaProdutividadeInfo';
 import { LogoMark } from '@/components/Logo';
 
 const StatsCards = dynamic(() => import('@/components/StatsCards').then((mod) => mod.StatsCards), {
@@ -83,19 +84,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Parlamentares Mais Ativos */}
+      {/* Parlamentares Mais Produtivos */}
       <section className="py-10 sm:py-14 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Parlamentares Mais Ativos</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Parlamentares Mais Produtivos</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Top 5 parlamentares com mais votações registradas na base.
+                Top 5 pelo ranking de produtividade — pontuação somada na base.
               </p>
             </div>
             <Link
-              href="/parlamentares?sort=ativos"
-              className="text-accent hover:text-accent/80 font-medium text-sm flex items-center gap-1 transition-colors"
+              href="/parlamentares?sort=produtivos"
+              className="hidden sm:inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
             >
               Ver ranking completo
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -103,7 +104,21 @@ export default function HomePage() {
               </svg>
             </Link>
           </div>
-          <ParlamentaresAtivos limit={5} />
+          <MetricaProdutividadeInfo />
+          <div className="mt-6">
+            <ParlamentaresAtivos limit={5} />
+          </div>
+          <div className="mt-4 sm:hidden">
+            <Link
+              href="/parlamentares?sort=produtivos"
+              className="inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
+            >
+              Ver ranking completo
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </section>
     </main>

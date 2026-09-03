@@ -1,19 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ParlamentarCard } from '@/components/ParlamentarCard';
-import { Skeleton } from '@/components/ui/Skeleton';
-
-interface ParlamentarAtivo {
-  id: string;
-  nome: string;
-  fotoUrl?: string | null;
-  casa: string;
-  partido?: { sigla: string; nome: string; cor: string | null } | null;
-  uf?: { sigla: string; nome: string; regiao: string } | null;
-  _count?: { votos: number; discursos: number; proposicoes: number };
-}
+import { Badge } from '@/components/ui/Badge';
 
 export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
   const [parlamentares, setParlamentares] = useState<any[]>([]);
@@ -24,24 +13,23 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
     let ativo = true;
     async function fetchData() {
       try {
-        // Busca os parlamentares mais ativos (ordenados por número de votos)
-        const response = await fetch(`/api/parlamentares?sort=ativos&limit=5`, {
+        const response = await fetch(`/api/parlamentares?sort=produtivos&limit=${limit}`, {
           cache: 'no-store',
         });
-        if (!response.ok) throw new Error('Erro ao carregar parlamentares ativos');
+        if (!response.ok) throw new Error('Erro ao carregar parlamentares mais produtivos');
         const data = await response.json();
-        if (ativo) setParlamentares(data.data.slice(0, 5));
+        if (ativo) setParlamentares(data.data.slice(0, limit));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
       } finally {
-        setIsLoading(false);
+        if (ativo) setIsLoading(false);
       }
     }
     fetchData();
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [limit]);
 
   if (error) {
     return (
@@ -54,7 +42,7 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: limit }).map((_, i) => (
           <ParlamentarCardSkeleton key={i} />
         ))}
       </div>
@@ -70,11 +58,31 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
   }
 
   return (
-    <div className="space-y-4">
-      {parlamentares.map((parlamentar) => (
-        <ParlamentarCard key={parlamentar.id} parlamentar={parlamentar} />
-      ))}
-    </div>
+    <ol className="space-y-4" aria-label="Ranking de produtividade">
+      {parlamentares.map((parlamentar, idx) => {
+        const score = parlamentar.produtividade?.pontuacao ?? 0;
+        return (
+          <li key={parlamentar.id} className="relative">
+            <div className="absolute -left-1 top-3 hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold shadow-sm ring-2 ring-background">
+              {idx + 1}
+            </div>
+            <div className="sm:pl-6">
+              <ParlamentarCard parlamentar={parlamentar} />
+              <div className="mt-2 flex flex-wrap items-center gap-2 pl-1 text-xs">
+                <Badge variant="outline" className="gap-1">
+                  Pontuação {score.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                </Badge>
+                <span className="text-muted-foreground">
+                  {parlamentar.produtividade
+                    ? `${parlamentar.produtividade.plApresentados} PL · ${parlamentar.produtividade.plAprovados} aprov. · ${parlamentar.produtividade.votosSimNao} votos SIM/NÃO · ${parlamentar.produtividade.discursos} discursos · ${parlamentar.produtividade.faltas} faltas`
+                    : null}
+                </span>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
