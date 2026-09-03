@@ -436,9 +436,8 @@ export class CamaraAdapter {
   // ============ PROPOSIÇÕES ============
 
   async *fetchProposicoesDeputado(deputadoIdExterno: string, ano: number): AsyncGenerator<ProposicaoNormalizada[]> {
-    const proposicoes: ProposicaoNormalizada[] = [];
-    
     // Buscar proposições onde o deputado é autor
+    const brutas: CamaraProposicao[] = [];
     for await (const page of this.paginate('proposicoes', {
       idDeputadoAutor: deputadoIdExterno,
       ano,
@@ -446,34 +445,49 @@ export class CamaraAdapter {
       ordenarPor: 'id',
       ordem: 'DESC',
     })) {
-      for (const p of page as CamaraProposicao[]) {
-        const autores = p.autores || (p.autor ? [p.autor] : []);
-        const autorPrincipal = autores.some((a: any) => String(a.id) === deputadoIdExterno);
-        
-        proposicoes.push({
-          idExterno: String(p.id),
-          parlamentarIdExterno: deputadoIdExterno,
-          casa: 'CAMARA',
-          tipo: p.siglaTipo,
-          numero: p.numero,
-          ano: p.ano,
-          ementa: p.ementa,
-          autorPrincipal,
-          status: mapStatusProposicao(p.statusProposicao?.descricaoSituacao),
-          dataApresentacao: toDate(p.dataApresentacao)!,
-          urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
-          tema: extrairTemaPrincipal(p.ementa),
-        });
-
-        // Tramitações
-        if (p.tramitacoes) {
-          for (const t of p.tramitacoes) {
-            this.stats.tramitacoes++;
-          }
-        }
-      }
+      brutas.push(...(page as CamaraProposicao[]));
     }
-    
+
+    // A listagem NÃO retorna statusProposicao — só o detalhe /proposicoes/{id}.
+    // Enriquece em lotes; falha individual mantém APRESENTADA.
+    const situacoes = new Map<number, string>();
+    const LOTE_STATUS = 5;
+    for (let i = 0; i < brutas.length; i += LOTE_STATUS) {
+      await Promise.all(
+        brutas.slice(i, i + LOTE_STATUS).map(async (p) => {
+          try {
+            const response = await camaraClient.get(`${CAMARA_API_BASE}/proposicoes/${p.id}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const s = data?.dados?.statusProposicao?.descricaoSituacao;
+            if (s) situacoes.set(p.id, s);
+          } catch {
+            // mantém APRESENTADA
+          }
+        })
+      );
+    }
+
+    const proposicoes: ProposicaoNormalizada[] = brutas.map((p) => {
+      const autores = p.autores || (p.autor ? [p.autor] : []);
+      const autorPrincipal = autores.some((a: any) => String(a.id) === deputadoIdExterno);
+
+      return {
+        idExterno: String(p.id),
+        parlamentarIdExterno: deputadoIdExterno,
+        casa: 'CAMARA' as const,
+        tipo: p.siglaTipo,
+        numero: p.numero,
+        ano: p.ano,
+        ementa: p.ementa,
+        autorPrincipal,
+        status: mapStatusProposicao(situacoes.get(p.id)),
+        dataApresentacao: toDate(p.dataApresentacao)!,
+        urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
+        tema: extrairTemaPrincipal(p.ementa),
+      };
+    });
+
     if (proposicoes.length > 0) {
       this.stats.proposicoes += proposicoes.length;
       yield proposicoes;
