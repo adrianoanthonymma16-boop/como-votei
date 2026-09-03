@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination, InfiniteScroll } from '@/components/ui/Pagination';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
-import { formatNumber } from '@/lib/utils';
 
 interface Proposicao {
   id: string;
@@ -29,38 +27,60 @@ interface ProposicoesTabProps {
   casa: 'CAMARA' | 'SENADO';
 }
 
+const CORES_TIPO: Record<string, string> = {
+  PL: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200',
+  PEC: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200',
+  MPL: 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200',
+  REQ: 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
+  PDC: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200',
+};
+
+const SIGLAS_TIPO: Record<string, string> = {
+  PL: 'Projeto de Lei',
+  PEC: 'Proposta de Emenda à Constituição',
+  PDC: 'Projeto de Decreto Legislativo',
+  PLP: 'Projeto de Lei Complementar',
+  MPL: 'Medida Provisória',
+  REQ: 'Requerimento',
+  IND: 'Indicação',
+  RIC: 'Requerimento de Informação',
+  RCP: 'Requerimento de Comissão Parlamentar',
+  SUG: 'Sugestão',
+};
+
 export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
   const [proposicoes, setProposicoes] = useState<Proposicao[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const loadData = async (cursor?: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams({
         limit: '20',
         ...(cursor && { cursor }),
       });
-      
+
       const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('Erro ao carregar proposições');
       }
-      
+
       const data = await response.json();
-      
+
       if (cursor) {
         setProposicoes((prev) => [...prev, ...data.data]);
       } else {
         setProposicoes(data.data);
       }
-      
+
       setNextCursor(data.nextCursor);
       setHasMore(data.hasMore);
     } catch (err) {
@@ -88,40 +108,41 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     return () => observer.disconnect();
   }, [hasMore, isLoading, nextCursor]);
 
+  const alternar = (id: string) =>
+    setAbertas((prev) => {
+      const prox = new Set(prev);
+      if (prox.has(id)) prox.delete(id);
+      else prox.add(id);
+      return prox;
+    });
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'success' | 'danger' | 'warning' | 'info' | 'secondary' | 'default'> = {
-      'APRESENTADA': 'secondary',
-      'EM_TRAMITACAO': 'info',
-      'APROVADA_CAMARA': 'success',
-      'APROVADA_SENADO': 'success',
-      'SANCIONADA': 'success',
-      'VETADA': 'danger',
-      'ARQUIVADA': 'default',
-      'RETIRADA': 'default',
+      APRESENTADA: 'secondary',
+      EM_TRAMITACAO: 'info',
+      APROVADA_CAMARA: 'success',
+      APROVADA_SENADO: 'success',
+      SANCIONADA: 'success',
+      VETADA: 'danger',
+      ARQUIVADA: 'default',
+      RETIRADA: 'default',
     };
     const labels: Record<string, string> = {
-      'APRESENTADA': 'Apresentada',
-      'EM_TRAMITACAO': 'Em Tramitação',
-      'APROVADA_CAMARA': 'Aprovada Câmara',
-      'APROVADA_SENADO': 'Aprovada Senado',
-      'SANCIONADA': 'Sancionada',
-      'VETADA': 'Vetada',
-      'ARQUIVADA': 'Arquivada',
-      'RETIRADA': 'Retirada',
+      APRESENTADA: 'Apresentada',
+      EM_TRAMITACAO: 'Em Tramitação',
+      APROVADA_CAMARA: 'Aprovada Câmara',
+      APROVADA_SENADO: 'Aprovada Senado',
+      SANCIONADA: 'Sancionada',
+      VETADA: 'Vetada',
+      ARQUIVADA: 'Arquivada',
+      RETIRADA: 'Retirada',
     };
     return <Badge variant={variants[status] || 'secondary'}>{labels[status] || status}</Badge>;
   };
 
-  const getTipoBadge = (tipo: string) => {
-    const colors: Record<string, string> = {
-      'PL': 'bg-blue-100 text-blue-800',
-      'PEC': 'bg-purple-100 text-purple-800',
-      'MPL': 'bg-orange-100 text-orange-800',
-      'REQ': 'bg-gray-100 text-gray-800',
-      'PDC': 'bg-green-100 text-green-800',
-    };
-    return <Badge variant="outline" className={colors[tipo] || ''}>{tipo}</Badge>;
-  };
+  const getTipoBadge = (tipo: string) => (
+    <Badge variant="outline" className={CORES_TIPO[tipo] || ''}>{tipo}</Badge>
+  );
 
   if (error) {
     return (
@@ -134,6 +155,10 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
 
   return (
     <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Toque em uma proposição para ler o que ela propõe e ver a tramitação oficial.
+      </p>
+
       <InfiniteScroll
         hasMore={hasMore}
         nextCursor={nextCursor}
@@ -141,73 +166,119 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         isLoading={isLoading}
         sentinelRef={sentinelRef}
       >
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-32">Apresentação</TableHead>
-                <TableHead>Proposição</TableHead>
-                <TableHead className="hidden md:table-cell w-28">Tipo</TableHead>
-                <TableHead className="w-32">Status</TableHead>
-                <TableHead className="hidden lg:table-cell w-32">Tema</TableHead>
-                <TableHead className="w-32 text-right">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {proposicoes.length === 0 && !isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Nenhuma proposição encontrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                proposicoes.map((p) => (
-                  <TableRow key={p.id} className="hover:bg-muted/50">
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(p.dataApresentacao)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 mb-1">
+        {proposicoes.length === 0 && !isLoading ? (
+          <div className="rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
+            Nenhuma proposição encontrada para este parlamentar.
+          </div>
+        ) : (
+          <ol className="space-y-3" aria-label="Proposições do parlamentar">
+            {proposicoes.map((p) => {
+              const aberta = abertas.has(p.id);
+              return (
+                <li key={p.id} className="rounded-xl border border-border bg-card overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => alternar(p.id)}
+                    aria-expanded={aberta}
+                    aria-controls={`proposicao-${p.id}`}
+                    className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <span className="flex-1 min-w-0">
+                      <span className="flex flex-wrap items-center gap-2">
                         {getTipoBadge(p.tipo)}
-                        <span className="font-medium text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           {p.tipo} {p.numero}/{p.ano}
                         </span>
-                        {!p.autorPrincipal && (
-                          <Badge variant="secondary" className="text-xs">Coautor</Badge>
+                        {!p.autorPrincipal && <Badge variant="secondary" className="text-xs">Coautoria</Badge>}
+                        {p.tema && (
+                          <Badge variant="outline" className="text-xs capitalize hidden sm:inline-flex">{p.tema}</Badge>
                         )}
+                      </span>
+                      <span className="mt-1 block text-sm text-muted-foreground line-clamp-2">{p.ementa}</span>
+                    </span>
+                    <span className="w-24 shrink-0 pt-0.5 text-right">
+                      <span className="block text-xs font-medium text-muted-foreground whitespace-nowrap">
+                        {formatDate(p.dataApresentacao)}
+                      </span>
+                      <span className="block">{getStatusBadge(p.status)}</span>
+                    </span>
+                    <span
+                      className={`shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
+                        aberta ? 'rotate-180 text-accent border-accent' : ''
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </span>
+                  </button>
+
+                  {aberta && (
+                    <div id={`proposicao-${p.id}`} className="border-t border-border bg-muted/20 px-4 py-4 animate-fade-in">
+                      <p className="text-sm leading-relaxed text-foreground">
+                        <span className="font-medium">{SIGLAS_TIPO[p.tipo] || `Proposição de tipo ${p.tipo}`} </span>
+                        {p.numero}/{p.ano} — {p.autorPrincipal ? 'de autoria do parlamentar' : 'em coautoria'}.
+                      </p>
+                      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                        <span className="font-medium text-foreground">O que propõe: </span>
+                        {p.ementa || 'Sem ementa disponível.'}
+                      </p>
+                      <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div className="rounded-lg border border-border bg-background px-3 py-2">
+                          <dt className="text-xs text-muted-foreground">Apresentação</dt>
+                          <dd className="font-medium text-foreground">{formatDate(p.dataApresentacao)}</dd>
+                        </div>
+                        <div className="rounded-lg border border-border bg-background px-3 py-2">
+                          <dt className="text-xs text-muted-foreground">Situação</dt>
+                          <dd className="font-medium text-foreground">{getStatusBadge(p.status)}</dd>
+                        </div>
+                        <div className="rounded-lg border border-border bg-background px-3 py-2">
+                          <dt className="text-xs text-muted-foreground">Autoria</dt>
+                          <dd className="font-medium text-foreground">
+                            {p.autorPrincipal ? 'Principal' : 'Coautoria'}
+                          </dd>
+                        </div>
+                        <div className="rounded-lg border border-border bg-background px-3 py-2">
+                          <dt className="text-xs text-muted-foreground">Tema</dt>
+                          <dd className="font-medium text-foreground capitalize">{p.tema || 'Sem tema'}</dd>
+                        </div>
+                      </dl>
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">Identificador oficial: {p.idExterno}</p>
+                        <a
+                          href={p.urlOriginal}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                        >
+                          Ver ficha oficial da tramitação
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
                       </div>
-                      <div className="text-sm text-muted-foreground line-clamp-2 max-w-md">
-                        {p.ementa}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{getTipoBadge(p.tipo)}</TableCell>
-                    <TableCell>{getStatusBadge(p.status)}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {p.tema && <Badge variant="outline" className="text-xs">{p.tema}</Badge>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <a
-                        href={p.urlOriginal}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-accent hover:underline text-sm font-medium"
-                      >
-                        Ver tramitação
-                      </a>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {isLoading && proposicoes.length === 0 && (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
+          </div>
+        )}
+
         {hasMore && (
           <div ref={sentinelRef} className="py-4">
             {isLoading && <div className="flex justify-center text-muted-foreground">Carregando mais...</div>}
           </div>
         )}
-        
+
         {hasMore && !isLoading && (
           <Pagination
             hasMore={hasMore}

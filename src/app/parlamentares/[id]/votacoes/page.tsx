@@ -48,7 +48,7 @@ export default async function VotacoesPage({ params }: PageProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <ParlamentarHeader parlamentar={parlamentar} activeTab="votacoes" presenca={presenca} />
-      <VotacoesTab parlamentarId={parlamentar.id} casa={parlamentar.casa as "CAMARA" | "SENADO"} />
+      <VotacoesTab parlamentarId={parlamentar.id} nome={parlamentar.nome} casa={parlamentar.casa as "CAMARA" | "SENADO"} />
     </div>
   );
 }
