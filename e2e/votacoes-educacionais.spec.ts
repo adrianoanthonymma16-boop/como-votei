@@ -109,4 +109,30 @@ test.describe('Votações educacionais', () => {
     const count = await badges.count();
     expect(count).toBeGreaterThan(0);
   });
+
+  test('filtros interativos do dashboard funcionam', async ({ page }) => {
+    await page.goto('/parlamentares/cmtjl8hum002nwod5zhw6h2ny/dashboard');
+
+    // Aguardar carregamento dos chips de filtro
+    await page.waitForSelector('text=Filtros');
+
+    // Verificar que os chips de tipo de voto existem com totais
+    const chipSim = page.locator('button:has-text("Sim")');
+    await expect(chipSim).toBeVisible();
+
+    // O chip deve mostrar o total
+    const simText = await chipSim.textContent();
+    expect(simText).toMatch(/\d+/);
+
+    // Clicar no chip SIM para filtrar
+    await chipSim.click();
+
+    // O chip deve ficar ativo (mudança de estilo)
+    await expect(chipSim).toHaveClass(/bg-green-600|border-transparent/);
+
+    // Verificar que o alinhamento recalcula com os votos filtrados
+    await page.waitForTimeout(500);
+    const alinhamento = page.locator('text=Alinhamento Partidário');
+    await expect(alinhamento).toBeVisible();
+  });
 });

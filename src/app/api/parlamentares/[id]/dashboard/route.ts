@@ -18,14 +18,13 @@ const querySchema = z.object({
 
 async function anosComDadosGlobais(): Promise<number[]> {
   const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
-    `SELECT DISTINCT EXTRACT(YEAR FROM "data")::int AS ano FROM (
+    `SELECT DISTINCT EXTRACT(YEAR FROM "data") AS ano FROM (
       SELECT data FROM "votacoes"
       UNION SELECT data FROM "discursos"
       UNION SELECT "data_apresentacao" FROM "proposicoes"
-      UNION SELECT NOW() AS data
-    ) a WHERE EXTRACT(YEAR FROM "data") >= 2023 GROUP BY ano ORDER BY ano DESC`
+    ) a WHERE EXTRACT(YEAR FROM "data") >= 2023 GROUP BY 1 ORDER BY 1 DESC`
   );
-  return rows.map((r) => r.ano);
+  return rows.map((r) => Math.round(r.ano));
 }
 
 async function anosComDados(parlamentarId: string): Promise<number[]> {
@@ -40,7 +39,12 @@ async function anosComDados(parlamentarId: string): Promise<number[]> {
   return rows.map((r) => r.ano);
 }
 
-const ANOS_GLOBAL = await anosComDadosGlobais();
+let ANOS_GLOBAL: number[] = [];
+try {
+  ANOS_GLOBAL = await anosComDadosGlobais();
+} catch {
+  // fallback: vai depender dos anos do parlamentar
+}
 
 export async function GET(
   request: NextRequest,
@@ -50,15 +54,20 @@ export async function GET(
   const { searchParams } = new URL(request.url);
 
   // Convert URLSearchParams to a plain object that preserves arrays for repeated keys.
-  const raw: Record<string, unknown> = {};
+  const raw: Record<string, string[]> = {};
   for (const [key, value] of searchParams.entries()) {
     if (key in raw) {
-      (raw[key] as unknown[]).push(value);
+      raw[key].push(value);
     } else {
-      raw[key] = value;
+      raw[key] = [value];
     }
   }
-  const parsed = querySchema.safeParse(raw);
+  // Descompacta arrays de tamanho 1 para valores escalares (exceto campos que esperam array).
+  const descompactado: Record<string, unknown> = {};
+  for (const [key, vals] of Object.entries(raw)) {
+    descompactado[key] = vals.length === 1 ? vals[0] : vals;
+  }
+  const parsed = querySchema.safeParse(descompactado);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -116,17 +125,20 @@ export async function GET(
     select: { data: true, tema: true, tipo: true },
   });
 
-  // Contagens para os filtros (independentes do filtro aplicado)
-  const [votosPorTipo, discursosPorTipo] = await Promise.all([
-    prisma.$queryRawUnsafe<{ tipo: string; cnt: bigint }[]>(
-      `SELECT v."tipo", count(*)::bigint as cnt FROM "votos" x JOIN "votacoes" v ON v.id = x."votacao_id" WHERE x."parlamentar_id" = $1 AND v."data" >= $2 AND v."data" <= $3 GROUP BY v."tipo" ORDER BY cnt DESC`,
-      [id, dataInicio.toISOString(), dataFim.toISOString()]
-    ),
-    prisma.$queryRawUnsafe<{ tipo: string; cnt: bigint }[]>(
-      `SELECT "tipo", count(*)::bigint as cnt FROM "discursos" WHERE "parlamentar_id" = $1 AND "data" >= $2 AND "data" <= $3 GROUP BY "tipo" ORDER BY cnt DESC`,
-      [id, dataInicio.toISOString(), dataFim.toISOString()]
-    ),
-  ]);
+  // Contagens para os filtros — computadas a partir dos votos já carregados.
+  const votosPorTipo = Object.entries(
+    votosRaw.reduce<Record<string, number>>((acc, v) => {
+      acc[v.tipo] = (acc[v.tipo] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([tipo, total]) => ({ tipo, total }));
+
+  const discursosPorTipo = Object.entries(
+    discursosRaw.reduce<Record<string, number>>((acc, d) => {
+      acc[d.tipo] = (acc[d.tipo] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([tipo, total]) => ({ tipo, total }));
 
   const proposicoes = await prisma.proposicao.findMany({
     where: {
@@ -226,8 +238,8 @@ export async function GET(
       tipoVoto: tipoVoto ?? null,
       tipoDiscurso: tipoDiscurso ?? null,
       disponiveis: {
-        tipoVoto: votosPorTipo.map((r) => ({ tipo: r.tipo, total: Number(r.cnt) })),
-        tipoDiscurso: discursosPorTipo.map((r) => ({ tipo: r.tipo, total: Number(r.cnt) })),
+        tipoVoto: votosPorTipo.map((r) => ({ tipo: r.tipo, total: r.total })),
+        tipoDiscurso: discursosPorTipo.map((r) => ({ tipo: r.tipo, total: r.total })),
       },
     },
     parlamentar: {
