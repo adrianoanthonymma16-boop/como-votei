@@ -48,7 +48,17 @@ export async function GET(
 ) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
-  const parsed = querySchema.safeParse(Object.fromEntries(searchParams));
+
+  // Convert URLSearchParams to a plain object that preserves arrays for repeated keys.
+  const raw: Record<string, unknown> = {};
+  for (const [key, value] of searchParams.entries()) {
+    if (key in raw) {
+      (raw[key] as unknown[]).push(value);
+    } else {
+      raw[key] = value;
+    }
+  }
+  const parsed = querySchema.safeParse(raw);
 
   if (!parsed.success) {
     return NextResponse.json(
