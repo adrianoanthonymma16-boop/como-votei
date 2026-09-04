@@ -61,27 +61,53 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
 
-      # Agendado (sem inputs): executa cada fase separadamente para evitar
-      # conflito de rate-limit entre discursos e proposições no mesmo processo.
+      # Agendado (sem inputs): cobre 3 anos (MVP) em loop para garantir
+      # que 2024/2025/2026 estejam sempre completos. Cada fase roda separada
+      # para evitar rate-limit entre discursos/proposições no mesmo processo.
       - name: Sync base (partidos + parlamentares)
         if: github.event_name == 'schedule'
         run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-parlamentares
 
-      - name: Sync votações
+      - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
-        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "🗳️  Sync votações $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes --ano=$ano
+          done
 
-      - name: Sync discursos
+      - name: Sync discursos (3 anos)
         if: github.event_name == 'schedule'
-        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-discursos
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "🎤 Sync discursos $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-discursos --ano=$ano
+          done
 
-      - name: Sync proposições
+      - name: Sync proposições (3 anos)
         if: github.event_name == 'schedule'
-        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "📋 Sync proposições $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes --ano=$ano
+          done
 
-      - name: Sync frequência
+      - name: Sync frequência (3 anos)
         if: github.event_name == 'schedule'
-        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-frequencia
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "📅 Sync frequência $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-frequencia --ano=$ano
+          done
+
+      - name: Guardrail — nominais sem votos
+        if: github.event_name == 'schedule'
+        run: |
+          node -e "
+          const { PrismaClient } = require('@prisma/client');
+          const p = new PrismaClient();
+          p.\$queryRaw\`SELECT COUNT(*)::int as cnt FROM votacoes v LEFT JOIN votos vo ON vo.votacao_id = v.id WHERE v.casa='CAMARA' AND v.descricao ILIKE '%Sim:%' GROUP BY v.id HAVING COUNT(vo.id)=0\`.then(r=>{ const c=r.length; console.log('Nominais órfãs:',c); if(c>15){console.error('❌ Muitas nominais sem votos — sync incompleto'); process.exit(1)} else console.log('✅ Guardrail OK'); p.\$disconnect() })
+          "
 
       # Execução manual: respeita os inputs escolhidos (uma única invocação).
       - name: Sync Câmara (manual)

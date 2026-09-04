@@ -110,7 +110,7 @@ function CasaBadge({ casa }: { casa: string }) {
 }
 
 // Sub-component: lista de votos dentro do accordion
-function VotosDaVotacao({ votacaoId }: { votacaoId: string }) {
+function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal: boolean }) {
   const [votos, setVotos] = useState<
     Array<{ tipo: string; parlamentar: { id: string; nome: string; fotoUrl?: string | null; casa: string; partido: { sigla: string; cor?: string | null }; uf: { sigla: string } } }>
   >([]);
@@ -201,7 +201,14 @@ function VotosDaVotacao({ votacaoId }: { votacaoId: string }) {
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg bg-slate-800" />)
         ) : votos.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">Nenhum voto encontrado com esse filtro.</p>
+          isNominal && !buscaParlamentar && !filtroVoto ? (
+            <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-amber-300">Votação nominal sem votos no banco — sincronização pendente</p>
+              <p className="mt-1 text-xs text-amber-200/70">Esta votação tem placar na descrição mas os votos individuais ainda não foram importados. Tente novamente em alguns minutos.</p>
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-slate-500">Nenhum voto encontrado com esse filtro.</p>
+          )
         ) : (
           votos.map((v) => (
             <Link
@@ -507,7 +514,7 @@ export function VotacoesPageClient() {
                             </div>
                           </dl>
                         </div>
-                        <VotosDaVotacao votacaoId={v.id} />
+                        <VotosDaVotacao votacaoId={v.id} isNominal={/Sim:\s*\d+/i.test(v.descricao)} />
                       </div>
                     </div>
                   </div>
