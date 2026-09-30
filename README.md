@@ -1,5 +1,11 @@
 # Como Votei
 
+[![CI](https://github.com/adrianoanthonymma16-boop/como-votei/actions/workflows/ci.yml/badge.svg)](https://github.com/adrianoanthonymma16-boop/como-votei/actions/workflows/ci.yml)
+[![E2E](https://github.com/adrianoanthonymma16-boop/como-votei/actions/workflows/ci.yml/badge.svg?label=e2e)](https://github.com/adrianoanthonymma16-boop/como-votei/actions/workflows/ci.yml)
+[![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-F1EFF6?style=flat-square&logo=opensourceinitiative&logoColor=original)](LICENSE)
+
+**No ar:** <https://como-votei.vercel.app>
+
 Ferramenta de transparência legislativa para analisar como deputados e senadores brasileiros atuam no Congresso: votações nominais, discursos e proposições de autoria.
 
 ## 🚀 Stack
