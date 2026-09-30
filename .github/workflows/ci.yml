@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Lint, tipos e testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+
+      - name: Checar tipos
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes unitários com cobertura
+        run: npx jest --coverage --coverageReporters=json-summary --coverageReporters=text
+
+      - name: Enviar cobertura ao Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/coverage-summary.json
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  e2e:
+    name: Testes end-to-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar browsers do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar E2E contra a aplicação em produção
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: https://como-votei.vercel.app
