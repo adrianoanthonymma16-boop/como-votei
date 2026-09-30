@@ -134,7 +134,9 @@ test.describe('Votações educacionais', () => {
 
     // Verificar que o alinhamento recalcula com os votos filtrados
     await page.waitForTimeout(500);
-    const alinhamento = page.locator('text=Alinhamento Partidário');
+    // getByRole em vez de text=: o rotulo aparece tambem no card de
+    // resumo, e o seletor textual casava os dois (strict mode).
+    const alinhamento = page.getByRole('heading', { name: 'Alinhamento Partidário' });
     await expect(alinhamento).toBeVisible();
   });
 });
