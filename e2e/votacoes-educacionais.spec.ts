@@ -78,12 +78,14 @@ test.describe('Votações educacionais', () => {
     await botaoCalc.click();
 
     // Verificar que os pesos aparecem
-    await expect(page.locator('text=PL apresentado')).toBeVisible();
-    await expect(page.locator('text=PL aprovado')).toBeVisible();
-    await expect(page.locator('text=Falta (ausência)')).toBeVisible();
+    // .first() porque os rotulos tambem aparecem no rodape da tabela de
+    // pesos, e o strict mode do Playwright falha com mais de um match.
+    await expect(page.locator('text=PL apresentado').first()).toBeVisible();
+    await expect(page.locator('text=PL aprovado').first()).toBeVisible();
+    await expect(page.locator('text=Falta (ausência)').first()).toBeVisible();
 
     // Verificar aviso do desenvolvedor
-    await expect(page.locator('text=Idealização do desenvolvedor')).toBeVisible();
+    await expect(page.locator('text=Idealização do desenvolvedor').first()).toBeVisible();
   });
 
   test('card de presença mostra fonte oficial (com ou sem dados)', async ({ page }) => {
@@ -117,7 +119,7 @@ test.describe('Votações educacionais', () => {
     await page.waitForSelector('text=Filtros');
 
     // Verificar que os chips de tipo de voto existem com totais
-    const chipSim = page.locator('button:has-text("Sim")');
+    const chipSim = page.locator('button:has-text("Sim")').first();
     await expect(chipSim).toBeVisible();
 
     // O chip deve mostrar o total
