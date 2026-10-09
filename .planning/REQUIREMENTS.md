@@ -51,15 +51,15 @@
 
 | Requirement | Phase |
 |-------------|-------|
-| GAST-01 | — |
-| GAST-02 | — |
-| GAST-03 | — |
-| GAST-04 | — |
-| GAST-05 | — |
-| GAST-06 | — |
-| GAST-07 | — |
-| GAST-08 | — |
-| OPS-01 | — |
-| QA-01 | — |
-| QA-02 | — |
-| QA-03 | — |
+| GAST-01 | Phase 4 |
+| GAST-02 | Phase 4 |
+| GAST-03 | Phase 4 |
+| GAST-04 | Phase 2 |
+| GAST-05 | Phase 2 |
+| GAST-06 | Phase 3 |
+| GAST-07 | Phase 4 |
+| GAST-08 | Phase 2 |
+| OPS-01 | Phase 2 |
+| QA-01 | Phase 1 (gate herdado por todas as fases) |
+| QA-02 | Phase 1 (agregação completada na Phase 3) |
+| QA-03 | Phase 4 |
