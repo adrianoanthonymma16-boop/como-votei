@@ -36,9 +36,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Modelo Prisma `Despesa` + migração + índices + constantes `ANOS_JANELA`
-- [ ] 01-02: Chave natural com teste de colisão zero em fixture real da Câmara (research flag)
-- [ ] 01-03: `parseBRL`, `camara-name-match`, tipos `DespesaNormalizada` e fixtures com testes Jest
+- [ ] 01-01: Tracer da chave natural `despesa-id` + modelo `Despesa` + gate de colisão full-year + migração (checkpoint de decisão da chave, D-03 one-way)
+- [ ] 01-02: `parseBRL`, `parseDataFonte` e `ANOS_JANELA` em `src/lib/despesas.ts` (TDD)
+- [ ] 01-03: `camara-name-match` (checkpoint id-first, D-06) e tipo `DespesaNormalizada` (D-08)
 
 ### Phase 2: Ingestão e Sincronização (CEAP/CEAPS)
 **Goal**: Despesas dos últimos 3 anos das duas casas no banco, com ingestão resiliente, upsert que aplica correções do snapshot diário, retenção que nunca acumula anos velhos e sync que falha ruidosamente.

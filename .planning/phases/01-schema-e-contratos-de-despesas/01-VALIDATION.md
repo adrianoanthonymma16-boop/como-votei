@@ -40,9 +40,14 @@ created: "2026-10-09"
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 1-01-01 | 01 | 1 | QA-01 | T-1-01 / — | `Despesa` model uses `Decimal(14,2)`; no float money | unit | `npx prisma validate && npx tsc --noEmit` | ❌ W0 | ⬜ pending |
-| 1-02-01 | 02 | 2 | QA-01 | T-1-01 / — | Chave natural passa teste de colisão zero em fixture real de 1 ano | unit | `npx jest -- despesa-key` | ❌ W0 | ⬜ pending |
-| 1-03-01 | 03 | 2 | QA-02 | / — | `parseBRL`/`camara-name-match` cobertos; ambiguidade → `null`; zero `parseFloat` | unit | `npx jest -- parseBRL camara-name-match` | ❌ W0 | ⬜ pending |
+| 1-01-01 | 01 | 1 | QA-01 | T-1-01 / T-1-02 | `derivarIdExternoDespesa` derives distinct stable keys for all fixture edge pairs; `Despesa` declares `Decimal(14,2)` money | unit | `npx prisma validate && npx jest src/lib/__tests__/despesa-id.test.ts` | ❌ W0 | ⬜ pending |
+| 1-01-02 | 01 | 1 | QA-01 | — | Key-shape decision (S6 vs S2) recorded before `@@unique` freeze | manual (checkpoint) | decision recorded in checkpoint state | n/a | ⬜ pending |
+| 1-01-03 | 01 | 1 | QA-01 | T-1-04 / T-1-05 | Full-year zero-collision gate + additive migration + Decimal round-trip smoke | integration | `npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/verificar-colisao-chave-despesa.ts /tmp/opencode/cotas/Ano-2025.json && npx prisma migrate status && npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/smoke-despesa.ts` | ❌ W0 | ⬜ pending |
+| 1-02-01 | 02 | 2 | QA-02 | T-1-02 | `parseBRL` boundaries (empty→null, malformed→throw, pt-BR, signed, ceiling); module free of QA-02-banned conversion tokens | unit | `npx jest src/lib/__tests__/parse-brl.test.ts` | ❌ W0 | ⬜ pending |
+| 1-02-02 | 02 | 2 | QA-02 | T-1-01 | `parseDataFonte` UTC dates; `ANOS_JANELA` = [ano, ano-1, ano-2] computed | unit | `npx jest src/lib/__tests__/datas-despesa.test.ts` | ❌ W0 | ⬜ pending |
+| 1-03-01 | 03 | 2 | QA-02 | T-1-03 | Id-first amendment outcome recorded before matcher ships | manual (checkpoint) | decision recorded in checkpoint state | n/a | ⬜ pending |
+| 1-03-02 | 03 | 2 | QA-02 | T-1-03 | Exact normalized match; ambiguity/leader → null; `metodo` audited | unit | `npx jest src/lib/__tests__/camara-name-match.test.ts` | ❌ W0 | ⬜ pending |
+| 1-03-03 | 03 | 2 | QA-01 / QA-02 | T-1-02 | `DespesaNormalizada` string decimals, zero-import file invariant; full gate | unit | `npx tsc --noEmit && npx next lint && npx jest && npx next build` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,11 +55,10 @@ created: "2026-10-09"
 
 ## Wave 0 Requirements
 
-- [ ] `.planning/phases/01-schema-e-contratos-de-despesas/01-fixtures-fonte.json` — committed real-source fixtures (20 labeled rows) ✅ already exists
-- [ ] `src/lib/__tests__/despesa-key.test.ts` — stubs for QA-01 collision-gate tests (if plan 01-02 creates them)
-- [ ] `src/lib/__tests__/parse-brl.test.ts` + `src/lib/__tests__/camara-name-match.test.ts` — stubs for QA-02
+- [x] `.planning/phases/01-schema-e-contratos-de-despesas/01-fixtures-fonte.json` — committed real-source fixtures (20 labeled rows) — already exists; copied into `src/lib/__tests__/fixtures/fontes.json` by task 1-01-01
+- [x] No test stubs required — every suite is created (RED-first where TDD) by its owning plan task; `jest.config.js` `testMatch` already picks up `src/lib/__tests__/**/*.test.ts`
 
-*Existing infrastructure (jest.config.js + ts-jest + `src/lib/__tests__/`) covers all phase requirements — no framework install needed.*
+*Existing infrastructure (jest.config.js + ts-jest + `src/lib/__tests__/` + Prisma CLI) covers all phase requirements — no framework install needed.*
 
 ---
 
