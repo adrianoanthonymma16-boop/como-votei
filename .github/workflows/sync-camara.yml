@@ -40,7 +40,8 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
-      NODE_ENV: production
+      # Sem NODE_ENV=production: com ele, `npm ci` omite devDependencies
+      # (ts-node/typescript) e o `npx ts-node` baixa cópia avulsa que quebra.
 
     steps:
       - name: Checkout repository
@@ -132,16 +133,29 @@ jobs:
           "
 
       # Execução manual: respeita os inputs escolhidos (uma única invocação).
+      # Monta os args em bash comparando com "true": inputs booleanos vindos
+      # da API chegam como string "false" (truthy em ${{ }}), o que ligava
+      # todas as fases sem querer.
       - name: Sync Câmara (manual)
         if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_ANO: ${{ github.event.inputs.ano }}
+          INPUT_PARLAMENTARES: ${{ github.event.inputs.apenas-parlamentares }}
+          INPUT_VOTACOES: ${{ github.event.inputs.apenas-votacoes }}
+          INPUT_DISCURSOS: ${{ github.event.inputs.apenas-discursos }}
+          INPUT_PROPOSICOES: ${{ github.event.inputs.apenas-proposicoes }}
+          INPUT_FREQUENCIA: ${{ github.event.inputs.apenas-frequencia }}
         run: |
-          npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts \
-            ${{ github.event.inputs.ano && format('--ano={0}', github.event.inputs.ano) || '' }} \
-            ${{ github.event.inputs.apenas-parlamentares && '--apenas-parlamentares' || '' }} \
-            ${{ github.event.inputs.apenas-votacoes && '--apenas-votacoes' || '' }} \
-            ${{ github.event.inputs.apenas-discursos && '--apenas-discursos' || '' }} \
-            ${{ github.event.inputs.apenas-proposicoes && '--apenas-proposicoes' || '' }} \
-            ${{ github.event.inputs.apenas-frequencia && '--apenas-frequencia' || '' }}
+          ARGS=""
+          [ -n "$INPUT_ANO" ] && ARGS="$ARGS --ano=$INPUT_ANO"
+          [ "$INPUT_PARLAMENTARES" = "true" ] && ARGS="$ARGS --apenas-parlamentares"
+          [ "$INPUT_VOTACOES" = "true" ] && ARGS="$ARGS --apenas-votacoes"
+          [ "$INPUT_DISCURSOS" = "true" ] && ARGS="$ARGS --apenas-discursos"
+          [ "$INPUT_PROPOSICOES" = "true" ] && ARGS="$ARGS --apenas-proposicoes"
+          [ "$INPUT_FREQUENCIA" = "true" ] && ARGS="$ARGS --apenas-frequencia"
+          echo "Args: '${ARGS:-<full sync>}'"
+          # shellcheck disable=SC2086
+          npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts $ARGS
 
       - name: Log completion
         if: always()
