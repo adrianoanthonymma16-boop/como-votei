@@ -4,26 +4,70 @@ import { useState } from 'react';
 
 const ITENS = [
   {
-    rotulo: 'PL apresentado',
-    peso: '+0,05',
+    rotulo: 'PEC apresentada / aprovada',
+    peso: '+0,30 / +5,0',
+    cor: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+    icone: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    ),
+    detalhe: 'Proposta de Emenda à Constituição de autoria própria. Peso máximo: exige 3/5 dos votos em dois turnos nas duas Casas.',
+  },
+  {
+    rotulo: 'PLP apresentado / aprovado',
+    peso: '+0,20 / +3,0',
     cor: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
     icone: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
       </svg>
     ),
-    detalhe: 'Cada Projeto de Lei (PL) de autoria própria do parlamentar (autorPrincipal). Mostra iniciativa legislativa.',
+    detalhe: 'Projeto de Lei Complementar de autoria própria. Exige maioria absoluta — rito mais duro que o PL comum.',
   },
   {
-    rotulo: 'PL aprovado (autoral)',
-    peso: '+1,0',
+    rotulo: 'PL apresentado / aprovado',
+    peso: '+0,05 / +1,0',
     cor: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
     icone: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
       </svg>
     ),
-    detalhe: 'PL de autoria própria com situação aprovada/sancionada. Mostra capacidade de levar a ideia até o fim.',
+    detalhe: 'Projeto de Lei (inclui PLS, PLC e PLV do Senado) de autoria própria. PL aprovado mostra capacidade de levar a ideia até o fim.',
+  },
+  {
+    rotulo: 'PDL/PRC apresentado / aprovado',
+    peso: '+0,03 / +0,5',
+    cor: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
+    icone: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    detalhe: 'Projeto de Decreto Legislativo ou de Resolução (inclui PDS/PRS do Senado). Rito mais simples, peso menor.',
+  },
+  {
+    rotulo: 'REQ apresentado / deferido',
+    peso: '+0,01 / +0,05',
+    cor: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-700',
+    icone: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    detalhe: 'Requerimentos (inclui RIC, RQS). Peso baixo de propósito: 10 REQs aprovados valem menos que 1 PL aprovado.',
+  },
+  {
+    rotulo: 'Coautoria',
+    peso: 'metade',
+    cor: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+    icone: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    detalhe: 'Proposição assinada em coautoria vale metade da apresentação e nunca conta aprovação (só o autor principal leva esse crédito).',
   },
   {
     rotulo: 'Falta (ausência)',
@@ -95,8 +139,8 @@ export function MetricaProdutividadeInfo() {
             <p className="text-sm font-medium text-foreground">Ranking de produtividade</p>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
               Para facilitar a comparação, somamos pontos por tipo de atividade. Quanto maior a pontuação, mais
-              atuação registrada na base. <strong className="text-foreground font-medium">PL aprovado</strong> tem mais peso
-              porque representa resultado concreto.
+              atuação registrada na base. <strong className="text-foreground font-medium">PEC aprovada</strong> tem mais peso
+              porque representa o rito mais exigente do Congresso.
             </p>
           </div>
 

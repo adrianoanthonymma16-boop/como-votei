@@ -15,8 +15,9 @@ interface ParlamentarComProdutividade extends Parlamentar {
   uf?: { sigla: string; nome: string; regiao: string } | null;
   produtividade?: {
     pontuacao: number;
-    plApresentados: number;
-    plAprovados: number;
+    apresentadosPrincipal: Record<string, number>;
+    apresentadosCoautoria: Record<string, number>;
+    aprovados: Record<string, number>;
     faltas: number;
     votosSimNao: number;
     discursos: number;
@@ -161,7 +162,14 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   {parlamentar.produtividade
-                    ? `${parlamentar.produtividade.plApresentados} PL · ${parlamentar.produtividade.plAprovados} aprov. · ${parlamentar.produtividade.votosSimNao} votos SIM/NÃO · ${parlamentar.produtividade.discursos} discursos · ${parlamentar.produtividade.faltas} faltas`
+                    ? (() => {
+                        const pr = parlamentar.produtividade!;
+                        const soma = (o: Record<string, number>) =>
+                          Object.values(o).reduce((a, b) => a + b, 0);
+                        const apres = soma(pr.apresentadosPrincipal) + soma(pr.apresentadosCoautoria);
+                        const aprov = soma(pr.aprovados);
+                        return `${apres} proposições · ${aprov} aprov. · ${pr.votosSimNao} votos SIM/NÃO · ${pr.discursos} discursos · ${pr.faltas} faltas`;
+                      })()
                     : null}
                 </span>
               </div>

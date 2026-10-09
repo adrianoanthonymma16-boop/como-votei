@@ -84,6 +84,11 @@ export interface ProposicaoNormalizada {
   tema?: string;
 }
 
+/** Proposição já com o histórico de tramitação (evita segunda passada no sync). */
+export interface ProposicaoComTramitacoes extends ProposicaoNormalizada {
+  tramitacoes: TramitacaoNormalizada[];
+}
+
 export interface TramitacaoNormalizada {
   proposicaoIdExterno: string;
   data: Date;

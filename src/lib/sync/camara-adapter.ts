@@ -13,6 +13,7 @@ import type {
   VotacaoNormalizada,
   VotoNormalizado,
   DiscursoNormalizado,
+  ProposicaoComTramitacoes,
   ProposicaoNormalizada,
   TramitacaoNormalizada,
   FrequenciaNormalizada,
@@ -435,7 +436,7 @@ export class CamaraAdapter {
 
   // ============ PROPOSIÇÕES ============
 
-  async *fetchProposicoesDeputado(deputadoIdExterno: string, ano: number): AsyncGenerator<ProposicaoNormalizada[]> {
+  async *fetchProposicoesDeputado(deputadoIdExterno: string, ano: number): AsyncGenerator<ProposicaoComTramitacoes[]> {
     // Buscar proposições onde o deputado é autor
     const brutas: CamaraProposicao[] = [];
     for await (const page of this.paginate('proposicoes', {
@@ -449,8 +450,10 @@ export class CamaraAdapter {
     }
 
     // A listagem NÃO retorna statusProposicao — só o detalhe /proposicoes/{id}.
-    // Enriquece em lotes; falha individual mantém APRESENTADA.
+    // Enriquece em lotes (status + tramitações); falha individual mantém
+    // APRESENTADA e histórico vazio.
     const situacoes = new Map<number, string>();
+    const tramitacoes = new Map<number, TramitacaoNormalizada[]>();
     const LOTE_STATUS = 5;
     for (let i = 0; i < brutas.length; i += LOTE_STATUS) {
       await Promise.all(
@@ -464,11 +467,35 @@ export class CamaraAdapter {
           } catch {
             // mantém APRESENTADA
           }
+          try {
+            const response = await camaraClient.get(`${CAMARA_API_BASE}/proposicoes/${p.id}/tramitacoes`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const lista: any[] = data?.dados || [];
+            tramitacoes.set(
+              p.id,
+              lista
+                .map((t) => {
+                  const dataT = toDate(t.dataHora);
+                  if (!dataT) return null;
+                  return {
+                    proposicaoIdExterno: String(p.id),
+                    data: dataT,
+                    descricao: t.descricaoTramitacao || t.despacho || 'Tramitação',
+                    orgao: t.siglaOrgao,
+                    situacao: t.descricaoSituacao || 'OUTRA',
+                  } as TramitacaoNormalizada;
+                })
+                .filter(Boolean) as TramitacaoNormalizada[]
+            );
+          } catch {
+            // mantém histórico vazio
+          }
         })
       );
     }
 
-    const proposicoes: ProposicaoNormalizada[] = brutas.map((p) => {
+    const proposicoes: ProposicaoComTramitacoes[] = brutas.map((p) => {
       const autores = p.autores || (p.autor ? [p.autor] : []);
       const autorPrincipal = autores.some((a: any) => String(a.id) === deputadoIdExterno);
 
@@ -485,11 +512,13 @@ export class CamaraAdapter {
         dataApresentacao: toDate(p.dataApresentacao)!,
         urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
         tema: extrairTemaPrincipal(p.ementa),
+        tramitacoes: tramitacoes.get(p.id) || [],
       };
     });
 
     if (proposicoes.length > 0) {
       this.stats.proposicoes += proposicoes.length;
+      this.stats.tramitacoes += proposicoes.reduce((n, p) => n + p.tramitacoes.length, 0);
       yield proposicoes;
     }
   }

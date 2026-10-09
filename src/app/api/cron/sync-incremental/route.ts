@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
 
   const tipo = request.nextUrl.searchParams.get('tipo') || 'incremental';
   const casa = request.nextUrl.searchParams.get('casa') || 'ambas';
+  // Inputs válidos dos workflows (sync-camara.yml / sync-senado.yml):
+  // ano + apenas-*. O recorte de 3 anos fica no evento `schedule`;
+  // o cron dispara o ano corrente como incremental.
+  const ano = request.nextUrl.searchParams.get('ano') || String(new Date().getFullYear());
 
   try {
     const resultados: Record<string, unknown> = {};
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
         workflows.push({
           name: 'Sync Câmara',
           workflow: 'sync-camara.yml',
-          inputs: { tipo: 'incremental' },
+          inputs: { ano },
         });
       }
 
@@ -36,7 +40,7 @@ export async function GET(request: NextRequest) {
         workflows.push({
           name: 'Sync Senado',
           workflow: 'sync-senado.yml',
-          inputs: { tipo: 'incremental' },
+          inputs: { ano },
         });
       }
 

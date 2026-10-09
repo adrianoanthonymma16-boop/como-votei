@@ -253,11 +253,12 @@ async function syncCamara(options: SyncOptions = {}) {
           if (sync(options.apenasProposicoes)) {
             for await (const proposicoes of camara.fetchProposicoesDeputado(dep.idExterno, ano)) {
               for (const p of proposicoes) {
-                await prisma.proposicao.upsert({
+                const prop = await prisma.proposicao.upsert({
                   where: { idExterno: p.idExterno },
                   update: {
                     status: p.status as StatusProposicao,
                     tema: p.tema,
+                    ementa: p.ementa,
                   },
                   create: {
                     idExterno: p.idExterno,
@@ -275,6 +276,22 @@ async function syncCamara(options: SyncOptions = {}) {
                   },
                 });
                 totalProposicoes++;
+
+                // Histórico reposto por inteiro (idempotente).
+                if (p.tramitacoes.length > 0) {
+                  await prisma.$transaction([
+                    prisma.tramitacao.deleteMany({ where: { proposicaoId: prop.id } }),
+                    prisma.tramitacao.createMany({
+                      data: p.tramitacoes.map((t) => ({
+                        proposicaoId: prop.id,
+                        data: t.data,
+                        descricao: t.descricao,
+                        orgao: t.orgao,
+                        situacao: t.situacao,
+                      })),
+                    }),
+                  ]);
+                }
               }
             }
           }

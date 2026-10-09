@@ -22,6 +22,10 @@ on:
         description: 'Sincronizar apenas discursos'
         required: false
         type: boolean
+      apenas-proposicoes:
+        description: 'Sincronizar apenas proposições (autorias + situação + tramitações)'
+        required: false
+        type: boolean
       apenas-frequencia:
         description: 'Sincronizar apenas frequência'
         required: false
@@ -31,8 +35,8 @@ jobs:
   sync-senado:
     name: Sync Senado
     runs-on: ubuntu-latest
-    timeout-minutes: 120
-    
+    timeout-minutes: 180
+
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NODE_ENV: production
@@ -56,14 +60,67 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
 
-      - name: Sync Senado Federal (schedule — 3 anos)
+      # Agendado (sem inputs): cobre 3 anos (MVP) em fases separadas para
+      # respeitar o rate limit do Senado (10 req/s) e isolar falhas por fase.
+      - name: Sync base (senadores)
+        if: github.event_name == 'schedule'
+        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-parlamentares
+
+      - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
         run: |
           for ano in 2024 2025 2026; do
-            echo "🏛️  Sync Senado $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --ano=$ano
+            echo "🗳️  Sync votações $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-votacoes --ano=$ano
           done
 
+      - name: Sync discursos (3 anos)
+        if: github.event_name == 'schedule'
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "🎤 Sync discursos $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-discursos --ano=$ano
+          done
+
+      - name: Sync proposições (3 anos)
+        if: github.event_name == 'schedule'
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "📋 Sync proposições $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-proposicoes --ano=$ano
+          done
+
+      - name: Sync frequência (3 anos)
+        if: github.event_name == 'schedule'
+        run: |
+          for ano in 2024 2025 2026; do
+            echo "📅 Sync frequência $ano"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-frequencia --ano=$ano
+          done
+
+      - name: Guardrail — proposições e tramitações do Senado
+        if: github.event_name == 'schedule'
+        run: |
+          node -e "
+          const { PrismaClient } = require('@prisma/client');
+          const p = new PrismaClient();
+          (async () => {
+            const total = await p.proposicao.count({ where: { casa: 'SENADO' } });
+            console.log('Proposições SENADO:', total);
+            if (total === 0) { console.error('❌ Nenhuma proposição do Senado — sync de autorias quebrou'); process.exit(1); }
+            const semStatus = await p.proposicao.count({ where: { casa: 'SENADO', status: 'APRESENTADA' } });
+            const pct = total > 0 ? (semStatus / total) * 100 : 0;
+            console.log('APRESENTADA (sem enriquecimento):', semStatus, pct.toFixed(1) + '%');
+            if (pct > 95) { console.error('❌ Enriquecimento de situação do Senado falhou (>95% APRESENTADA)'); process.exit(1); }
+            const trams = await p.tramitacao.count({ where: { proposicao: { casa: 'SENADO' } } });
+            console.log('Tramitações SENADO:', trams);
+            if (trams === 0) { console.error('❌ Nenhuma tramitação do Senado — sync de movimentações quebrou'); process.exit(1); }
+            console.log('✅ Guardrail Senado OK');
+            await p.\$disconnect();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+
+      # Execução manual: respeita os inputs escolhidos (uma única invocação).
       - name: Sync Senado Federal (manual)
         if: github.event_name == 'workflow_dispatch'
         run: |

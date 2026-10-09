@@ -6,7 +6,7 @@ import {
   parsePaginacao,
   calcularPaginacao,
 } from '@/lib/parlamentar-query';
-import { calcularPontuacao, STATUS_PL_APROVADO } from '@/lib/produtividade';
+import { calcularPontuacao, contadoresDeGrupos, type ContadoresProdutividade } from '@/lib/produtividade';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,15 +67,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const [plApresentados, plAprovados, faltas, votosSimNao, discursos] = await Promise.all([
+    // Proposições agregadas por (tipo, autoria, status) — a pontuação pondera
+    // por grupo de tipo (PEC > PLP > PL > PDL/PRC > REQ > INC) e coautoria
+    // vale metade da apresentação (ver src/lib/produtividade.ts).
+    const [propGroups, faltas, votosSimNao, discursos] = await Promise.all([
       prisma.proposicao.groupBy({
-        by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: 'PL', autorPrincipal: true },
-        _count: { _all: true },
-      }),
-      prisma.proposicao.groupBy({
-        by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: 'PL', autorPrincipal: true, status: { in: [...STATUS_PL_APROVADO] as any } },
+        by: ['parlamentarId', 'tipo', 'autorPrincipal', 'status'],
+        where: { parlamentarId: { in: ids } },
         _count: { _all: true },
       }),
       prisma.voto.groupBy({
@@ -98,21 +96,39 @@ export async function GET(request: NextRequest) {
     const map = (rows: { parlamentarId: string; _count: { _all: number } }[]) =>
       new Map(rows.map((r) => [r.parlamentarId, r._count._all]));
 
-    const mPl = map(plApresentados as any);
-    const mPlAp = map(plAprovados as any);
     const mFalta = map(faltas as any);
     const mVoto = map(votosSimNao as any);
     const mDisc = map(discursos as any);
 
-    const pontuacoes = ids.map((id) => ({
-      id,
-      pontuacao: calcularPontuacao({
-        plApresentados: mPl.get(id) ?? 0,
-        plAprovados: mPlAp.get(id) ?? 0,
+    const linhasPorParlamentar = new Map<
+      string,
+      { tipo: string; autorPrincipal: boolean; status: string; qtd: number }[]
+    >();
+    for (const g of propGroups as any[]) {
+      const lista = linhasPorParlamentar.get(g.parlamentarId) || [];
+      lista.push({
+        tipo: g.tipo,
+        autorPrincipal: g.autorPrincipal,
+        status: g.status,
+        qtd: g._count._all,
+      });
+      linhasPorParlamentar.set(g.parlamentarId, lista);
+    }
+
+    const contadoresById = new Map<string, ContadoresProdutividade>();
+    for (const id of ids) {
+      const grupos = contadoresDeGrupos(linhasPorParlamentar.get(id) || []);
+      contadoresById.set(id, {
+        ...grupos,
         faltas: mFalta.get(id) ?? 0,
         votosSimNao: mVoto.get(id) ?? 0,
         discursos: mDisc.get(id) ?? 0,
-      }),
+      });
+    }
+
+    const pontuacoes = ids.map((id) => ({
+      id,
+      pontuacao: calcularPontuacao(contadoresById.get(id)!),
     }));
 
     pontuacoes.sort((a, b) => b.pontuacao - a.pontuacao);
@@ -138,11 +154,7 @@ export async function GET(request: NextRequest) {
         ...p,
         produtividade: {
           pontuacao: pontuacaoById.get(p.id) ?? 0,
-          plApresentados: mPl.get(p.id) ?? 0,
-          plAprovados: mPlAp.get(p.id) ?? 0,
-          faltas: mFalta.get(p.id) ?? 0,
-          votosSimNao: mVoto.get(p.id) ?? 0,
-          discursos: mDisc.get(p.id) ?? 0,
+          ...contadoresById.get(p.id),
         },
       }));
 

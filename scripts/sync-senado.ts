@@ -18,6 +18,7 @@ interface SyncOptions {
   apenasParlamentares?: boolean;
   apenasVotacoes?: boolean;
   apenasDiscursos?: boolean;
+  apenasProposicoes?: boolean;
   apenasFrequencia?: boolean;
   debug?: boolean;
 }
@@ -28,13 +29,25 @@ async function syncSenado(options: SyncOptions = {}) {
   const senado = NormalizerFactory.getSenado();
   senado.resetStats();
 
+  // Quando nenhum "apenas*" está definido, sincroniza tudo (mesmo padrão da Câmara).
+  // Quando um ou mais "apenas*" estão definidos, sincroniza somente aqueles.
+  const onlyFlags = [
+    options.apenasParlamentares,
+    options.apenasVotacoes,
+    options.apenasDiscursos,
+    options.apenasProposicoes,
+    options.apenasFrequencia,
+  ];
+  const hasOnly = onlyFlags.some(Boolean);
+  const sync = (flag?: boolean) => !hasOnly || !!flag;
+
   console.log(`\n🏛️  INICIANDO SYNC SENADO FEDERAL - Ano ${ano}`);
   console.log(`⏰ ${new Date().toISOString()}`);
   console.log('='.repeat(60));
 
   try {
     // 1. Sincronizar Senadores
-    if (!options.apenasVotacoes && !options.apenasDiscursos && !options.apenasFrequencia) {
+    if (sync(options.apenasParlamentares)) {
       console.log('\n👥 Sincronizando senadores...');
       const senadores = await senado.fetchSenadores();
       
@@ -100,7 +113,7 @@ async function syncSenado(options: SyncOptions = {}) {
     console.log(`\n📊 ${senadoresDb.length} senadores ativos para sincronizar`);
 
     // 2. Sincronizar Votações e Votos
-    if (!options.apenasParlamentares && !options.apenasDiscursos && !options.apenasFrequencia) {
+    if (sync(options.apenasVotacoes)) {
       console.log('\n🗳️  Sincronizando votações e votos...');
       
       let totalVotacoes = 0, totalVotos = 0;
@@ -170,7 +183,7 @@ async function syncSenado(options: SyncOptions = {}) {
     }
 
     // 3. Sincronizar Discursos e Frequência
-    if (!options.apenasParlamentares && !options.apenasVotacoes) {
+    if (sync(options.apenasDiscursos) || sync(options.apenasFrequencia)) {
       console.log('\n🎤 Sincronizando discursos e frequência...');
       
       let totalDiscursos = 0, totalFrequencias = 0;
@@ -181,7 +194,7 @@ async function syncSenado(options: SyncOptions = {}) {
         
         await Promise.all(batch.map(async (sen) => {
           // Discursos
-          if (!options.apenasFrequencia) {
+          if (sync(options.apenasDiscursos) && !options.apenasFrequencia) {
             for await (const discursos of senado.fetchDiscursosSenador(sen.idExterno, ano)) {
               for (const d of discursos) {
                 await prisma.discurso.upsert({
@@ -206,7 +219,7 @@ async function syncSenado(options: SyncOptions = {}) {
           }
 
           // Frequência
-          if (!options.apenasDiscursos) {
+          if (sync(options.apenasFrequencia) && !options.apenasDiscursos) {
             const freq = await senado.fetchFrequencia(sen.idExterno, ano);
             if (freq) {
               await prisma.frequencia.upsert({
@@ -244,6 +257,71 @@ async function syncSenado(options: SyncOptions = {}) {
       console.log(`✅ ${totalDiscursos} discursos, ${totalFrequencias} frequências`);
     }
 
+    // 4. Sincronizar Proposições (autoria) + Tramitações
+    if (sync(options.apenasProposicoes)) {
+      console.log('\n📋 Sincronizando proposições e tramitações...');
+      console.log('   Fonte: /senador/{codigo}/autorias + /materia/situacaoatual + /materia/movimentacoes');
+
+      let totalProposicoes = 0, totalTramitacoes = 0;
+      const batchSize = 5; // detalhe por matéria (2 req) — lote conservador p/ rate limit
+
+      for (let i = 0; i < senadoresDb.length; i += batchSize) {
+        const batch = senadoresDb.slice(i, i + batchSize);
+
+        await Promise.all(batch.map(async (sen) => {
+          for await (const proposicoes of senado.fetchProposicoesSenador(sen.idExterno, ano)) {
+            for (const p of proposicoes) {
+              const prop = await prisma.proposicao.upsert({
+                where: { idExterno: p.idExterno },
+                update: {
+                  status: p.status as StatusProposicao,
+                  tema: p.tema,
+                  ementa: p.ementa,
+                },
+                create: {
+                  idExterno: p.idExterno,
+                  parlamentarId: sen.id,
+                  casa: Casa.SENADO,
+                  tipo: p.tipo,
+                  numero: p.numero,
+                  ano: p.ano,
+                  ementa: p.ementa,
+                  autorPrincipal: p.autorPrincipal,
+                  status: p.status as StatusProposicao,
+                  dataApresentacao: p.dataApresentacao,
+                  urlOriginal: p.urlOriginal,
+                  tema: p.tema,
+                },
+              });
+              totalProposicoes++;
+
+              // Histórico é reposto por inteiro (idempotente): a API não dá
+              // chave estável por movimentação, então delete + recreate.
+              if (p.tramitacoes.length > 0) {
+                await prisma.$transaction([
+                  prisma.tramitacao.deleteMany({ where: { proposicaoId: prop.id } }),
+                  prisma.tramitacao.createMany({
+                    data: p.tramitacoes.map((t) => ({
+                      proposicaoId: prop.id,
+                      data: t.data,
+                      descricao: t.descricao,
+                      orgao: t.orgao,
+                      situacao: t.situacao,
+                    })),
+                  }),
+                ]);
+                totalTramitacoes += p.tramitacoes.length;
+              }
+            }
+          }
+        }));
+
+        const progress = Math.min(i + batchSize, senadoresDb.length);
+        console.log(`  📈 Progresso: ${progress}/${senadoresDb.length} senadores`);
+      }
+      console.log(`✅ ${totalProposicoes} proposições, ${totalTramitacoes} tramitações`);
+    }
+
     // Resumo final
     const stats = senado.getStats();
     const tempoTotal = ((Date.now() - startTime) / 1000 / 60).toFixed(1);
@@ -255,6 +333,7 @@ async function syncSenado(options: SyncOptions = {}) {
     console.log(`👥 Parlamentares: ${stats.parlamentares}`);
     console.log(`🗳️  Votações: ${stats.votacoes} | Votos: ${senado.getStats().votos}`);
     console.log(`🎤 Discursos: ${stats.discursos}`);
+    console.log(`📋 Proposições: ${stats.proposicoes} | Tramitações: ${stats.tramitacoes}`);
     console.log(`📅 Frequências: ${stats.frequencias}`);
     console.log(`\n✅ Sync Senado concluído em ${tempoTotal} min`);
 
@@ -275,6 +354,7 @@ for (const arg of args) {
   if (arg === '--apenas-parlamentares') options.apenasParlamentares = true;
   if (arg === '--apenas-votacoes') options.apenasVotacoes = true;
   if (arg === '--apenas-discursos') options.apenasDiscursos = true;
+  if (arg === '--apenas-proposicoes') options.apenasProposicoes = true;
   if (arg === '--apenas-frequencia') options.apenasFrequencia = true;
   if (arg === '--debug') options.debug = true;
 }

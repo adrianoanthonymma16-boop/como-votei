@@ -4,13 +4,14 @@
  */
 
 import { senadoClient } from './http-client';
+import { createHash } from 'crypto';
 import { extrairTemaPrincipal } from '../temas';
 import type {
   ParlamentarNormalizado,
   VotacaoNormalizada,
   VotoNormalizado,
   DiscursoNormalizado,
-  ProposicaoNormalizada,
+  ProposicaoComTramitacoes,
   TramitacaoNormalizada,
   FrequenciaNormalizada,
   SyncStats,
@@ -135,7 +136,7 @@ function toDate(dateStr?: string): Date | undefined {
     /^(\d{2})\/(\d{2})\/(\d{4})$/,         // DD/MM/YYYY
     /^(\d{4})-(\d{2})-(\d{2})T/,           // ISO datetime
   ];
-  
+
   for (const fmt of formats) {
     const match = dateStr.match(fmt);
     if (match) {
@@ -146,7 +147,85 @@ function toDate(dateStr?: string): Date | undefined {
       return isNaN(d.getTime()) ? undefined : d;
     }
   }
+  // "YYYY-MM-DD HH:MM:SS" (movimentações do Senado)
+  const espacado = dateStr.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
+  if (espacado) {
+    const d = new Date(`${espacado[1]}T${espacado[2]}`);
+    return isNaN(d.getTime()) ? undefined : d;
+  }
   return undefined;
+}
+
+function hashString(input: string): string {
+  return createHash('md5').update(input).digest('hex').slice(0, 12);
+}
+
+/** Normaliza singleton-ou-lista da API do Senado (retorna objeto quando há 1 item). */
+function asArray<T>(v: T | T[] | undefined | null): T[] {
+  if (!v) return [];
+  return Array.isArray(v) ? v : [v];
+}
+
+/** idExterno determinístico para discursos (upsert idempotente, sem duplicatas). */
+function makeDiscursoIdExterno(senadorIdExterno: string, data?: string, tipo?: string, resumo?: string): string {
+  const base = [data || '', tipo || '', (resumo || '').slice(0, 200)].join('|');
+  return `SENADO-${senadorIdExterno}-${hashString(base)}`;
+}
+
+/** idExterno determinístico para tramitações do Senado. */
+function makeTramitacaoIdExterno(materiaCodigo: string, data: string, sigla: string, descricao: string): string {
+  return `SENADO-${materiaCodigo}-TRAM-${hashString([data, sigla, descricao].join('|'))}`;
+}
+
+/**
+ * Mapeia situação do Senado (DescricaoSituacao de /materia/situacaoatual +
+ * flag Tramitando) para o enum local. Mesma semântica do mapa da Câmara:
+ * ordem importa — terminais/aprovadas primeiro, genéricos por último.
+ */
+export function mapStatusProposicaoSenado(
+  descricaoSituacao?: string,
+  tramitando?: string
+): ProposicaoComTramitacoes['status'] {
+  const tram = (tramitando || '').toLowerCase();
+  const emTramitacao = tram.startsWith('sim') || tram === 's';
+  if (!descricaoSituacao) return emTramitacao ? 'EM_TRAMITACAO' : 'APRESENTADA';
+
+  const t = descricaoSituacao
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (
+    t.includes('norma juridica') ||
+    t.includes('sancao') ||
+    t.includes('sancionada') ||
+    t.includes('promulg') ||
+    t.includes('transformada em norma')
+  ) {
+    return 'SANCIONADA';
+  }
+  if (t.includes('veto') || t.includes('vetad')) return 'VETADA';
+  if (t.includes('retirad')) return 'RETIRADA';
+  if (t.includes('aprovad')) {
+    // "Aprovada e remetida à Câmara" = matéria do Senado aprovada NO Senado
+    // (vai à revisão). Só é APROVADA_CAMARA quando aprovada PELA Câmara.
+    const remetida =
+      t.includes('remet') || t.includes('remessa') || t.includes('enviad') || t.includes('envio');
+    if (t.includes('camara') && !remetida) return 'APROVADA_CAMARA';
+    return 'APROVADA_SENADO';
+  }
+  if (
+    t.includes('rejeitad') ||
+    t.includes('recusad') ||
+    t.includes('prejudic') ||
+    t.includes('arquiv') ||
+    t.includes('tramitacao encerrada') ||
+    t.includes('encerrada')
+  ) {
+    return 'ARQUIVADA';
+  }
+  if (t.includes('apresentad')) return 'APRESENTADA';
+  return emTramitacao ? 'EM_TRAMITACAO' : 'ARQUIVADA';
 }
 
 export class SenadoAdapter {
@@ -393,12 +472,13 @@ export class SenadoAdapter {
       
       for (const d of brutos) {
         const textoCompleto = d.Transcricao || d.Texto || d.Sumario || d.Resumo || d.Indexacao || '';
+        const dataStr = d.DataPronunciamento || d.Data;
         discursos.push({
-          idExterno: `senado-${senadorIdExterno}-${Date.now()}-${Math.random()}`,
+          idExterno: makeDiscursoIdExterno(senadorIdExterno, dataStr, d.TipoPronunciamento || d.Tipo, textoCompleto),
           parlamentarIdExterno: senadorIdExterno,
           casa: 'SENADO',
           tipo: mapTipoDiscursoSenado(d.TipoPronunciamento || d.Tipo || ''),
-          data: toDate(d.DataPronunciamento || d.Data)!,
+          data: toDate(dataStr)!,
           hora: undefined,
           resumo: textoCompleto.substring(0, 1000),
           urlOriginal: d.UrlTexto || '',
@@ -417,8 +497,165 @@ export class SenadoAdapter {
   }
 
   // ============ PROPOSIÇÕES (Autoria) ============
-  // Senado não expõe facilmente proposições de autoria via API aberta
-  // Implementação futura se necessário
+  //
+  // Fontes oficiais (verificadas em 2026-10-08, respostas JSON ativas):
+  //  - Lista: GET /senador/{codigo}/autorias → MateriasAutoriaParlamentar.
+  //    Parlamentar.Autorias.Autoria[] { Materia: {Codigo, Sigla, Numero, Ano,
+  //    Ementa, Data}, IndicadorAutorPrincipal: 'Sim'|'Não' }
+  //  - Status: GET /materia/situacaoatual/{codigo} → SituacaoAtualMateria.
+  //    Materias.Materia[].SituacaoAtual.Autuacoes.Autuacao[].Situacoes.
+  //    Situacao[] {DataSituacao, CodigoSituacao, SiglaSituacao,
+  //    DescricaoSituacao} + flag Tramitando ('Sim'|'Nao')
+  //  - Trâmites: GET /materia/movimentacoes/{codigo} → MovimentacaoMateria.
+  //    Materia.Autuacoes.Autuacao[].HistoricoSituacoes.Situacao[]
+  //
+  // RISCO (reuse-first, documentado): os serviços v3/v7 acima estão marcados
+  // como depreciados (DataDesativacaoCompleta 2026-02-01, substituto
+  // /dadosabertos/processo/{idProcesso}) mas respondem normalmente hoje. Se
+  // retornarem 404/410, migrar para o substituto usando IdentificacaoProcesso.
+  // Rate limit Senado: 10 req/s (429). O enriquecimento usa fetch direto com
+  // concorrência limitada (lote de 8) e backoff em 429 — fora da fila serial.
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async fetchJsonDireto(url: string, tentativas = 3): Promise<any | null> {
+    for (let t = 0; t <= tentativas; t++) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'ComoVotei/1.0 (Transparência Legislativa; +https://comovotei.vercel.app)',
+            Accept: 'application/json',
+          },
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (response.status === 429) {
+          await this.sleep(2000 * (t + 1));
+          continue;
+        }
+        if (response.status === 404 || response.status === 410) {
+          console.warn(`[SenadoAdapter] Serviço depreciado sem substituto direto: ${url} (${response.status})`);
+          return null;
+        }
+        if (!response.ok) return null;
+        return await response.json();
+      } catch {
+        if (t === tentativas) return null;
+        await this.sleep(1000 * (t + 1));
+      }
+    }
+    return null;
+  }
+
+  /** Situação atual de uma matéria (público p/ backfill e jobs). */
+  async fetchSituacaoMateria(
+    codigo: string
+  ): Promise<{ descricao?: string; sigla?: string; tramitando?: string }> {
+    const data = await this.fetchJsonDireto(`${SENADO_LEGIS_BASE}/materia/situacaoatual/${codigo}`);
+    try {
+      const materias = asArray<any>(data?.SituacaoAtualMateria?.Materias?.Materia);
+      const mat = materias.find((m) => String(m?.Codigo) === codigo) || materias[0];
+      const autuacoes = asArray<any>(mat?.SituacaoAtual?.Autuacoes?.Autuacao);
+      const situacoes = autuacoes.flatMap((a) => asArray<any>(a?.Situacoes?.Situacao));
+      const atual = situacoes[situacoes.length - 1];
+      return {
+        descricao: atual?.DescricaoSituacao,
+        sigla: atual?.SiglaSituacao,
+        tramitando: mat?.Tramitando,
+      };
+    } catch {
+      return {};
+    }
+  }
+
+  private async fetchMovimentacoesMateria(codigo: string): Promise<TramitacaoNormalizada[]> {
+    const data = await this.fetchJsonDireto(`${SENADO_LEGIS_BASE}/materia/movimentacoes/${codigo}`);
+    const tramitacoes: TramitacaoNormalizada[] = [];
+    try {
+      const autuacoes = asArray<any>(data?.MovimentacaoMateria?.Materia?.Autuacoes?.Autuacao);
+      for (const aut of autuacoes) {
+        for (const s of asArray<any>(aut?.HistoricoSituacoes?.Situacao)) {
+          const dataSit = toDate(s?.DataSituacao);
+          if (!dataSit) continue;
+          tramitacoes.push({
+            proposicaoIdExterno: `SENADO-${codigo}`,
+            data: dataSit,
+            descricao: s.DescricaoSituacao || s.SiglaSituacao || 'Movimentação',
+            orgao: undefined,
+            situacao: s.SiglaSituacao || 'OUTRA',
+          });
+          if (tramitacoes.length >= 100) break;
+        }
+        if (tramitacoes.length >= 100) break;
+      }
+    } catch (error) {
+      console.warn(`[SenadoAdapter] Erro ao parsear movimentações ${codigo}:`, error);
+    }
+    return tramitacoes;
+  }
+
+  async *fetchProposicoesSenador(
+    senadorIdExterno: string,
+    ano: number
+  ): AsyncGenerator<ProposicaoComTramitacoes[]> {
+    const response = await senadoClient.get(`${SENADO_LEGIS_BASE}/senador/${senadorIdExterno}/autorias`);
+    if (!response.ok) return;
+
+    let lista: any[] = [];
+    try {
+      const data = await response.json();
+      lista = asArray<any>(data?.MateriasAutoriaParlamentar?.Parlamentar?.Autorias?.Autoria);
+    } catch (error) {
+      console.warn(`[SenadoAdapter] Erro ao buscar autorias ${senadorIdExterno}:`, error);
+      return;
+    }
+
+    // A listagem retorna TODO o histórico — filtra o ano do sync (recorte 3 anos do MVP).
+    const doAno = lista.filter((a) => String(a?.Materia?.Ano) === String(ano));
+    if (doAno.length === 0) return;
+
+    const proposicoes: ProposicaoComTramitacoes[] = [];
+    const LOTE = 8; // concorrência limitada (rate limit 10 req/s + backoff em 429)
+    for (let i = 0; i < doAno.length; i += LOTE) {
+      await Promise.all(
+        doAno.slice(i, i + LOTE).map(async (a) => {
+          const m = a?.Materia || {};
+          const codigo = String(m.Codigo || '');
+          if (!codigo) return;
+          const autorPrincipal = normalizarNome(a.IndicadorAutorPrincipal || '').startsWith('SIM');
+
+          const [sit, movs] = await Promise.all([
+            this.fetchSituacaoMateria(codigo),
+            this.fetchMovimentacoesMateria(codigo),
+          ]);
+
+          const ementa = m.Ementa || '';
+          proposicoes.push({
+            idExterno: `SENADO-${codigo}`,
+            parlamentarIdExterno: senadorIdExterno,
+            casa: 'SENADO',
+            tipo: m.Sigla || 'MAT',
+            numero: parseInt(m.Numero, 10) || 0,
+            ano: parseInt(m.Ano, 10) || ano,
+            ementa,
+            autorPrincipal,
+            status: mapStatusProposicaoSenado(sit.descricao, sit.tramitando),
+            dataApresentacao: toDate(m.Data) || new Date(`${ano}-01-01`),
+            urlOriginal: `https://www25.senado.leg.br/web/atividade/materias/-/materia/${codigo}`,
+            tema: extrairTemaPrincipal(ementa),
+            tramitacoes: movs,
+          });
+        })
+      );
+    }
+
+    if (proposicoes.length > 0) {
+      this.stats.proposicoes += proposicoes.length;
+      this.stats.tramitacoes += proposicoes.reduce((n, p) => n + p.tramitacoes.length, 0);
+      yield proposicoes;
+    }
+  }
 
   // ============ FREQUÊNCIA ============
 

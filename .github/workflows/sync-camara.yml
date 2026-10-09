@@ -109,6 +109,28 @@ jobs:
           p.\$queryRaw\`SELECT COUNT(*)::int as cnt FROM votacoes v LEFT JOIN votos vo ON vo.votacao_id = v.id WHERE v.casa='CAMARA' AND v.descricao ILIKE '%Sim:%' GROUP BY v.id HAVING COUNT(vo.id)=0\`.then(r=>{ const c=r.length; console.log('Nominais órfãs:',c); if(c>15){console.error('❌ Muitas nominais sem votos — sync incompleto'); process.exit(1)} else console.log('✅ Guardrail OK'); p.\$disconnect() })
           "
 
+      - name: Guardrail — proposições e tramitações da Câmara
+        if: github.event_name == 'schedule'
+        run: |
+          node -e "
+          const { PrismaClient } = require('@prisma/client');
+          const p = new PrismaClient();
+          (async () => {
+            const total = await p.proposicao.count({ where: { casa: 'CAMARA' } });
+            console.log('Proposições CAMARA:', total);
+            if (total === 0) { console.error('❌ Nenhuma proposição da Câmara — sync de autorias quebrou'); process.exit(1); }
+            const semStatus = await p.proposicao.count({ where: { casa: 'CAMARA', status: 'APRESENTADA' } });
+            const pct = total > 0 ? (semStatus / total) * 100 : 0;
+            console.log('APRESENTADA (sem enriquecimento):', semStatus, pct.toFixed(1) + '%');
+            if (pct > 95) { console.error('❌ Enriquecimento de status da Câmara falhou (>95% APRESENTADA)'); process.exit(1); }
+            const trams = await p.tramitacao.count({ where: { proposicao: { casa: 'CAMARA' } } });
+            console.log('Tramitações CAMARA:', trams);
+            if (trams === 0) { console.error('❌ Nenhuma tramitação da Câmara — sync de tramitações quebrou'); process.exit(1); }
+            console.log('✅ Guardrail proposições OK');
+            await p.\$disconnect();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+
       # Execução manual: respeita os inputs escolhidos (uma única invocação).
       - name: Sync Câmara (manual)
         if: github.event_name == 'workflow_dispatch'
