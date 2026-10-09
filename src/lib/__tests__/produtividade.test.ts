@@ -171,6 +171,18 @@ describe('calcularPontuacao (nova métrica por tipo)', () => {
     expect(calcularPontuacao(pec)).toBeGreaterThan(calcularPontuacao(pl));
   });
 
+  it('coautoria em REQ/INC (assinatura em bloco) vale zero', () => {
+    const c: ContadoresProdutividade = {
+      apresentadosPrincipal: {},
+      apresentadosCoautoria: { REQ: 494, INC: 939 },
+      aprovados: {},
+      faltas: 0,
+      votosSimNao: 0,
+      discursos: 0,
+    };
+    expect(calcularPontuacao(c)).toBe(0);
+  });
+
   it('soma pesos corretamente num caso misto', () => {
     const c: ContadoresProdutividade = {
       apresentadosPrincipal: { PL: 2, REQ: 3 },

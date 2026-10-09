@@ -46,6 +46,20 @@ export const PESO_APROVACAO: Record<GrupoTipoProposicao, number> = {
 /** Coautoria vale metade da apresentação. */
 export const FATOR_COAUTORIA = 0.5;
 
+/**
+ * Coautoria em tipos de baixo custo e alto volume (REQ/INC, os da assinatura
+ * em bloco) NÃO pontua — evita gaming por volume. Nos demais grupos, metade.
+ */
+export const FATOR_COAUTORIA_POR_GRUPO: Record<GrupoTipoProposicao, number> = {
+  PEC: FATOR_COAUTORIA,
+  PLP: FATOR_COAUTORIA,
+  PL: FATOR_COAUTORIA,
+  PDL_PRC: FATOR_COAUTORIA,
+  REQ: 0,
+  INC: 0,
+  OUTRO: FATOR_COAUTORIA,
+} as const;
+
 export const PESOS = {
   PL_APRESENTADO: PESO_APRESENTACAO.PL,
   PL_APROVADO: PESO_APROVACAO.PL,
@@ -151,9 +165,14 @@ function somarPorGrupo(
 }
 
 export function calcularPontuacao(c: ContadoresProdutividade): number {
+  let coautoria = 0;
+  for (const [grupo, qtd] of Object.entries(c.apresentadosCoautoria)) {
+    const g = grupo as GrupoTipoProposicao;
+    coautoria += (qtd ?? 0) * (PESO_APRESENTACAO[g] ?? 0) * (FATOR_COAUTORIA_POR_GRUPO[g] ?? 0);
+  }
   const raw =
     somarPorGrupo(c.apresentadosPrincipal, PESO_APRESENTACAO) +
-    somarPorGrupo(c.apresentadosCoautoria, PESO_APRESENTACAO, FATOR_COAUTORIA) +
+    coautoria +
     somarPorGrupo(c.aprovados, PESO_APROVACAO) +
     c.faltas * PESOS.FALTA +
     c.votosSimNao * PESOS.VOTO_SIM_NAO +
