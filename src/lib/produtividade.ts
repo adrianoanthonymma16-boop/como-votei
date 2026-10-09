@@ -165,3 +165,25 @@ export function calcularPontuacao(c: ContadoresProdutividade): number {
 export function pontuacaoParaContadores(c: ContadoresProdutividade): PontuacaoProdutividade {
   return { ...c, pontuacao: calcularPontuacao(c) };
 }
+
+/** Soma os valores de uma contagem por grupo (tolerante a undefined). */
+export function somarContagem(contagem?: ContagemPorGrupo): number {
+  if (!contagem) return 0;
+  return Object.values(contagem).reduce((a, b) => a + (b ?? 0), 0);
+}
+
+/**
+ * Resumo exibido nas páginas: total apresentadas (principal + coautoria)
+ * e total aprovadas (só autor principal).
+ */
+export function resumoProdutividade(p?: {
+  apresentadosPrincipal?: ContagemPorGrupo;
+  apresentadosCoautoria?: ContagemPorGrupo;
+  aprovados?: ContagemPorGrupo;
+}): { apresentadas: number; aprovadas: number } {
+  if (!p) return { apresentadas: 0, aprovadas: 0 };
+  return {
+    apresentadas: somarContagem(p.apresentadosPrincipal) + somarContagem(p.apresentadosCoautoria),
+    aprovadas: somarContagem(p.aprovados),
+  };
+}

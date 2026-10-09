@@ -4,7 +4,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { getInitials } from '@/lib/utils';
+import { resumoProdutividade, type ContagemPorGrupo } from '@/lib/produtividade';
 import type { Parlamentar } from '@prisma/client';
+
+export interface ProdutividadeResumo {
+  pontuacao: number;
+  apresentadosPrincipal?: ContagemPorGrupo;
+  apresentadosCoautoria?: ContagemPorGrupo;
+  aprovados?: ContagemPorGrupo;
+  faltas?: number;
+  votosSimNao?: number;
+  discursos?: number;
+}
 
 interface ParlamentarWithCounts extends Parlamentar {
   _count?: {
@@ -14,6 +25,7 @@ interface ParlamentarWithCounts extends Parlamentar {
   };
   partido?: { sigla: string; nome: string; cor: string | null } | null;
   uf?: { sigla: string; nome: string; regiao: string } | null;
+  produtividade?: ProdutividadeResumo | null;
 }
 
 interface ParlamentarCardProps {
@@ -77,6 +89,30 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
           <p className="text-xs text-muted-foreground truncate mb-3">
             {parlamentar.nomeCivil || parlamentar.cpf || ''}
           </p>
+
+          {/* Pontuação da nova validação (só quando a API envia produtividade) */}
+          {parlamentar.produtividade && (
+            <p className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+              <Badge variant="outline" className="gap-1.5 font-mono px-2.5 py-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                {parlamentar.produtividade.pontuacao.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{' '}
+                pts
+              </Badge>
+              <span className="text-muted-foreground">
+                {(() => {
+                  const r = resumoProdutividade(parlamentar.produtividade!);
+                  return `${r.apresentadas} proposições · ${r.aprovadas} aprov.`;
+                })()}
+                {typeof parlamentar.produtividade.votosSimNao === 'number' &&
+                  ` · ${parlamentar.produtividade.votosSimNao} votos SIM/NÃO`}
+                {typeof parlamentar.produtividade.discursos === 'number' &&
+                  ` · ${parlamentar.produtividade.discursos} discursos`}
+              </span>
+            </p>
+          )}
 
           {/* Action buttons - 4 funcionalidades */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

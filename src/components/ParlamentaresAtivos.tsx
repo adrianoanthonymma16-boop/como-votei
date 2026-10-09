@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ParlamentarCard } from '@/components/ParlamentarCard';
+import { ParlamentarCard, type ProdutividadeResumo } from '@/components/ParlamentarCard';
 import { Badge } from '@/components/ui/Badge';
+import { resumoProdutividade } from '@/lib/produtividade';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentarComProdutividade extends Parlamentar {
@@ -13,15 +14,7 @@ interface ParlamentarComProdutividade extends Parlamentar {
   };
   partido?: { sigla: string; nome: string; cor: string | null } | null;
   uf?: { sigla: string; nome: string; regiao: string } | null;
-  produtividade?: {
-    pontuacao: number;
-    apresentadosPrincipal: Record<string, number>;
-    apresentadosCoautoria: Record<string, number>;
-    aprovados: Record<string, number>;
-    faltas: number;
-    votosSimNao: number;
-    discursos: number;
-  };
+  produtividade?: ProdutividadeResumo;
 }
 
 function CrownIcon({ className }: { className?: string }) {
@@ -164,11 +157,8 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
                   {parlamentar.produtividade
                     ? (() => {
                         const pr = parlamentar.produtividade!;
-                        const soma = (o: Record<string, number>) =>
-                          Object.values(o).reduce((a, b) => a + b, 0);
-                        const apres = soma(pr.apresentadosPrincipal) + soma(pr.apresentadosCoautoria);
-                        const aprov = soma(pr.aprovados);
-                        return `${apres} proposições · ${aprov} aprov. · ${pr.votosSimNao} votos SIM/NÃO · ${pr.discursos} discursos · ${pr.faltas} faltas`;
+                        const r = resumoProdutividade(pr);
+                        return `${r.apresentadas} proposições · ${r.aprovadas} aprov. · ${pr.votosSimNao ?? 0} votos SIM/NÃO · ${pr.discursos ?? 0} discursos · ${pr.faltas ?? 0} faltas`;
                       })()
                     : null}
                 </span>

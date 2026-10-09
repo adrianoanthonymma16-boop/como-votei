@@ -10,12 +10,21 @@ import { Select, SelectOption } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { formatNumber } from '@/lib/utils';
 import { DEFAULT_PER_PAGE } from '@/lib/parlamentar-query';
+import type { ProdutividadeResumo } from '@/components/ParlamentarCard';
 
 type ParlamentarCompleto = import('@prisma/client').Parlamentar & {
   partido?: { id: string; sigla: string; nome: string; cor: string | null } | null;
   uf?: { id: string; sigla: string; nome: string; regiao: string } | null;
   _count?: { votos: number; discursos: number; proposicoes: number };
+  produtividade?: ProdutividadeResumo | null;
 };
+
+const SORTS = [
+  { value: '', label: 'Ordem alfabética' },
+  { value: 'produtivos', label: 'Mais produtivos' },
+  { value: 'ativos', label: 'Mais ativos em votações' },
+  { value: 'recent', label: 'Atualizados recentemente' },
+] as const;
 
 interface PartidoItem {
   id: string;
@@ -42,6 +51,7 @@ export function ParlamentaresPageClient() {
   const [casa, setCasa] = useState(searchParams.get('casa') ?? '');
   const [partidoId, setPartidoId] = useState(searchParams.get('partidoId') ?? '');
   const [ufId, setUfId] = useState(searchParams.get('ufId') ?? '');
+  const [sort, setSort] = useState(searchParams.get('sort') ?? '');
   const [page, setPage] = useState(() => {
     const p = Number(searchParams.get('page') ?? '1');
     return Number.isInteger(p) && p >= 1 ? p : 1;
@@ -63,11 +73,12 @@ export function ParlamentaresPageClient() {
       if (casa) params.set('casa', casa);
       if (partidoId) params.set('partidoId', partidoId);
       if (ufId) params.set('ufId', ufId);
+      if (sort) params.set('sort', sort);
       params.set('page', String(novaPagina));
       params.set('limit', String(DEFAULT_PER_PAGE));
       router.push(`/parlamentares?${params.toString()}`);
     },
-    [casa, partidoId, ufId, router]
+    [casa, partidoId, ufId, sort, router]
   );
 
   // Carrega os dados a partir da URL (única fonte de verdade).
@@ -103,6 +114,7 @@ export function ParlamentaresPageClient() {
     setCasa(searchParams.get('casa') ?? '');
     setPartidoId(searchParams.get('partidoId') ?? '');
     setUfId(searchParams.get('ufId') ?? '');
+    setSort(searchParams.get('sort') ?? '');
     const p = Number(searchParams.get('page') ?? '1');
     setPage(Number.isInteger(p) && p >= 1 ? p : 1);
   }, [searchParams]);
@@ -151,6 +163,14 @@ export function ParlamentaresPageClient() {
     router.push(`/parlamentares?${proximo.toString()}`);
   };
 
+  const alterarSort = (valor: string) => {
+    const proximo = new URLSearchParams(searchParams.toString());
+    if (valor) proximo.set('sort', valor);
+    else proximo.delete('sort');
+    proximo.delete('page');
+    router.push(`/parlamentares?${proximo.toString()}`);
+  };
+
   const labelCasa = casa === 'CAMARA' ? 'Câmara dos Deputados' : casa === 'SENADO' ? 'Senado Federal' : '';
   const partidoSelecionado = partidos.find((p) => p.id === partidoId);
   const ufSelecionada = ufs.find((u) => u.id === ufId);
@@ -178,7 +198,7 @@ export function ParlamentaresPageClient() {
       </div>
 
       <div className="bg-card rounded-xl border border-border p-4 sm:p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="lg:col-span-1">
             <label htmlFor="search" className="text-xs font-medium text-muted-foreground mb-1 block">Buscar por nome</label>
             <Input
@@ -212,6 +232,14 @@ export function ParlamentaresPageClient() {
               <SelectOption value="">Todos os estados</SelectOption>
               {ufs.map((u) => (
                 <SelectOption key={u.id} value={u.id}>{u.sigla} - {u.nome}</SelectOption>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label htmlFor="sort" className="text-xs font-medium text-muted-foreground mb-1 block">Ordenar por</label>
+            <Select id="sort" value={sort} onChange={(e) => alterarSort(e.target.value)}>
+              {SORTS.map((s) => (
+                <SelectOption key={s.value || 'nome'} value={s.value}>{s.label}</SelectOption>
               ))}
             </Select>
           </div>

@@ -3,6 +3,8 @@ import {
   contadoresDeGrupos,
   filtroStatusAprovada,
   grupoDoTipo,
+  resumoProdutividade,
+  somarContagem,
   PESO_APRESENTACAO,
   PESO_APROVACAO,
   FATOR_COAUTORIA,
@@ -102,6 +104,28 @@ describe('contadoresDeGrupos', () => {
     ]);
     expect(contadores.apresentadosCoautoria.PL).toBe(1);
     expect(contadores.aprovados.PL ?? 0).toBe(0);
+  });
+});
+
+describe('resumoProdutividade', () => {
+  it('soma apresentação (principal + coautoria) e aprovações', () => {
+    expect(
+      resumoProdutividade({
+        apresentadosPrincipal: { PL: 2, PEC: 1 },
+        apresentadosCoautoria: { REQ: 3 },
+        aprovados: { PL: 1 },
+      })
+    ).toEqual({ apresentadas: 6, aprovadas: 1 });
+  });
+
+  it('vazio retorna zeros', () => {
+    expect(resumoProdutividade({})).toEqual({ apresentadas: 0, aprovadas: 0 });
+  });
+
+  it('somarContagem soma valores do mapa', () => {
+    expect(somarContagem({ PL: 2, PEC: 1 })).toBe(3);
+    expect(somarContagem({})).toBe(0);
+    expect(somarContagem(undefined)).toBe(0);
   });
 });
 
