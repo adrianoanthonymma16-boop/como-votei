@@ -48,12 +48,16 @@ const TEMAS = [
 
 function ehVotacaoNominal(descricao?: string): boolean {
   // Votação nominal no Congresso: quando cada parlamentar tem voto individual (SIM/NAO/ABSTENCAO)
-  // As pautas e descrições costumam incluir "votação nominal" ou similar
+  // As pautas e descrições costumam incluir "Sim: X; Não: Y" ou indicar votação nominal
   if (!descricao) return false;
   const lower = descricao.toLowerCase();
-  // Palavras-chave que indicam votação nominal no Brasil
-  const keywords = ['votação nominal', 'votacao nominal', 'nominal', 'votação eletrônica', 'votacao eletronica'];
-  return keywords.some((k) => lower.includes(k));
+  // Verifica padrões de contagem de votos (Sim/Não com possível tilde na NAO)
+  const hasVotePattern = /sim:\s*\d+\s*[;,]\s*nao|não\s*:\s*\d+/.test(lower) ||
+    /sim:\s*\d+\s*;\s*nao\s*:?\s*\d+/.test(lower) ||
+    /sim:\s*\d+\s*;\s*não\s*:?\s*\d+/.test(lower);
+  // Verifica menção explícita a "votação nominal"
+  const hasNominalKeyword = lower.includes('votação nominal') || lower.includes('votacao nominal') || lower.includes('nominal');
+  return hasVotePattern || hasNominalKeyword;
 }
 
 function extrairInfoProposicao(descricao: string, ementa?: string | null) {
