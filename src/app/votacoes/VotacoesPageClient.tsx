@@ -46,6 +46,16 @@ const TEMAS = [
   'desenvolvimento regional',
 ] as const;
 
+function ehVotacaoNominal(descricao?: string): boolean {
+  // Votação nominal no Congresso: quando cada parlamentar tem voto individual (SIM/NAO/ABSTENCAO)
+  // As pautas e descrições costumam incluir "votação nominal" ou similar
+  if (!descricao) return false;
+  const lower = descricao.toLowerCase();
+  // Palavras-chave que indicam votação nominal no Brasil
+  const keywords = ['votação nominal', 'votacao nominal', 'nominal', 'votação eletrônica', 'votacao eletronica'];
+  return keywords.some((k) => lower.includes(k));
+}
+
 function extrairInfoProposicao(descricao: string, ementa?: string | null) {
   const texto = ementa || descricao;
   const match = texto.match(/\b(PL|PLP|PEC|PLV|PDL|PRC|REQ|RIC|DEC|OFE)\s*(?:nº\s*)?(\d[\d./]*)/i);
@@ -514,7 +524,7 @@ export function VotacoesPageClient() {
                             </div>
                           </dl>
                         </div>
-                        <VotosDaVotacao votacaoId={v.id} isNominal={/Sim:\s*\d+/i.test(v.descricao)} />
+                        <VotosDaVotacao votacaoId={v.id} isNominal={ehVotacaoNominal(v.descricao)} />
                       </div>
                     </div>
                   </div>
