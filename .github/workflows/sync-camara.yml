@@ -35,7 +35,9 @@ jobs:
   sync-camara:
     name: Sync Câmara
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # Fase de proposições: ~3 req/proposição (detalhe + autores + tramitações)
+    # para 513 deputados — um ano pode passar de 2h.
+    timeout-minutes: 360
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}

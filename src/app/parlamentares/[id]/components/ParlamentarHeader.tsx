@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { PresencaCard } from '@/components/PresencaCard';
 
-export type SecaoId = 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard';
+export type SecaoId = 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard' | 'produtividade';
 
 interface ParlamentarHeaderData {
   id: string;
@@ -25,6 +25,7 @@ const secoes: { id: SecaoId; label: string }[] = [
   { id: 'proposicoes', label: 'Projetos' },
   { id: 'discursos', label: 'Discursos' },
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'produtividade', label: 'Produtividade' },
 ];
 
 /** Humaniza códigos normalizados de situação (EXERCICIO -> Exercício). */
@@ -48,6 +49,7 @@ const coresSecao: Record<SecaoId, string> = {
   proposicoes: 'group-hover:text-green-600 dark:group-hover:text-green-400',
   discursos: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
   dashboard: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
+  produtividade: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
 };
 
 export function ParlamentarHeader({

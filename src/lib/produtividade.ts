@@ -191,6 +191,17 @@ export function somarContagem(contagem?: ContagemPorGrupo): number {
   return Object.values(contagem).reduce((a, b) => a + (b ?? 0), 0);
 }
 
+/** Rótulos exibidos nas páginas para cada grupo de tipo. */
+export const ROTULOS_GRUPO: Record<GrupoTipoProposicao, { sigla: string; nome: string }> = {
+  PEC: { sigla: 'PEC', nome: 'Proposta de Emenda à Constituição' },
+  PLP: { sigla: 'PLP', nome: 'Projeto de Lei Complementar' },
+  PL: { sigla: 'PL', nome: 'Projeto de Lei (inclui PLS, PLC, PLV)' },
+  PDL_PRC: { sigla: 'PDL/PRC', nome: 'Decreto Legislativo ou Resolução (inclui PDS, PRS)' },
+  REQ: { sigla: 'REQ', nome: 'Requerimento (inclui RIC, RQS)' },
+  INC: { sigla: 'INC', nome: 'Indicação ou Sugestão' },
+  OUTRO: { sigla: 'Outros', nome: 'Demais tipos' },
+};
+
 /**
  * Resumo exibido nas páginas: total apresentadas (principal + coautoria)
  * e total aprovadas (só autor principal).

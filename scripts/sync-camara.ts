@@ -259,6 +259,9 @@ async function syncCamara(options: SyncOptions = {}) {
                     status: p.status as StatusProposicao,
                     tema: p.tema,
                     ementa: p.ementa,
+                    // autorPrincipal entra no update para corrigir as 23k
+                    // linhas legadas que ficaram todas como coautoria
+                    autorPrincipal: p.autorPrincipal,
                   },
                   create: {
                     idExterno: p.idExterno,

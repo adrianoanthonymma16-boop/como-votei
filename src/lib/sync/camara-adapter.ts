@@ -449,10 +449,12 @@ export class CamaraAdapter {
       brutas.push(...(page as CamaraProposicao[]));
     }
 
-    // A listagem NÃO retorna statusProposicao — só o detalhe /proposicoes/{id}.
-    // Enriquece em lotes (status + tramitações); falha individual mantém
-    // APRESENTADA e histórico vazio.
+    // A listagem NÃO retorna statusProposicao nem autores — só o detalhe
+    // /proposicoes/{id} e /proposicoes/{id}/autores. Enriquece em lotes
+    // (status + autoria + tramitações); falha individual mantém APRESENTADA,
+    // coautoria (falso) e histórico vazio.
     const situacoes = new Map<number, string>();
+    const principais = new Map<number, boolean>();
     const tramitacoes = new Map<number, TramitacaoNormalizada[]>();
     const LOTE_STATUS = 5;
     for (let i = 0; i < brutas.length; i += LOTE_STATUS) {
@@ -466,6 +468,22 @@ export class CamaraAdapter {
             if (s) situacoes.set(p.id, s);
           } catch {
             // mantém APRESENTADA
+          }
+          try {
+            // Autor principal = deputado filtrado com proponente=1 ou
+            // ordemAssinatura=1 (uri .../deputados/{id}).
+            const response = await camaraClient.get(`${CAMARA_API_BASE}/proposicoes/${p.id}/autores`);
+            if (!response.ok) return;
+            const data = await response.json();
+            const lista: any[] = data?.dados || [];
+            const principal = lista.some((a) => {
+              const idAutor = String(a?.uri || '').split('/').filter(Boolean).pop();
+              if (idAutor !== deputadoIdExterno) return false;
+              return a?.proponente == 1 || a?.ordemAssinatura == 1;
+            });
+            principais.set(p.id, principal);
+          } catch {
+            // mantém coautoria (falso)
           }
           try {
             const response = await camaraClient.get(`${CAMARA_API_BASE}/proposicoes/${p.id}/tramitacoes`);
@@ -496,9 +514,6 @@ export class CamaraAdapter {
     }
 
     const proposicoes: ProposicaoComTramitacoes[] = brutas.map((p) => {
-      const autores = p.autores || (p.autor ? [p.autor] : []);
-      const autorPrincipal = autores.some((a: any) => String(a.id) === deputadoIdExterno);
-
       return {
         idExterno: String(p.id),
         parlamentarIdExterno: deputadoIdExterno,
@@ -507,7 +522,7 @@ export class CamaraAdapter {
         numero: p.numero,
         ano: p.ano,
         ementa: p.ementa,
-        autorPrincipal,
+        autorPrincipal: principais.get(p.id) ?? false,
         status: mapStatusProposicao(situacoes.get(p.id)),
         dataApresentacao: toDate(p.dataApresentacao)!,
         urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,

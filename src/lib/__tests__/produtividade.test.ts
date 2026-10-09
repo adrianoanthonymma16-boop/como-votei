@@ -5,6 +5,7 @@ import {
   grupoDoTipo,
   resumoProdutividade,
   somarContagem,
+  ROTULOS_GRUPO,
   PESO_APRESENTACAO,
   PESO_APROVACAO,
   FATOR_COAUTORIA,
@@ -126,6 +127,14 @@ describe('resumoProdutividade', () => {
     expect(somarContagem({ PL: 2, PEC: 1 })).toBe(3);
     expect(somarContagem({})).toBe(0);
     expect(somarContagem(undefined)).toBe(0);
+  });
+
+  it('ROTULOS_GRUPO cobre todos os grupos', () => {
+    const grupos = ['PEC', 'PLP', 'PL', 'PDL_PRC', 'REQ', 'INC', 'OUTRO'] as const;
+    for (const g of grupos) {
+      expect(ROTULOS_GRUPO[g].sigla).toBeTruthy();
+      expect(ROTULOS_GRUPO[g].nome).toBeTruthy();
+    }
   });
 });
 

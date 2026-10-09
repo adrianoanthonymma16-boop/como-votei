@@ -189,7 +189,8 @@
   .action-btn-votacoes,
   .action-btn-proposicoes,
   .action-btn-discursos,
-  .action-btn-dashboard {
+  .action-btn-dashboard,
+  .action-btn-produtividade {
     flex: 1;
     min-width: 70px;
     display: flex;
@@ -208,7 +209,8 @@
     .action-btn-votacoes,
     .action-btn-proposicoes,
     .action-btn-discursos,
-    .action-btn-dashboard {
+    .action-btn-dashboard,
+    .action-btn-produtividade {
       min-width: 80px;
       padding: 0.625rem;
     }
@@ -309,6 +311,30 @@
     border-color: rgba(245, 158, 11, 0.5);
     box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.2);
   }
+
+  /* Produtividade - Rosa */
+  .action-btn-produtividade {
+    background-color: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+  }
+  .action-btn-produtividade:hover {
+    background-color: #ffe4e6;
+    color: #9f1239;
+    border-color: #fda4af;
+    box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.1);
+  }
+  .dark .action-btn-produtividade {
+    background-color: rgba(136, 19, 55, 0.3);
+    color: #fda4af;
+    border-color: rgba(159, 18, 57, 0.5);
+  }
+  .dark .action-btn-produtividade:hover {
+    background-color: rgba(136, 19, 55, 0.5);
+    color: #fecdd3;
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.2);
+  }
   
   /* Action button internal elements */
   .action-label {
@@ -325,7 +351,8 @@
   .action-btn-votacoes:focus-visible,
   .action-btn-proposicoes:focus-visible,
   .action-btn-discursos:focus-visible,
-  .action-btn-dashboard:focus-visible {
+  .action-btn-dashboard:focus-visible,
+  .action-btn-produtividade:focus-visible {
     outline: 2px solid;
     outline-offset: 2px;
   }
@@ -333,6 +360,7 @@
   .action-btn-proposicoes:focus-visible { outline-color: #22c55e; }
   .action-btn-discursos:focus-visible { outline-color: #a855f7; }
   .action-btn-dashboard:focus-visible { outline-color: #f59e0b; }
+  .action-btn-produtividade:focus-visible { outline-color: #f43f5e; }
   
   /* Badge variants with dark mode */
   .badge-default {
