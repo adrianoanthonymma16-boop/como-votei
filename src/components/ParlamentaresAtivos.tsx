@@ -50,7 +50,8 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
     let ativo = true;
     async function fetchData() {
       try {
-        const response = await fetch(`/api/parlamentares?sort=produtivos&limit=${limit}`, {
+        const ano = new Date().getFullYear();
+        const response = await fetch(`/api/parlamentares?sort=produtivos&limit=${limit}&ano=${ano}`, {
           cache: 'no-store',
         });
         if (!response.ok) throw new Error('Erro ao carregar parlamentares mais produtivos');

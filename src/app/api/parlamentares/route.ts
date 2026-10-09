@@ -23,6 +23,8 @@ const querySchema = z.object({
   // "ativos" ordena por número de votações
   // "produtivos" ordena pela métrica de produtividade do desenvolvedor
   sort: z.enum(['nome', 'recent', 'ativos', 'produtivos']).optional().default('nome'),
+  // Ano de referência para o ranking de produtividade (default: ano atual)
+  ano: z.coerce.number().int().min(2000).max(2100).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -36,7 +38,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { casa, partidoId, ufId, legislatura, situacao, search, sort } = parsed.data;
+  const { casa, partidoId, ufId, legislatura, situacao, search, sort, ano } = parsed.data;
+
+  // Ano de referência para produtividade: ?ano= ou ano corrente
+  const anoRef = ano ?? new Date().getFullYear();
+  const inicioAno = new Date(`${anoRef}-01-01`);
+  const fimAno = new Date(`${anoRef}-12-31T23:59:59.999Z`);
 
   const paginacao = parsePaginacao(parsed.data.page, parsed.data.limit);
   if (!paginacao) {
@@ -70,25 +77,40 @@ export async function GET(request: NextRequest) {
     // Proposições agregadas por (tipo, autoria, status) — a pontuação pondera
     // por grupo de tipo (PEC > PLP > PL > PDL/PRC > REQ > INC) e coautoria
     // vale metade da apresentação (ver src/lib/produtividade.ts).
+    // Filtro por ano: proposições do ano, votos em votações do ano, discursos do ano.
     const [propGroups, faltas, votosSimNao, discursos] = await Promise.all([
       prisma.proposicao.groupBy({
         by: ['parlamentarId', 'tipo', 'autorPrincipal', 'status'],
-        where: { parlamentarId: { in: ids } },
+        where: {
+          parlamentarId: { in: ids },
+          dataApresentacao: { gte: inicioAno, lte: fimAno },
+        },
         _count: { _all: true },
       }),
       prisma.voto.groupBy({
         by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: 'AUSENTE' },
+        where: {
+          parlamentarId: { in: ids },
+          tipo: 'AUSENTE',
+          votacao: { data: { gte: inicioAno, lte: fimAno } },
+        },
         _count: { _all: true },
       }),
       prisma.voto.groupBy({
         by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids }, tipo: { in: ['SIM', 'NAO'] } },
+        where: {
+          parlamentarId: { in: ids },
+          tipo: { in: ['SIM', 'NAO'] },
+          votacao: { data: { gte: inicioAno, lte: fimAno } },
+        },
         _count: { _all: true },
       }),
       prisma.discurso.groupBy({
         by: ['parlamentarId'],
-        where: { parlamentarId: { in: ids } },
+        where: {
+          parlamentarId: { in: ids },
+          data: { gte: inicioAno, lte: fimAno },
+        },
         _count: { _all: true },
       }),
     ]);
@@ -160,6 +182,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: ordenados,
+      ano: anoRef,
       ...calcularPaginacao(total, page, perPage),
     });
   }

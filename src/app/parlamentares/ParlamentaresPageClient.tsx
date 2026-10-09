@@ -90,6 +90,10 @@ export function ParlamentaresPageClient() {
       try {
         const params = new URLSearchParams(searchParams.toString());
         params.set('limit', String(DEFAULT_PER_PAGE));
+        // Produtividade é por ano corrente — sempre envia ano explícito
+        if (params.get('sort') === 'produtivos' && !params.get('ano')) {
+          params.set('ano', String(new Date().getFullYear()));
+        }
         const res = await fetch(`/api/parlamentares?${params.toString()}`, { signal: controller.signal });
         if (!res.ok) throw new Error('Falha ao carregar parlamentares');
         const data = await res.json();
@@ -193,8 +197,14 @@ export function ParlamentaresPageClient() {
       </nav>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Parlamentares</h1>
-        <p className="text-muted-foreground">Busque e filtre deputados e senadores por nome, partido, estado ou casa.</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Parlamentares{sort === 'produtivos' ? ` Mais Produtivos ${new Date().getFullYear()}` : ''}
+        </h1>
+        <p className="text-muted-foreground">
+          {sort === 'produtivos'
+            ? `Ranking de produtividade em ${new Date().getFullYear()} — pontuação baseada em proposições, votos e discursos do ano corrente.`
+            : 'Busque e filtre deputados e senadores por nome, partido, estado ou casa.'}
+        </p>
       </div>
 
       <div className="bg-card rounded-xl border border-border p-4 sm:p-6 mb-6">
