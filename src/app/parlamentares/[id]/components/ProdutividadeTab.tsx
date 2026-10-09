@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { FonteOficial } from '@/components/FonteOficial';
+import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
   FATOR_COAUTORIA_POR_GRUPO,
@@ -16,6 +17,8 @@ import {
 } from '@/lib/produtividade';
 
 interface ProdutividadeData {
+  ano: number | null;
+  anos: number[];
   parlamentar: { id: string; nome: string; casa: string };
   pontuacao: number;
   apresentadosPrincipal: ContagemPorGrupo;
@@ -38,30 +41,36 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
   const [data, setData] = useState<ProdutividadeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ano, setAno] = useState('');
 
-  useEffect(() => {
-    let ativo = true;
-    async function load() {
+  const loadData = useCallback(
+    async (anoFiltro?: string) => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`/api/parlamentares/${parlamentarId}/produtividade`, {
-          cache: 'no-store',
-        });
+        const a = anoFiltro ?? ano;
+        const url = `/api/parlamentares/${parlamentarId}/produtividade${a ? `?ano=${a}` : ''}`;
+        const response = await fetch(url, { cache: 'no-store' });
         if (!response.ok) throw new Error('Erro ao carregar produtividade');
         const result = await response.json();
-        if (ativo) setData(result);
+        setData(result);
       } catch (err) {
-        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
       } finally {
-        if (ativo) setIsLoading(false);
+        setIsLoading(false);
       }
-    }
-    load();
-    return () => {
-      ativo = false;
-    };
-  }, [parlamentarId]);
+    },
+    [parlamentarId, ano]
+  );
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleAno = (novoAno: string) => {
+    setAno(novoAno);
+    loadData(novoAno);
+  };
 
   if (error) {
     return (
@@ -96,9 +105,15 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <FiltroAno ano={ano} anos={data.anos ?? []} onChange={handleAno} />
+      </div>
+
       {/* Pontuação */}
       <div className="rounded-xl border border-border bg-card p-6 text-center">
-        <p className="text-sm font-medium text-muted-foreground">Pontuação de produtividade</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          Pontuação de produtividade{data.ano ? ` em ${data.ano}` : ' (todos os anos)'}
+        </p>
         <p className="mt-1 text-5xl font-bold text-foreground">
           {data.pontuacao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           <span className="ml-2 text-lg font-medium text-muted-foreground">pts</span>

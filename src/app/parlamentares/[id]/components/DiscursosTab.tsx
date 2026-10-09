@@ -6,6 +6,7 @@ import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { FiltroAno } from '@/components/FiltroAno';
 
 interface Discurso {
   id: string;
@@ -35,8 +36,10 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
+  const [ano, setAno] = useState('');
+  const [anos, setAnos] = useState<number[]>([]);
 
-  const loadData = useCallback(async (targetPage: number) => {
+  const loadData = useCallback(async (targetPage: number, anoFiltro?: string) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -44,6 +47,8 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
         page: String(targetPage),
         limit: String(PER_PAGE),
       });
+      const a = anoFiltro ?? ano;
+      if (a) params.set('ano', a);
       const response = await fetch(`/api/parlamentares/${parlamentarId}/discursos?${params.toString()}`);
       if (!response.ok) throw new Error('Erro ao carregar discursos');
       const data = await response.json();
@@ -56,11 +61,30 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [parlamentarId]);
+  }, [parlamentarId, ano]);
 
   useEffect(() => {
     loadData(1);
   }, [loadData]);
+
+  useEffect(() => {
+    let ativo = true;
+    fetch(`/api/parlamentares/${parlamentarId}/anos`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (ativo && Array.isArray(d?.anos)) setAnos(d.anos);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [parlamentarId]);
+
+  const handleAno = (novoAno: string) => {
+    setAno(novoAno);
+    setAbertas(new Set());
+    loadData(1, novoAno);
+  };
 
   const handlePageChange = (p: number) => {
     loadData(p);
@@ -116,6 +140,16 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
       <p className="text-sm text-muted-foreground">
         Toque em um pronunciamento para ler o resumo e acessar o texto oficial.
       </p>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <FiltroAno ano={ano} anos={anos} onChange={handleAno} />
+      </div>
+
+      {ano && !isLoading && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {total} discurso(s) em {ano}
+        </p>
+      )}
 
       {discursos.length === 0 && !isLoading ? (
         <div className="rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">

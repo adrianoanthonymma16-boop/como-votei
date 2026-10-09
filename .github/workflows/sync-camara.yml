@@ -40,7 +40,9 @@ jobs:
     timeout-minutes: 360
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Timeouts estendidos: o Neon free tier suspende o compute parado e a
+      # primeira conexão (cold start) estoura o pool_timeout padrão (P1002).
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}&connect_timeout=30&pool_timeout=60
       CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
       # Sem NODE_ENV=production: com ele, `npm ci` omite devDependencies
       # (ts-node/typescript) e o `npx ts-node` baixa cópia avulsa que quebra.
@@ -62,7 +64,14 @@ jobs:
         run: npx prisma generate
 
       - name: Run migrations
-        run: npx prisma migrate deploy
+        # Retry: primeira conexão após idle do Neon pode dar P1002 (cold start).
+        run: |
+          for tentativa in 1 2 3 4 5; do
+            npx prisma migrate deploy && break
+            echo "migrate falhou (tentativa $tentativa/5) — retry em 30s..."
+            [ "$tentativa" = 5 ] && exit 1
+            sleep 30
+          done
 
       # Agendado (sem inputs): cobre 3 anos (MVP) em loop para garantir
       # que 2024/2025/2026 estejam sempre completos. Cada fase roda separada
@@ -156,8 +165,14 @@ jobs:
           [ "$INPUT_PROPOSICOES" = "true" ] && ARGS="$ARGS --apenas-proposicoes"
           [ "$INPUT_FREQUENCIA" = "true" ] && ARGS="$ARGS --apenas-frequencia"
           echo "Args: '${ARGS:-<full sync>}'"
+          # Retry (upserts são idempotentes): protege de P1002 transitório.
           # shellcheck disable=SC2086
-          npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts $ARGS
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts $ARGS && break
+            echo "sync falhou (tentativa $tentativa/3) — retry em 60s..."
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 60
+          done
 
       - name: Log completion
         if: always()

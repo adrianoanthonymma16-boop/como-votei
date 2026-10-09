@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
+import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
 import { descreverTipoProposicao } from '@/lib/temas';
@@ -51,20 +52,23 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
   // '' = todas | 'true' = aprovadas (SANCIONADA/APROVADA_*) | 'false' = não aprovadas
   const [aprovada, setAprovada] = useState('');
   const [tema, setTema] = useState('');
+  const [ano, setAno] = useState('');
+  const [anos, setAnos] = useState<number[]>([]);
   const [temas, setTemas] = useState<Array<{ tema: string; total: number }>>([]);
 
   const loadData = useCallback(
-    async (targetPage: number, filtros?: { aprovada: string; tema: string }) => {
+    async (targetPage: number, filtros?: { aprovada: string; tema: string; ano: string }) => {
       try {
         setIsLoading(true);
         setError(null);
-        const f = filtros ?? { aprovada, tema };
+        const f = filtros ?? { aprovada, tema, ano };
         const params = new URLSearchParams({
           page: String(targetPage),
           limit: String(PER_PAGE),
         });
         if (f.aprovada) params.set('aprovada', f.aprovada);
         if (f.tema) params.set('tema', f.tema);
+        if (f.ano) params.set('ano', f.ano);
         const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`);
         if (!response.ok) throw new Error('Erro ao carregar proposições');
         const data = await response.json();
@@ -79,26 +83,40 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         setIsLoading(false);
       }
     },
-    [parlamentarId, aprovada, tema]
+    [parlamentarId, aprovada, tema, ano]
   );
 
   useEffect(() => {
     loadData(1);
   }, [loadData]);
 
+  useEffect(() => {
+    let ativo = true;
+    fetch(`/api/parlamentares/${parlamentarId}/anos`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (ativo && Array.isArray(d?.anos)) setAnos(d.anos);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [parlamentarId]);
+
   const handlePageChange = (p: number) => {
     loadData(p);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleFiltro = (novaAprovada: string, novoTema: string) => {
+  const handleFiltro = (novaAprovada: string, novoTema: string, novoAno: string) => {
     setAprovada(novaAprovada);
     setTema(novoTema);
+    setAno(novoAno);
     setAbertas(new Set());
-    loadData(1, { aprovada: novaAprovada, tema: novoTema });
+    loadData(1, { aprovada: novaAprovada, tema: novoTema, ano: novoAno });
   };
 
-  const filtrosAtivos = aprovada !== '' || tema !== '';
+  const filtrosAtivos = aprovada !== '' || tema !== '' || ano !== '';
 
   const alternar = (id: string) =>
     setAbertas((prev) => {
@@ -151,13 +169,14 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         Toque em uma proposição para ler o que ela propõe e ver a tramitação oficial.
       </p>
 
-      {/* Filtros — situação oficial e tema oficial, sem inventar categorias */}
+      {/* Filtros — situação oficial, tema oficial e ano, sem inventar categorias */}
       <div className="flex flex-col sm:flex-row gap-3">
+        <FiltroAno ano={ano} anos={anos} onChange={(v) => handleFiltro(aprovada, tema, v)} />
         <label className="flex flex-1 items-center gap-2 text-sm text-muted-foreground">
           <span className="shrink-0 font-medium">Situação</span>
           <select
             value={aprovada}
-            onChange={(e) => handleFiltro(e.target.value, tema)}
+            onChange={(e) => handleFiltro(e.target.value, tema, ano)}
             aria-label="Filtrar por situação"
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -170,7 +189,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
           <span className="shrink-0 font-medium">Tema</span>
           <select
             value={tema}
-            onChange={(e) => handleFiltro(aprovada, e.target.value)}
+            onChange={(e) => handleFiltro(aprovada, e.target.value, ano)}
             aria-label="Filtrar por tema"
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -185,7 +204,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         {filtrosAtivos && (
           <button
             type="button"
-            onClick={() => handleFiltro('', '')}
+            onClick={() => handleFiltro('', '', '')}
             className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Limpar
@@ -196,6 +215,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
       {filtrosAtivos && !isLoading && (
         <p className="text-xs text-muted-foreground" aria-live="polite">
           {total} proposição(ões) encontrada(s)
+          {ano && ` · ano ${ano}`}
           {aprovada === 'true' && ' · aprovadas (sancionadas ou aprovadas em plenário)'}
           {aprovada === 'false' && ' · não aprovadas'}
           {tema && ` · tema ${tema}`}
