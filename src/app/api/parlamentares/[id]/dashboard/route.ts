@@ -83,7 +83,19 @@ export async function GET(
   // Sem ?ano, usa 2026 se houver dados globais para esse ano;
   // senão o ano mais recente com registros do parlamentar;
   // nunca o ano corrente vazio.
-  const anos = await anosComDados(id);
+  // `anos` inclui anos de frequência oficial mesmo sem atividade
+  // (ex.: 2025 tem frequência sincronizada mas votações ainda não).
+  const [anosAtividade, anosFrequencia] = await Promise.all([
+    anosComDados(id),
+    prisma.frequencia.findMany({
+      where: { parlamentarId: id },
+      select: { ano: true },
+      orderBy: { ano: 'desc' },
+    }),
+  ]);
+  const anos = Array.from(
+    new Set([...anosAtividade, ...anosFrequencia.map((f) => f.ano)])
+  ).sort((a, b) => b - a);
   const ano = parsed.data.ano ?? (ANOS_GLOBAL.includes(2026) ? 2026 : anos[0] ?? new Date().getFullYear());
   const temDados = anos.length > 0;
 

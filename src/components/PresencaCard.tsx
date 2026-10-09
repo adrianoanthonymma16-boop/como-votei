@@ -54,7 +54,7 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
   return (
     <div className="stat-card text-center sm:text-left" aria-live="polite">
       <div className="flex items-center justify-between gap-2 mb-1">
-        <p className="text-xs sm:text-sm text-muted-foreground">Presença em votações</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Presença em plenário</p>
         {dados && dados.anos.length > 0 && (
           <label className="flex items-center gap-1 text-xs text-muted-foreground">
             <span className="sr-only">Filtrar presença por ano</span>

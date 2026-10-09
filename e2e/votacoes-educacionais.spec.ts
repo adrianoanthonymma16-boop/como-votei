@@ -92,7 +92,7 @@ test.describe('Votações educacionais', () => {
     await page.goto('/parlamentares/cmtjl8hum002nwod5zhw6h2ny/votacoes');
 
     // O card existe no header com o rótulo
-    const card = page.locator('text=Presença em votações').first();
+    const card = page.locator('text=Presença em plenário').first();
     await expect(card).toBeVisible();
 
     // Ou há a barra empilhada com os 3 números, ou o estado "sem dados oficiais"
