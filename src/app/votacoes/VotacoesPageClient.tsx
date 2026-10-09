@@ -215,13 +215,18 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg bg-slate-800" />)
         ) : votos.length === 0 ? (
-          isNominal && !buscaParlamentar && !filtroVoto ? (
+          buscaParlamentar || filtroVoto ? (
+            <p className="py-8 text-center text-sm text-slate-500">Nenhum voto encontrado com esse filtro.</p>
+          ) : isNominal ? (
             <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 px-4 py-6 text-center">
               <p className="text-sm font-medium text-amber-300">Votação nominal sem votos no banco — sincronização pendente</p>
               <p className="mt-1 text-xs text-amber-200/70">Esta votação tem placar na descrição mas os votos individuais ainda não foram importados. Tente novamente em alguns minutos.</p>
             </div>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-500">Nenhum voto encontrado com esse filtro.</p>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-6 text-center">
+              <p className="text-sm font-medium text-slate-400">Votos individuais não disponíveis</p>
+              <p className="mt-1 text-xs text-slate-500">A fonte oficial da Câmara não publicou os votos nominais desta votação. O placar está na descrição acima.</p>
+            </div>
           )
         ) : (
           votos.map((v) => (
