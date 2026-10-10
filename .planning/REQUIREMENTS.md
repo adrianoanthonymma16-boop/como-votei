@@ -23,7 +23,7 @@
 ### Qualidade / Verificação
 
 - [x] **QA-01**: Toda fase passa `npx tsc --noEmit && npx next lint && npx jest && npx next build` antes de commit/push
-- [ ] **QA-02**: Lógica de conversão de dinheiro (`parseBRL`), name-match e agregação tem cobertura de teste unitário (Jest); valores monetários usam `Decimal(14,2)`, nunca float/`parseFloat`
+- [x] **QA-02**: Lógica de conversão de dinheiro (`parseBRL`), name-match e agregação tem cobertura de teste unitário (Jest); valores monetários usam `Decimal(14,2)`, nunca float/`parseFloat`
 - [ ] **QA-03**: Fluxo de UI de gastos validado end-to-end com Playwright (local ou produção) — total, barras, lista, links e estados
 
 ## v2 Requirements (deferred)

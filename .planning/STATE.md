@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Schema e Contratos de Despesas
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-10T02:43:54.528Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-10-10T03:16:53.199Z"
 last_activity: 2026-10-09
 last_activity_desc: Phase 01 execution started
-state_head: 35a2ccf2183066786bdc0a223358e80bde708bfe
+state_head: 976e6f7e6046981bbfbb78e122207bff035e1e13
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-09)
 ## Current Position
 
 Phase: 01 (Schema e Contratos de Despesas) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-10-09 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 25 min | 3 tasks | 8 files |
+| Phase 01-schema-e-contratos-de-despesas P02 | 7 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,11 @@ Recent decisions affecting current work:
 - [Roadmap]: 4 fases em vez das 5 do research — a Phase 5 do research (v1.x enhancements: link-health, evolução mensal, CSV) já está deferred em REQUIREMENTS.md (GAST-V2-01..06)
 - [01-01 T2 checkpoint, S6 sign-off 2026-10-10T02:27:45Z]: idExterno key shape frozen as S6 content-fingerprint `CAMARA:{idDocumento}:{sha256(rawRecordJSON)[0:16]}` / `SENADO:{id}` with global `@@unique(idExterno)` (D-03 amended) — rationale: 3-year measured evidence (556,044 rows 2024–2026) shows 0 collisions at sha256[:16]; literal D-03 form `CAMARA:{idDocumento}` refuted (14,541/10,319/46 duplicate keys per year, idDocumento=0 sentinels, 124 cross-year overlaps; `@@unique([casa, idExterno])` fallback refuted too — collisions are intra-Câmara); sha256[:8] collides 4× at 209k rows so 16 hex chars is the researched floor. Recorded BEFORE the `add_despesa` migration freeze (Task 2 gate verify: no `prisma/migrations/*add_despesa*` existed at sign-off).
 - [Phase 01]: S6 content-fingerprint key shape frozen via human checkpoint (Task 2) — 3-year measured evidence (556,044 rows 2024-2026) shows 0 collisions at sha256[:16]; literal D-03 form CAMARA:{idDocumento} refuted (14,541/10,319/46 duplicate keys/year, idDocumento=0 sentinels, 124 cross-year overlaps; @@unique([casa, idExterno]) fallback refuted too); sha256[:8] collides 4x at 209k rows so 16 hex chars is the researched floor
+- [Phase 01]: parseBRL returns string | null — canonical dot-decimal string feeds new Prisma.Decimal(...) directly at ingestion edge
+- [Phase 01]: Empty/whitespace/undefined/null → null; non-empty malformed → throws descriptive Error (fail-loud per QA-02)
+- [Phase 01]: Module-source scan test mechanically enforces QA-02: zero parseFloat/Number( constructor calls in despesas.ts
+- [Phase 01]: parseDataFonte uses slice-10 + regex + Date.UTC(); validates by reading back UTC components; accepts typo years
+- [Phase 01]: ANOS_JANELA computed via IIFE from UTC clock — single source for Phase 2 import loop and retention (GAST-05)
 
 ### Pending Todos
 
@@ -91,6 +97,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-10T02:43:54.512Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-10-10T03:16:53.180Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
