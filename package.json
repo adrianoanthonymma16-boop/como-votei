@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.12.0",
+    "@types/yauzl": "^3.4.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
     "next": "14.2.0",
@@ -28,7 +29,9 @@
     "pino-pretty": "^11.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "stream-json": "^2.1.0",
     "tailwind-merge": "^2.2.0",
+    "yauzl": "^3.4.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
