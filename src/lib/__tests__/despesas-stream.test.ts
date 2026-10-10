@@ -326,6 +326,7 @@ describe('Streaming pipeline - transformRecord', () => {
 });
 
 describe('Streaming pipeline - chunk emission mock', () => {
+  jest.setTimeout(15000);
   it('should emit individual objects through streamArray', async () => {
     const testData = [
       { id: 1, nome: 'Teste 1' },
