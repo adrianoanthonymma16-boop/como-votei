@@ -107,6 +107,32 @@ export interface FrequenciaNormalizada {
   taxaPresenca: number;
 }
 
+/**
+ * Contrato único de despesa normalizada entre adapters (Phase 2) e upsert.
+ * Invariante DB-free: zero imports, plain interface + string-literal unions.
+ * D-01: campos de auditoria (nomeParlamentarRaw) + namespaced idExterno.
+ * D-07: valor/valorGlosa são strings canônicas dot-decimal (output de parseBRL),
+ *       nunca number — new Prisma.Decimal(valor) é lossless.
+ * D-05: categoria é label livre da fonte (Câmara descricao/subcota, Senado tipoDespesa).
+ * D-08: casa espelha enum Prisma Casa como string-literal union (sem import @prisma/client).
+ */
+export interface DespesaNormalizada {
+  idExterno: string;                    // namespaced: "CAMARA:{idDocumento}:{fp16}" | "SENADO:{id}"
+  parlamentarIdExterno?: string;         // source id — Câmara idDeputado / Senado codSenador (matcher Phase 2)
+  nomeParlamentarRaw: string;           // audit do match (D-01) — nome bruto da linha da despesa
+  casa: 'CAMARA' | 'SENADO';
+  ano: number;
+  mes: number;
+  data?: Date;                          // nullable — bulk tem linhas sem dataEmissao
+  categoria: string;                    // label livre da fonte (D-05)
+  fornecedor: string;
+  cpfCnpj?: string;
+  documento?: string;                   // número/tipo do documento
+  valor: string;                        // signed canonical dot-decimal (D-07) — string, never number
+  valorGlosa?: string;                  // same convention
+  urlDocumento?: string;                // Senado nunca emite (0/3 anos)
+}
+
 export interface SyncResult {
   sucessos: number;
   erros: number;
