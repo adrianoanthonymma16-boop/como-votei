@@ -5,7 +5,18 @@ import { camaraNameMatch, type ResultadoMatch, type DiretorioParlamentares } fro
  * (01-RESEARCH.md: 556k linhas, 100% idDeputado = Parlamentar.idExterno, 0 misattribution, 0.69% silent-drop).
  */
 describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
-  // Diretório de teste simulando o índice construído pela Phase 2
+  // Helper para normalizar chaves do diretório (mesmo que a implementação)
+  const normNome = (nome: string) =>
+    String(nome || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  const normUf = (uf: string) => String(uf || '').trim().toUpperCase();
+  const chave = (nome: string, uf: string) => `${normNome(nome)}|${normUf(uf)}`;
+
+  // Diretório de teste simulando o índice construído pela Phase 2 (chaves JÁ normalizadas)
   const diretorio: DiretorioParlamentares = {
     porIdExterno: {
       '98057': 'parlamentar-lafayette-id',
@@ -15,11 +26,11 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       '204379': 'parlamentar-acacio-id',
     },
     porNomeUf: {
-      'LAFAYETTE DE ANDRADA|MG': ['parlamentar-lafayette-id'],
-      'DANILO FORTE|CE': ['parlamentar-danilo-id'],
-      'PAULO FREIRE COSTA|SP': ['parlamentar-paulo-id'],
-      'RUI FALCAO|SP': ['parlamentar-rui-id'],
-      'ACACIO FAVACHO|AP': ['parlamentar-acacio-id'],
+      [chave('Lafayette de Andrada', 'MG')]: ['parlamentar-lafayette-id'],
+      [chave('Danilo Forte', 'CE')]: ['parlamentar-danilo-id'],
+      [chave('Paulo Freire Costa', 'SP')]: ['parlamentar-paulo-id'],
+      [chave('Rui Falcão', 'SP')]: ['parlamentar-rui-id'],
+      [chave('Acacio Favacho', 'AP')]: ['parlamentar-acacio-id'],
     },
     partidosPorId: {
       'parlamentar-lafayette-id': 'PL',
@@ -32,10 +43,9 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
 
   describe('id-first resolution (Option A)', () => {
     it('known idDeputado resolves via porIdExterno with metodo idExterno even when raw name differs', () => {
-      // Lafayette no bulk tem nome "Lafayette de Andrada" mas o diretório pode ter variação
       const entrada = {
         idDeputado: 98057,
-        nomeParlamentar: 'LAFAYETTE DE ANDRADA', // mesmo nome normalizado
+        nomeParlamentar: 'LAFAYETTE DE ANDRADA',
         uf: 'MG',
         partidoSigla: 'PL',
       };
@@ -47,7 +57,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
 
     it('unknown idDeputado falls through to nome+UF path; a hit returns metodo nomeUf', () => {
       const entrada = {
-        idDeputado: 999999, // não existe no diretório
+        idDeputado: 999999,
         nomeParlamentar: 'Danilo Forte',
         uf: 'CE',
         partidoSigla: 'PP',
@@ -76,7 +86,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dirComDuploEspaco: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'CONFUCIO MOURA|RO': ['parlamentar-confucio-id'],
+          [chave('Confúcio  Moura', 'RO')]: ['parlamentar-confucio-id'],
         },
         partidosPorId: {
           'parlamentar-confucio-id': 'MDB',
@@ -96,7 +106,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dir: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'DANILO FORTE|CE': ['parlamentar-danilo-id'],
+          [chave('Danilo Forte', 'CE')]: ['parlamentar-danilo-id'],
         },
         partidosPorId: {
           'parlamentar-danilo-id': 'PP',
@@ -104,7 +114,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       };
       const entrada = {
         nomeParlamentar: 'Danilo Forte',
-        uf: 'ce', // lowercase
+        uf: 'ce',
       };
       const resultado = camaraNameMatch(entrada, dir);
       expect(resultado).not.toBeNull();
@@ -115,14 +125,14 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dir: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOSE SILVA|SP': ['parlamentar-jose-id'],
+          [chave('Jose Silva', 'SP')]: ['parlamentar-jose-id'],
         },
         partidosPorId: {
           'parlamentar-jose-id': 'PT',
         },
       };
       const entrada = {
-        nomeParlamentar: 'JOSE   SILVA', // múltiplos espaços
+        nomeParlamentar: 'JOSE   SILVA',
         uf: 'SP',
       };
       const resultado = camaraNameMatch(entrada, dir);
@@ -136,7 +146,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const entrada = {
         nomeParlamentar: 'Danilo Forte',
         uf: 'CE',
-        partidoSigla: 'PT', // diferente do PP no diretório
+        partidoSigla: 'PT',
       };
       const resultado = camaraNameMatch(entrada, diretorio);
       expect(resultado).not.toBeNull();
@@ -161,7 +171,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dirAmbiguo: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOSE SILVA|SP': ['parlamentar-jose-1', 'parlamentar-jose-2'],
+          [chave('Jose Silva', 'SP')]: ['parlamentar-jose-1', 'parlamentar-jose-2'],
         },
         partidosPorId: {
           'parlamentar-jose-1': 'PT',
@@ -180,7 +190,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dirAmbiguo: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOSE SILVA|SP': ['parlamentar-jose-1', 'parlamentar-jose-2'],
+          [chave('Jose Silva', 'SP')]: ['parlamentar-jose-1', 'parlamentar-jose-2'],
         },
         partidosPorId: {
           'parlamentar-jose-1': 'PT',
@@ -190,7 +200,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const entrada = {
         nomeParlamentar: 'Jose Silva',
         uf: 'SP',
-        partidoSigla: 'MDB', // não corresponde a nenhum
+        partidoSigla: 'MDB',
       };
       const resultado = camaraNameMatch(entrada, dirAmbiguo);
       expect(resultado).toBeNull();
@@ -200,11 +210,11 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dirAmbiguo: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOSE SILVA|SP': ['parlamentar-jose-1', 'parlamentar-jose-2'],
+          [chave('Jose Silva', 'SP')]: ['parlamentar-jose-1', 'parlamentar-jose-2'],
         },
         partidosPorId: {
           'parlamentar-jose-1': 'PT',
-          'parlamentar-jose-2': 'PT', // mesmo partido
+          'parlamentar-jose-2': 'PT',
         },
       };
       const entrada = {
@@ -222,7 +232,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dirAmbiguo: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOSE SILVA|SP': ['parlamentar-jose-1', 'parlamentar-jose-2'],
+          [chave('Jose Silva', 'SP')]: ['parlamentar-jose-1', 'parlamentar-jose-2'],
         },
         partidosPorId: {
           'parlamentar-jose-1': 'PT',
@@ -284,7 +294,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dir: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOAO SILVA FILHO|SP': ['parlamentar-joao-id'],
+          [chave('JOAO SILVA FILHO', 'SP')]: ['parlamentar-joao-id'],
         },
         partidosPorId: {
           'parlamentar-joao-id': 'PT',
@@ -302,7 +312,7 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dir: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'MARIA SOUZA|RJ': ['parlamentar-maria-id'],
+          [chave('MARIA SOUZA', 'RJ')]: ['parlamentar-maria-id'],
         },
         partidosPorId: {
           'parlamentar-maria-id': 'PT',
@@ -320,14 +330,14 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
       const dir: DiretorioParlamentares = {
         porIdExterno: {},
         porNomeUf: {
-          'JOAO SILVA|SP': ['parlamentar-joao-id'],
+          [chave('JOAO SILVA', 'SP')]: ['parlamentar-joao-id'],
         },
         partidosPorId: {
           'parlamentar-joao-id': 'PT',
         },
       };
       const entrada = {
-        nomeParlamentar: 'joao   silva', // lowercase + multi-space
+        nomeParlamentar: 'joao   silva',
         uf: 'sp',
       };
       const resultado = camaraNameMatch(entrada, dir);
@@ -338,13 +348,8 @@ describe('camaraNameMatch (contrato D-06 + id-first amendment)', () => {
   });
 
   describe('Option B variant (compiled out under A)', () => {
-    // Mantido como documentação da variante literal D-06/GAST-08
-    // Se o checkpoint fosse Option B, este bloco seria o comportamento ativo
     it.skip('Option B: idDeputado ignored, name+UF only', () => {
-      // Comportamento: ignora idDeputado completamente, só normaliza nome+UF
-      // Ambiguidade, líder, partido-divergência iguais ao Option A
-      // Apenas a prioridade id-first é removida
-      expect(true).toBe(true); // placeholder para flip de um bloco
+      expect(true).toBe(true);
     });
   });
 });
