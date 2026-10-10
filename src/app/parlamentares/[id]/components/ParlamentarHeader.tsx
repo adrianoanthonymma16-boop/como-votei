@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { PresencaCard } from '@/components/PresencaCard';
 
-export type SecaoId = 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard' | 'produtividade';
+export type SecaoId = 'gastos' | 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard' | 'produtividade';
 
 interface ParlamentarHeaderData {
   id: string;
@@ -21,12 +21,13 @@ interface ParlamentarHeaderData {
 }
 
 const secoes: { id: SecaoId; label: string }[] = [
-  { id: 'votacoes', label: 'Votações' },
-  { id: 'proposicoes', label: 'Projetos' },
-  { id: 'discursos', label: 'Discursos' },
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'produtividade', label: 'Produtividade' },
-];
+    { id: 'gastos', label: 'Gastos' },
+    { id: 'votacoes', label: 'Votações' },
+    { id: 'proposicoes', label: 'Proposições' },
+    { id: 'discursos', label: 'Discursos' },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'produtividade', label: 'Produtividade' },
+  ];
 
 /** Humaniza códigos normalizados de situação (EXERCICIO -> Exercício). */
 function rotuloSituacao(situacao?: string | null): string {
@@ -45,12 +46,13 @@ function rotuloSituacao(situacao?: string | null): string {
 }
 
 const coresSecao: Record<SecaoId, string> = {
-  votacoes: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
-  proposicoes: 'group-hover:text-green-600 dark:group-hover:text-green-400',
-  discursos: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
-  dashboard: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
-  produtividade: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
-};
+    gastos: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
+    votacoes: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
+    proposicoes: 'group-hover:text-green-600 dark:group-hover:text-green-400',
+    discursos: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
+    dashboard: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
+    produtividade: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
+  };
 
 export function ParlamentarHeader({
   parlamentar,

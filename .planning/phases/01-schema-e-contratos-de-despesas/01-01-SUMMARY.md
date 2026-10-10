@@ -192,3 +192,11 @@ None - no external service configuration required.
 
 *Phase: 01-schema-e-contratos-de-despesas*
 *Completed: 2026-10-10*
+## Self-Check: PASSED
+
+- All created files exist on disk: VERIFIED
+- All commit hashes found in git log: VERIFIED
+- SUMMARY.md created at .planning/phases/01-schema-e-contratos-de-despesas/01-01-SUMMARY.md: VERIFIED
+- STATE.md updated with position, decisions, session: VERIFIED
+- ROADMAP.md updated with plan progress: VERIFIED
+- REQUIREMENTS.md updated with QA-01 complete: VERIFIED

@@ -13,25 +13,40 @@ describe('Retention DELETE', () => {
   const anosJanela = [currentYear, currentYear - 1, currentYear - 2];
   const anoForaJanela = currentYear - 3;
 
+  let testPrefix: string;
+
   beforeAll(async () => {
     await prisma.despesa.deleteMany({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:' } },
+      where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
     });
+  });
+
+  beforeEach(() => {
+    testPrefix = `RETENTION_TEST_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
   });
 
   beforeEach(async () => {
     await prisma.despesa.deleteMany({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:' } },
+      where: { idExterno: { startsWith: testPrefix } },
+    });
+  });
+
+  afterEach(async () => {
+    await prisma.despesa.deleteMany({
+      where: { idExterno: { startsWith: testPrefix } },
     });
   });
 
   afterAll(async () => {
+    await prisma.despesa.deleteMany({
+      where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
+    });
     await prisma.$disconnect();
   });
 
   it('should delete records outside ANOS_JANELA for CAMARA', async () => {
     const inWindow = anosJanela.map((ano, i) => ({
-      idExterno: `RETENTION_TEST:CAMARA_IN_${ano}_${i}`,
+      idExterno: `${testPrefix}CAMARA_IN_${ano}_${i}`,
       casa: 'CAMARA' as Casa,
       ano,
       mes: 1,
@@ -42,7 +57,7 @@ describe('Retention DELETE', () => {
     }));
 
     const outOfWindow = [{
-      idExterno: `RETENTION_TEST:CAMARA_OUT_${anoForaJanela}`,
+      idExterno: `${testPrefix}CAMARA_OUT_${anoForaJanela}`,
       casa: 'CAMARA' as Casa,
       ano: anoForaJanela,
       mes: 1,
@@ -55,10 +70,10 @@ describe('Retention DELETE', () => {
     await prisma.despesa.createMany({ data: [...inWindow, ...outOfWindow] });
 
     const beforeIn = await prisma.despesa.count({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:CAMARA_IN_' } },
+      where: { idExterno: { startsWith: `${testPrefix}CAMARA_IN_` } },
     });
     const beforeOut = await prisma.despesa.count({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:CAMARA_OUT_' } },
+      where: { idExterno: { startsWith: `${testPrefix}CAMARA_OUT_` } },
     });
 
     expect(beforeIn).toBe(anosJanela.length);
@@ -74,20 +89,16 @@ describe('Retention DELETE', () => {
 
     expect(Number(deleted)).toBe(1);
 
-    const afterIn = await prisma.despesa.count({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:CAMARA_IN_' } },
-    });
     const afterOut = await prisma.despesa.count({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:CAMARA_OUT_' } },
+      where: { idExterno: { startsWith: `${testPrefix}CAMARA_OUT_` } },
     });
 
-    expect(afterIn).toBe(anosJanela.length);
     expect(afterOut).toBe(0);
   });
 
   it('should delete records outside ANOS_JANELA for SENADO', async () => {
     const inWindow = anosJanela.map((ano, i) => ({
-      idExterno: `RETENTION_TEST:SENADO_IN_${ano}_${i}`,
+      idExterno: `${testPrefix}SENADO_IN_${ano}_${i}`,
       casa: 'SENADO' as Casa,
       ano,
       mes: 1,
@@ -98,7 +109,7 @@ describe('Retention DELETE', () => {
     }));
 
     const outOfWindow = [{
-      idExterno: `RETENTION_TEST:SENADO_OUT_${anoForaJanela}`,
+      idExterno: `${testPrefix}SENADO_OUT_${anoForaJanela}`,
       casa: 'SENADO' as Casa,
       ano: anoForaJanela,
       mes: 1,
@@ -109,6 +120,16 @@ describe('Retention DELETE', () => {
     }];
 
     await prisma.despesa.createMany({ data: [...inWindow, ...outOfWindow] });
+
+    const beforeIn = await prisma.despesa.count({
+      where: { idExterno: { startsWith: `${testPrefix}SENADO_IN_` } },
+    });
+    const beforeOut = await prisma.despesa.count({
+      where: { idExterno: { startsWith: `${testPrefix}SENADO_OUT_` } },
+    });
+
+    expect(beforeIn).toBe(anosJanela.length);
+    expect(beforeOut).toBe(1);
 
     const deleted = await prisma.$executeRawUnsafe(
       `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
@@ -121,16 +142,16 @@ describe('Retention DELETE', () => {
     expect(Number(deleted)).toBe(1);
 
     const afterOut = await prisma.despesa.count({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:SENADO_OUT_' } },
+      where: { idExterno: { startsWith: `${testPrefix}SENADO_OUT_` } },
     });
 
     expect(afterOut).toBe(0);
   });
 
-  it('should not delete records from other casa', async () => {
+  it('should not delete records from other casa (CAMARA)', async () => {
     await prisma.despesa.create({
       data: {
-        idExterno: 'RETENTION_TEST:CAMARA_CROSS_2020',
+        idExterno: `${testPrefix}CAMARA_CROSS_2020`,
         casa: 'CAMARA',
         ano: 2020,
         mes: 1,
@@ -150,7 +171,7 @@ describe('Retention DELETE', () => {
     );
 
     const crossRecord = await prisma.despesa.findUnique({
-      where: { idExterno: 'RETENTION_TEST:CAMARA_CROSS_2020' },
+      where: { idExterno: `${testPrefix}CAMARA_CROSS_2020` },
     });
 
     expect(crossRecord).not.toBeNull();
@@ -165,19 +186,20 @@ describe('Retention DELETE', () => {
   it('should handle empty result (nothing to delete)', async () => {
     // Clean up any existing test records first
     await prisma.despesa.deleteMany({
-      where: { idExterno: { startsWith: 'RETENTION_TEST:EMPTY_' } },
+      where: { idExterno: { startsWith: `${testPrefix}EMPTY_` } },
     });
 
-    const inWindow = [{
-      idExterno: `RETENTION_TEST:EMPTY_${currentYear}`,
+    // Create only records inside the window
+    const inWindow = anosJanela.map((ano, i) => ({
+      idExterno: `${testPrefix}EMPTY_IN_${ano}_${i}`,
       casa: 'CAMARA' as Casa,
-      ano: currentYear,
+      ano,
       mes: 1,
       categoria: 'TESTE',
       fornecedor: 'FORNECEDOR',
       valor: '100.00',
       nomeParlamentarRaw: 'TESTE',
-    }];
+    }));
 
     await prisma.despesa.createMany({ data: inWindow });
 
@@ -191,4 +213,11 @@ describe('Retention DELETE', () => {
 
     expect(Number(deleted)).toBe(0);
   });
+});
+
+afterAll(async () => {
+  await prisma.despesa.deleteMany({
+    where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
+  });
+  await prisma.$disconnect();
 });

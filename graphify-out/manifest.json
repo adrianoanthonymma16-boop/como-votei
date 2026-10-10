@@ -1,0 +1,800 @@
+{
+  ".eslintrc.json": {
+    "mtime": 1788375407.858286,
+    "seen": 1791591597.554997,
+    "ast_hash": "9b8be5ef96ddd69ecd1ddc1554c61a88",
+    "semantic_hash": "9b8be5ef96ddd69ecd1ddc1554c61a88"
+  },
+  ".planning/config.json": {
+    "mtime": 1791553316.7574582,
+    "seen": 1791591597.555001,
+    "ast_hash": "4596f40f96792d0f7b494ac83463c11e",
+    "semantic_hash": "4596f40f96792d0f7b494ac83463c11e"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-fixtures-fonte.json": {
+    "mtime": 1791556002.6677825,
+    "seen": 1791591597.5550027,
+    "ast_hash": "ae27bd263ed04561ba357dd086b84b2d",
+    "semantic_hash": "ae27bd263ed04561ba357dd086b84b2d"
+  },
+  ".planning/state.json": {
+    "mtime": 1791589673.5583706,
+    "seen": 1791591597.5550036,
+    "ast_hash": "09a67e0b321e62d4cd9d44f93f3828dd",
+    "semantic_hash": "09a67e0b321e62d4cd9d44f93f3828dd"
+  },
+  "e2e/votacoes-educacionais.spec.ts": {
+    "mtime": 1791544579.9253638,
+    "seen": 1791591597.5550041,
+    "ast_hash": "e03c67a618c3caa7c7c87d8f8c4795aa",
+    "semantic_hash": "e03c67a618c3caa7c7c87d8f8c4795aa"
+  },
+  "jest.config.js": {
+    "mtime": 1788374644.4217668,
+    "seen": 1791591597.5550046,
+    "ast_hash": "57dc1702483730dc464cb20c274b6f98",
+    "semantic_hash": "57dc1702483730dc464cb20c274b6f98"
+  },
+  "next.config.js": {
+    "mtime": 1788296927.4701421,
+    "seen": 1791591597.5550056,
+    "ast_hash": "ca982c9d917c26f88ce4c4cbaa791741",
+    "semantic_hash": "ca982c9d917c26f88ce4c4cbaa791741"
+  },
+  "package.json": {
+    "mtime": 1788442035.1084414,
+    "seen": 1791591597.555006,
+    "ast_hash": "792f0b27f25973e9228b860baab5d18c",
+    "semantic_hash": "792f0b27f25973e9228b860baab5d18c"
+  },
+  "playwright.config.ts": {
+    "mtime": 1788412105.2664943,
+    "seen": 1791591597.5550065,
+    "ast_hash": "82a10f409197baa7a349ed73f1c916c6",
+    "semantic_hash": "82a10f409197baa7a349ed73f1c916c6"
+  },
+  "postcss.config.js": {
+    "mtime": 1788297004.1471586,
+    "seen": 1791591597.555007,
+    "ast_hash": "b46edce5c4fbda3c64745a89d92aa2d6",
+    "semantic_hash": "b46edce5c4fbda3c64745a89d92aa2d6"
+  },
+  "prisma/migrations/20260902041125_postgresql_init/migration.sql": {
+    "mtime": 1788322285.2936733,
+    "seen": 1791591597.5550077,
+    "ast_hash": "c4024e7444d7ce1d45262442a12ea2cc",
+    "semantic_hash": "c4024e7444d7ce1d45262442a12ea2cc"
+  },
+  "prisma/migrations/20261009034942_temp/migration.sql": {
+    "mtime": 1791517782.9242454,
+    "seen": 1791591597.5550082,
+    "ast_hash": "7fe2c74b1db9aeb5a816970ef7361c37",
+    "semantic_hash": "7fe2c74b1db9aeb5a816970ef7361c37"
+  },
+  "prisma/seed.ts": {
+    "mtime": 1788296029.5843284,
+    "seen": 1791591597.5550086,
+    "ast_hash": "7bed0cce589894fe836b76ade7943bbc",
+    "semantic_hash": "7bed0cce589894fe836b76ade7943bbc"
+  },
+  "scripts/backfill-status-proposicoes.ts": {
+    "mtime": 1791506484.7232072,
+    "seen": 1791591597.5550094,
+    "ast_hash": "b640955e9822f39c01bb1dc4b0c09262",
+    "semantic_hash": "b640955e9822f39c01bb1dc4b0c09262"
+  },
+  "scripts/backfill-votos-faltantes.ts": {
+    "mtime": 1788553395.1372623,
+    "seen": 1791591597.5550098,
+    "ast_hash": "b98fa33ea370b3c9b013f6511e449007",
+    "semantic_hash": "b98fa33ea370b3c9b013f6511e449007"
+  },
+  "scripts/sync-camara.ts": {
+    "mtime": 1791514557.8783426,
+    "seen": 1791591597.5550103,
+    "ast_hash": "b4cee7503045257410c60b43477d87c2",
+    "semantic_hash": "b4cee7503045257410c60b43477d87c2"
+  },
+  "scripts/sync-senado.ts": {
+    "mtime": 1791506484.7232072,
+    "seen": 1791591597.5550108,
+    "ast_hash": "ea93f18421660fabcdf819ef9be3b0dc",
+    "semantic_hash": "ea93f18421660fabcdf819ef9be3b0dc"
+  },
+  "src/app/api/cron/sync-incremental/route.ts": {
+    "mtime": 1791506484.7242072,
+    "seen": 1791591597.5550115,
+    "ast_hash": "b7f07f1286d72270f01d6397e0d1b43b",
+    "semantic_hash": "b7f07f1286d72270f01d6397e0d1b43b"
+  },
+  "src/app/api/parlamentares/[id]/anos/route.ts": {
+    "mtime": 1791515459.4892564,
+    "seen": 1791591597.555012,
+    "ast_hash": "fd017a0a669c6eaf45e99f26585f9bc7",
+    "semantic_hash": "fd017a0a669c6eaf45e99f26585f9bc7"
+  },
+  "src/app/api/parlamentares/[id]/dashboard/route.ts": {
+    "mtime": 1791544566.353605,
+    "seen": 1791591597.5550127,
+    "ast_hash": "0d3229191a2d879bd6d41aa7947e828a",
+    "semantic_hash": "0d3229191a2d879bd6d41aa7947e828a"
+  },
+  "src/app/api/parlamentares/[id]/discursos/route.ts": {
+    "mtime": 1788408122.2613819,
+    "seen": 1791591597.5550132,
+    "ast_hash": "e44d77311d1c5ad4321c7f1303a10116",
+    "semantic_hash": "e44d77311d1c5ad4321c7f1303a10116"
+  },
+  "src/app/api/parlamentares/[id]/frequencia/route.ts": {
+    "mtime": 1788438453.2223186,
+    "seen": 1791591597.5550137,
+    "ast_hash": "4921c4772f4cdc6237695db0d4eb66d3",
+    "semantic_hash": "4921c4772f4cdc6237695db0d4eb66d3"
+  },
+  "src/app/api/parlamentares/[id]/produtividade/route.ts": {
+    "mtime": 1791515482.1755054,
+    "seen": 1791591597.5550144,
+    "ast_hash": "1bc7c663535e7b95f8d631ee4cc49bdf",
+    "semantic_hash": "1bc7c663535e7b95f8d631ee4cc49bdf"
+  },
+  "src/app/api/parlamentares/[id]/proposicoes/route.ts": {
+    "mtime": 1788446731.4857368,
+    "seen": 1791591597.5550148,
+    "ast_hash": "deecc6ef1841c6475193c8fb50ed75a2",
+    "semantic_hash": "deecc6ef1841c6475193c8fb50ed75a2"
+  },
+  "src/app/api/parlamentares/[id]/votacoes/route.ts": {
+    "mtime": 1788408214.0864408,
+    "seen": 1791591597.5550153,
+    "ast_hash": "5b34a00c83c553e268ed024f1658fc85",
+    "semantic_hash": "5b34a00c83c553e268ed024f1658fc85"
+  },
+  "src/app/api/parlamentares/route.ts": {
+    "mtime": 1791519058.3865716,
+    "seen": 1791591597.555016,
+    "ast_hash": "d7bca8193546d9833c9b731a16c4b85f",
+    "semantic_hash": "d7bca8193546d9833c9b731a16c4b85f"
+  },
+  "src/app/api/partidos/route.ts": {
+    "mtime": 1788408544.38125,
+    "seen": 1791591597.5550165,
+    "ast_hash": "fc63d528d586055af74751fcb12e95f5",
+    "semantic_hash": "fc63d528d586055af74751fcb12e95f5"
+  },
+  "src/app/api/stats/visao-geral/route.ts": {
+    "mtime": 1788402969.5565844,
+    "seen": 1791591597.5550172,
+    "ast_hash": "a9e2f3bc7400bda7a95274b867fc4259",
+    "semantic_hash": "a9e2f3bc7400bda7a95274b867fc4259"
+  },
+  "src/app/api/ufs/route.ts": {
+    "mtime": 1788408562.6544607,
+    "seen": 1791591597.5550177,
+    "ast_hash": "4a413c3bb363db3c7ef7d54dbbd56ed3",
+    "semantic_hash": "4a413c3bb363db3c7ef7d54dbbd56ed3"
+  },
+  "src/app/api/votacoes/[id]/votos/route.ts": {
+    "mtime": 1788552688.706066,
+    "seen": 1791591597.5550182,
+    "ast_hash": "8d8a4e73817a1bc1729e01804be731f8",
+    "semantic_hash": "8d8a4e73817a1bc1729e01804be731f8"
+  },
+  "src/app/api/votacoes/route.ts": {
+    "mtime": 1788471181.0266697,
+    "seen": 1791591597.5550187,
+    "ast_hash": "dd84669fc64e3333a57938e64e86821b",
+    "semantic_hash": "dd84669fc64e3333a57938e64e86821b"
+  },
+  "src/app/layout.tsx": {
+    "mtime": 1788471419.1184301,
+    "seen": 1791591597.5550194,
+    "ast_hash": "be7c1d72f56cf1ef306bb9bd7ded8a93",
+    "semantic_hash": "be7c1d72f56cf1ef306bb9bd7ded8a93"
+  },
+  "src/app/page.tsx": {
+    "mtime": 1791519076.5076683,
+    "seen": 1791591597.5550196,
+    "ast_hash": "fb626c592b7b13330597e273539d507d",
+    "semantic_hash": "fb626c592b7b13330597e273539d507d"
+  },
+  "src/app/parlamentares/ParlamentaresPageClient.tsx": {
+    "mtime": 1791519130.9162314,
+    "seen": 1791591597.5550203,
+    "ast_hash": "f4f83aca06fb8ff581b890bf645dff3f",
+    "semantic_hash": "f4f83aca06fb8ff581b890bf645dff3f"
+  },
+  "src/app/parlamentares/[id]/components/DashboardFilters.tsx": {
+    "mtime": 1788463905.5983794,
+    "seen": 1791591597.5550208,
+    "ast_hash": "0dc69a4cab00d1f9e160c3bf9c07e6aa",
+    "semantic_hash": "0dc69a4cab00d1f9e160c3bf9c07e6aa"
+  },
+  "src/app/parlamentares/[id]/components/DashboardTab.tsx": {
+    "mtime": 1788463870.2019315,
+    "seen": 1791591597.5550213,
+    "ast_hash": "1061ddbbea811881dc6435b2212bc18c",
+    "semantic_hash": "1061ddbbea811881dc6435b2212bc18c"
+  },
+  "src/app/parlamentares/[id]/components/DiscursosTab.tsx": {
+    "mtime": 1791515546.4992113,
+    "seen": 1791591597.5550218,
+    "ast_hash": "5babadf76c205c5cbe5434e3cc115012",
+    "semantic_hash": "5babadf76c205c5cbe5434e3cc115012"
+  },
+  "src/app/parlamentares/[id]/components/ParlamentarHeader.tsx": {
+    "mtime": 1791514683.0158603,
+    "seen": 1791591597.5550222,
+    "ast_hash": "719edcce08f986f2f9cd9cd7b5764fde",
+    "semantic_hash": "719edcce08f986f2f9cd9cd7b5764fde"
+  },
+  "src/app/parlamentares/[id]/components/ProdutividadeTab.tsx": {
+    "mtime": 1791515634.3052156,
+    "seen": 1791591597.5550225,
+    "ast_hash": "60c7766ce0dca014f8ea39ae5bd6b24f",
+    "semantic_hash": "60c7766ce0dca014f8ea39ae5bd6b24f"
+  },
+  "src/app/parlamentares/[id]/components/ProposicoesTab.tsx": {
+    "mtime": 1791515603.8208404,
+    "seen": 1791591597.5550232,
+    "ast_hash": "0000eb3e4f51b634e9850def0c7887c9",
+    "semantic_hash": "0000eb3e4f51b634e9850def0c7887c9"
+  },
+  "src/app/parlamentares/[id]/components/VotacoesTab.tsx": {
+    "mtime": 1791515526.0269866,
+    "seen": 1791591597.5550237,
+    "ast_hash": "d5404abb35d18c488803113e8315e851",
+    "semantic_hash": "d5404abb35d18c488803113e8315e851"
+  },
+  "src/app/parlamentares/[id]/dashboard/page.tsx": {
+    "mtime": 1788438676.2287545,
+    "seen": 1791591597.5550241,
+    "ast_hash": "ee524279677611507b715daf1a7e7c31",
+    "semantic_hash": "ee524279677611507b715daf1a7e7c31"
+  },
+  "src/app/parlamentares/[id]/discursos/page.tsx": {
+    "mtime": 1788438676.2307546,
+    "seen": 1791591597.5550246,
+    "ast_hash": "e388b546404a0ff3fe83cde964bc4289",
+    "semantic_hash": "e388b546404a0ff3fe83cde964bc4289"
+  },
+  "src/app/parlamentares/[id]/page.tsx": {
+    "mtime": 1788342776.641461,
+    "seen": 1791591597.5550256,
+    "ast_hash": "6176515f4f2955781d1af9572bc0a622",
+    "semantic_hash": "6176515f4f2955781d1af9572bc0a622"
+  },
+  "src/app/parlamentares/[id]/produtividade/page.tsx": {
+    "mtime": 1791514680.747431,
+    "seen": 1791591597.5550263,
+    "ast_hash": "ff04baf34907946b75acf7de0a82a49e",
+    "semantic_hash": "ff04baf34907946b75acf7de0a82a49e"
+  },
+  "src/app/parlamentares/[id]/proposicoes/page.tsx": {
+    "mtime": 1788438676.2307546,
+    "seen": 1791591597.5550268,
+    "ast_hash": "04f9b3704f0975bc6b269f9aaff2d369",
+    "semantic_hash": "04f9b3704f0975bc6b269f9aaff2d369"
+  },
+  "src/app/parlamentares/[id]/votacoes/page.tsx": {
+    "mtime": 1788438641.579376,
+    "seen": 1791591597.5550272,
+    "ast_hash": "755c2102804cf9dbee63d2296db14ac3",
+    "semantic_hash": "755c2102804cf9dbee63d2296db14ac3"
+  },
+  "src/app/parlamentares/page.tsx": {
+    "mtime": 1788315456.370431,
+    "seen": 1791591597.5550275,
+    "ast_hash": "4e7a5c1a50ae353bc3c395068a69f7e7",
+    "semantic_hash": "4e7a5c1a50ae353bc3c395068a69f7e7"
+  },
+  "src/app/sobre/page.tsx": {
+    "mtime": 1788405845.342123,
+    "seen": 1791591597.555028,
+    "ast_hash": "a2cb09eebd24e5259730549658248121",
+    "semantic_hash": "a2cb09eebd24e5259730549658248121"
+  },
+  "src/app/votacoes/VotacoesPageClient.tsx": {
+    "mtime": 1791520471.7806542,
+    "seen": 1791591597.5550284,
+    "ast_hash": "220dde5adf1c7784818add1e3d41309a",
+    "semantic_hash": "220dde5adf1c7784818add1e3d41309a"
+  },
+  "src/app/votacoes/page.tsx": {
+    "mtime": 1788471353.2804449,
+    "seen": 1791591597.555029,
+    "ast_hash": "328ebb594a7b5f55aa446714be7987b9",
+    "semantic_hash": "328ebb594a7b5f55aa446714be7987b9"
+  },
+  "src/components/AvisoBanner.tsx": {
+    "mtime": 1788455139.595573,
+    "seen": 1791591597.5550294,
+    "ast_hash": "8e02ec88fe69534505238177e5c780ed",
+    "semantic_hash": "8e02ec88fe69534505238177e5c780ed"
+  },
+  "src/components/FiltroAno.tsx": {
+    "mtime": 1791515495.7736547,
+    "seen": 1791591597.55503,
+    "ast_hash": "617c3de39466c658e45b85dd876ed6a3",
+    "semantic_hash": "617c3de39466c658e45b85dd876ed6a3"
+  },
+  "src/components/FonteOficial.tsx": {
+    "mtime": 1788401164.5892186,
+    "seen": 1791591597.5550306,
+    "ast_hash": "1b8bff2bae0da88737256a8eff78a85f",
+    "semantic_hash": "1b8bff2bae0da88737256a8eff78a85f"
+  },
+  "src/components/Logo.tsx": {
+    "mtime": 1788400670.5890553,
+    "seen": 1791591597.555031,
+    "ast_hash": "3ebdcd701c8564edc2ebf6b4727502f2",
+    "semantic_hash": "3ebdcd701c8564edc2ebf6b4727502f2"
+  },
+  "src/components/MetricaProdutividadeInfo.tsx": {
+    "mtime": 1791514090.7251534,
+    "seen": 1791591597.5550315,
+    "ast_hash": "ecb731b8b04bdb7262669eae56086fbb",
+    "semantic_hash": "ecb731b8b04bdb7262669eae56086fbb"
+  },
+  "src/components/ParlamentarCard.tsx": {
+    "mtime": 1791514700.0299215,
+    "seen": 1791591597.5550323,
+    "ast_hash": "7618a7baec7cfe024f9b4a09635cc1b7",
+    "semantic_hash": "7618a7baec7cfe024f9b4a09635cc1b7"
+  },
+  "src/components/ParlamentaresAtivos.tsx": {
+    "mtime": 1791519075.6972547,
+    "seen": 1791591597.5550327,
+    "ast_hash": "9c0cfcc8818d2ce9f29f619c185b2be3",
+    "semantic_hash": "9c0cfcc8818d2ce9f29f619c185b2be3"
+  },
+  "src/components/ParlamentaresList.tsx": {
+    "mtime": 1788400608.44328,
+    "seen": 1791591597.5550334,
+    "ast_hash": "063af2a93f5ee7a713849802381ee237",
+    "semantic_hash": "063af2a93f5ee7a713849802381ee237"
+  },
+  "src/components/ParlamentaresRecent.tsx": {
+    "mtime": 1788400637.9397018,
+    "seen": 1791591597.555034,
+    "ast_hash": "212ba9613351a5515af544c37804ff21",
+    "semantic_hash": "212ba9613351a5515af544c37804ff21"
+  },
+  "src/components/PresencaCard.tsx": {
+    "mtime": 1791544580.8253741,
+    "seen": 1791591597.5550344,
+    "ast_hash": "35d9afb81238db72fba623d44337e96d",
+    "semantic_hash": "35d9afb81238db72fba623d44337e96d"
+  },
+  "src/components/SearchForm.tsx": {
+    "mtime": 1788400911.9150662,
+    "seen": 1791591597.5550349,
+    "ast_hash": "9f97db8e3abe0b8d79b41e6b0b306793",
+    "semantic_hash": "9f97db8e3abe0b8d79b41e6b0b306793"
+  },
+  "src/components/StatsCards.tsx": {
+    "mtime": 1788403179.5987298,
+    "seen": 1791591597.5550354,
+    "ast_hash": "d76bb458436b3266b4c0e3f8c99c5939",
+    "semantic_hash": "d76bb458436b3266b4c0e3f8c99c5939"
+  },
+  "src/components/ThemeProvider.tsx": {
+    "mtime": 1788370704.5568945,
+    "seen": 1791591597.5550358,
+    "ast_hash": "d8b0bf67b1aa00528ef8c8964a6a49f1",
+    "semantic_hash": "d8b0bf67b1aa00528ef8c8964a6a49f1"
+  },
+  "src/components/ThemeToggle.tsx": {
+    "mtime": 1788370725.2100322,
+    "seen": 1791591597.5550363,
+    "ast_hash": "75b2a1d158d6fb690d21402566f420c6",
+    "semantic_hash": "75b2a1d158d6fb690d21402566f420c6"
+  },
+  "src/components/ui/Badge.tsx": {
+    "mtime": 1788370802.1558907,
+    "seen": 1791591597.555037,
+    "ast_hash": "2a597bd7bc2d190ff38b92a492a4765e",
+    "semantic_hash": "2a597bd7bc2d190ff38b92a492a4765e"
+  },
+  "src/components/ui/Button.tsx": {
+    "mtime": 1788372668.010712,
+    "seen": 1791591597.5550375,
+    "ast_hash": "02b010b0a85c2c47efda00278dce6c58",
+    "semantic_hash": "02b010b0a85c2c47efda00278dce6c58"
+  },
+  "src/components/ui/Input.tsx": {
+    "mtime": 1788372615.87013,
+    "seen": 1791591597.555038,
+    "ast_hash": "40a9529d908f06b3283ecee6ceca10e6",
+    "semantic_hash": "40a9529d908f06b3283ecee6ceca10e6"
+  },
+  "src/components/ui/PaginacaoNumerica.tsx": {
+    "mtime": 1788400540.5174325,
+    "seen": 1791591597.5550385,
+    "ast_hash": "5785347436e85a3a1c0082068dd45fa9",
+    "semantic_hash": "5785347436e85a3a1c0082068dd45fa9"
+  },
+  "src/components/ui/Pagination.tsx": {
+    "mtime": 1788372584.6407816,
+    "seen": 1791591597.555039,
+    "ast_hash": "87419f7d96f13aba60181fef91a4eee2",
+    "semantic_hash": "87419f7d96f13aba60181fef91a4eee2"
+  },
+  "src/components/ui/Select.tsx": {
+    "mtime": 1788372647.2124798,
+    "seen": 1791591597.5550394,
+    "ast_hash": "ab13b52ae9e9a5ddc1e75604a854db58",
+    "semantic_hash": "ab13b52ae9e9a5ddc1e75604a854db58"
+  },
+  "src/components/ui/Skeleton.tsx": {
+    "mtime": 1788371376.8323035,
+    "seen": 1791591597.55504,
+    "ast_hash": "aedf5eca261db29d40dc4e612feb644c",
+    "semantic_hash": "aedf5eca261db29d40dc4e612feb644c"
+  },
+  "src/components/ui/Table.tsx": {
+    "mtime": 1788371914.1863,
+    "seen": 1791591597.5550406,
+    "ast_hash": "0de221de4f0fb536397ad2900262727d",
+    "semantic_hash": "0de221de4f0fb536397ad2900262727d"
+  },
+  "src/components/ui/Tabs.tsx": {
+    "mtime": 1788298030.9398105,
+    "seen": 1791591597.555041,
+    "ast_hash": "ad9a2b949012dff0d6c7464339183ce6",
+    "semantic_hash": "ad9a2b949012dff0d6c7464339183ce6"
+  },
+  "src/lib/__tests__/dashboard.test.ts": {
+    "mtime": 1788375547.1888409,
+    "seen": 1791591597.5550416,
+    "ast_hash": "463df17590d40609436b805ec2d43e88",
+    "semantic_hash": "463df17590d40609436b805ec2d43e88"
+  },
+  "src/lib/__tests__/frequencia.test.ts": {
+    "mtime": 1788438763.617709,
+    "seen": 1791591597.555042,
+    "ast_hash": "a7aff55445c1009e1c220fe33531369f",
+    "semantic_hash": "a7aff55445c1009e1c220fe33531369f"
+  },
+  "src/lib/__tests__/parlamentar-query.test.ts": {
+    "mtime": 1788400477.2036424,
+    "seen": 1791591597.5550425,
+    "ast_hash": "18e953db8f76ca90ae0a8cf094c3e73b",
+    "semantic_hash": "18e953db8f76ca90ae0a8cf094c3e73b"
+  },
+  "src/lib/__tests__/produtividade.test.ts": {
+    "mtime": 1791514613.407815,
+    "seen": 1791591597.555043,
+    "ast_hash": "32f8e60ae1ce6114292c665cc1ba80ff",
+    "semantic_hash": "32f8e60ae1ce6114292c665cc1ba80ff"
+  },
+  "src/lib/__tests__/status-proposicao.test.ts": {
+    "mtime": 1788440398.5315661,
+    "seen": 1791591597.5550437,
+    "ast_hash": "334830616f03722fbcb10dc25ca9b5ef",
+    "semantic_hash": "334830616f03722fbcb10dc25ca9b5ef"
+  },
+  "src/lib/__tests__/status-senado.test.ts": {
+    "mtime": 1791506484.7242072,
+    "seen": 1791591597.5550442,
+    "ast_hash": "907fce93515095bd78583f3a2910769b",
+    "semantic_hash": "907fce93515095bd78583f3a2910769b"
+  },
+  "src/lib/__tests__/temas.test.ts": {
+    "mtime": 1788440416.0549536,
+    "seen": 1791591597.5550447,
+    "ast_hash": "a39b14f3395564c68de814cca231f4bb",
+    "semantic_hash": "a39b14f3395564c68de814cca231f4bb"
+  },
+  "src/lib/__tests__/utils.test.ts": {
+    "mtime": 1788374963.9203846,
+    "seen": 1791591597.5550451,
+    "ast_hash": "c5ec536b1488fd82bdd3c08b399c16fa",
+    "semantic_hash": "c5ec536b1488fd82bdd3c08b399c16fa"
+  },
+  "src/lib/dashboard.ts": {
+    "mtime": 1788375526.8976145,
+    "seen": 1791591597.5550456,
+    "ast_hash": "8729ea4e99ecc4e6712464b676d05c40",
+    "semantic_hash": "8729ea4e99ecc4e6712464b676d05c40"
+  },
+  "src/lib/frequencia.ts": {
+    "mtime": 1788438437.8481507,
+    "seen": 1791591597.555046,
+    "ast_hash": "5b4e69b12325f81fd5278b433f65773c",
+    "semantic_hash": "5b4e69b12325f81fd5278b433f65773c"
+  },
+  "src/lib/parlamentar-anos.ts": {
+    "mtime": 1791515460.2292645,
+    "seen": 1791591597.5550466,
+    "ast_hash": "34a47b8d4edcef78fda64c4eba94f9c1",
+    "semantic_hash": "34a47b8d4edcef78fda64c4eba94f9c1"
+  },
+  "src/lib/parlamentar-query.ts": {
+    "mtime": 1788400449.8913016,
+    "seen": 1791591597.5550473,
+    "ast_hash": "ccdfd63e70ef5bc5103b5e8aa953cc79",
+    "semantic_hash": "ccdfd63e70ef5bc5103b5e8aa953cc79"
+  },
+  "src/lib/prisma.ts": {
+    "mtime": 1788297067.566879,
+    "seen": 1791591597.5550482,
+    "ast_hash": "fba8329228c2d9948bde365dd315103d",
+    "semantic_hash": "fba8329228c2d9948bde365dd315103d"
+  },
+  "src/lib/produtividade.ts": {
+    "mtime": 1791514577.2551904,
+    "seen": 1791591597.555049,
+    "ast_hash": "9645120c39f8d9fbec07d0bdd4e1d211",
+    "semantic_hash": "9645120c39f8d9fbec07d0bdd4e1d211"
+  },
+  "src/lib/sync/camara-adapter.ts": {
+    "mtime": 1791514559.351359,
+    "seen": 1791591597.5550494,
+    "ast_hash": "622743e3ad7e75af79677033e55880b3",
+    "semantic_hash": "622743e3ad7e75af79677033e55880b3"
+  },
+  "src/lib/sync/http-client.ts": {
+    "mtime": 1788305182.4251833,
+    "seen": 1791591597.55505,
+    "ast_hash": "97a1fc98b553ad3de73657fabb39455a",
+    "semantic_hash": "97a1fc98b553ad3de73657fabb39455a"
+  },
+  "src/lib/sync/normalizer-factory.ts": {
+    "mtime": 1788305847.196798,
+    "seen": 1791591597.5550506,
+    "ast_hash": "eb4e8298cc8f3ab340a1f9de74baf181",
+    "semantic_hash": "eb4e8298cc8f3ab340a1f9de74baf181"
+  },
+  "src/lib/sync/senado-adapter.ts": {
+    "mtime": 1791506484.7242072,
+    "seen": 1791591597.555051,
+    "ast_hash": "ac35deed5aa9ff880446bcdd1ab89e90",
+    "semantic_hash": "ac35deed5aa9ff880446bcdd1ab89e90"
+  },
+  "src/lib/sync/types.ts": {
+    "mtime": 1791506484.7242072,
+    "seen": 1791591597.5550516,
+    "ast_hash": "de9e1109bc95de6de7ffd9d7c383e7dc",
+    "semantic_hash": "de9e1109bc95de6de7ffd9d7c383e7dc"
+  },
+  "src/lib/temas-keywords.json": {
+    "mtime": 1788296264.6932864,
+    "seen": 1791591597.555052,
+    "ast_hash": "b5b9ea6761358513f1c20470ca3a1577",
+    "semantic_hash": "b5b9ea6761358513f1c20470ca3a1577"
+  },
+  "src/lib/temas.ts": {
+    "mtime": 1788440311.0916111,
+    "seen": 1791591597.5550525,
+    "ast_hash": "42d8e9e0979414a4216a6d096fb05d21",
+    "semantic_hash": "42d8e9e0979414a4216a6d096fb05d21"
+  },
+  "src/lib/utils.ts": {
+    "mtime": 1788374841.6229672,
+    "seen": 1791591597.555053,
+    "ast_hash": "6be3e15dffd08a4df6d6064a430e410e",
+    "semantic_hash": "6be3e15dffd08a4df6d6064a430e410e"
+  },
+  "tailwind.config.js": {
+    "mtime": 1788375017.2959275,
+    "seen": 1791591597.5550535,
+    "ast_hash": "6d8b68d1c88c07429378d46fcfa58b12",
+    "semantic_hash": "6d8b68d1c88c07429378d46fcfa58b12"
+  },
+  "tsconfig.json": {
+    "mtime": 1788375280.0308595,
+    "seen": 1791591597.5550542,
+    "ast_hash": "fe06a72ead7ecaf125a0e6fa41781f60",
+    "semantic_hash": "fe06a72ead7ecaf125a0e6fa41781f60"
+  },
+  "vercel.json": {
+    "mtime": 1788316883.1078587,
+    "seen": 1791591597.5550547,
+    "ast_hash": "c990a2edb14615784d8a992980779395",
+    "semantic_hash": "c990a2edb14615784d8a992980779395"
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1791506484.7082071,
+    "seen": 1791591597.5550551,
+    "ast_hash": "97b22967ac8d07efaabba40ae0cef9f6",
+    "semantic_hash": "97b22967ac8d07efaabba40ae0cef9f6"
+  },
+  ".github/workflows/sync-camara.yml": {
+    "mtime": 1791515669.49486,
+    "seen": 1791591597.5550556,
+    "ast_hash": "d2ef243480a09f9a2db641b10e8de664",
+    "semantic_hash": "d2ef243480a09f9a2db641b10e8de664"
+  },
+  ".github/workflows/sync-senado.yml": {
+    "mtime": 1791515671.0985787,
+    "seen": 1791591597.555056,
+    "ast_hash": "32c7312eb7cc8195ae1a38db71956467",
+    "semantic_hash": "32c7312eb7cc8195ae1a38db71956467"
+  },
+  ".planning/PROJECT.md": {
+    "mtime": 1791550699.5260153,
+    "seen": 1791591597.5550597,
+    "ast_hash": "b08c138713dbec865819afd567e7f476",
+    "semantic_hash": "b08c138713dbec865819afd567e7f476"
+  },
+  ".planning/REQUIREMENTS.md": {
+    "mtime": 1791553047.6580074,
+    "seen": 1791591597.5550601,
+    "ast_hash": "43ea8ba1fa7c43d139b859c0515d61a2",
+    "semantic_hash": "43ea8ba1fa7c43d139b859c0515d61a2"
+  },
+  ".planning/ROADMAP.md": {
+    "mtime": 1791589673.7903733,
+    "seen": 1791591597.555061,
+    "ast_hash": "e430400f4d288855f8d0b2ef17d31a51",
+    "semantic_hash": "e430400f4d288855f8d0b2ef17d31a51"
+  },
+  ".planning/STATE.md": {
+    "mtime": 1791589673.5233703,
+    "seen": 1791591597.5550616,
+    "ast_hash": "e97d1aeca3c28ccf5d3ffb0e62475989",
+    "semantic_hash": "e97d1aeca3c28ccf5d3ffb0e62475989"
+  },
+  ".planning/codebase/ARCHITECTURE.md": {
+    "mtime": 1791549171.5491292,
+    "seen": 1791591597.555062,
+    "ast_hash": "ddf2cad35ea62684c70b67dfcc92056b",
+    "semantic_hash": "ddf2cad35ea62684c70b67dfcc92056b"
+  },
+  ".planning/codebase/CONCERNS.md": {
+    "mtime": 1791549468.4105408,
+    "seen": 1791591597.5550625,
+    "ast_hash": "13a76d2086bf3f83a7148e1b0f141733",
+    "semantic_hash": "13a76d2086bf3f83a7148e1b0f141733"
+  },
+  ".planning/codebase/CONVENTIONS.md": {
+    "mtime": 1791548983.4019673,
+    "seen": 1791591597.555063,
+    "ast_hash": "46f25b615d3bf690a463717829d127a2",
+    "semantic_hash": "46f25b615d3bf690a463717829d127a2"
+  },
+  ".planning/codebase/INTEGRATIONS.md": {
+    "mtime": 1791548927.872329,
+    "seen": 1791591597.5550635,
+    "ast_hash": "e182e6ab74ced88834e11382db445d6c",
+    "semantic_hash": "e182e6ab74ced88834e11382db445d6c"
+  },
+  ".planning/codebase/STACK.md": {
+    "mtime": 1791548868.5986478,
+    "seen": 1791591597.555064,
+    "ast_hash": "e6d00aa7bfc81d5b283a80a63262eab3",
+    "semantic_hash": "e6d00aa7bfc81d5b283a80a63262eab3"
+  },
+  ".planning/codebase/STRUCTURE.md": {
+    "mtime": 1791549225.0967448,
+    "seen": 1791591597.5550647,
+    "ast_hash": "a6c45f775dee503f1360fd3f613f92a5",
+    "semantic_hash": "a6c45f775dee503f1360fd3f613f92a5"
+  },
+  ".planning/codebase/TESTING.md": {
+    "mtime": 1791549086.4426231,
+    "seen": 1791591597.5550652,
+    "ast_hash": "09c0eb2c53d422106d1fdd9f277a26b5",
+    "semantic_hash": "09c0eb2c53d422106d1fdd9f277a26b5"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-01-PLAN.md": {
+    "mtime": 1791584011.0567787,
+    "seen": 1791591597.5550656,
+    "ast_hash": "fbbc43600b799bf50df37c9ad46847ac",
+    "semantic_hash": "fbbc43600b799bf50df37c9ad46847ac"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-02-PLAN.md": {
+    "mtime": 1791582625.9105718,
+    "seen": 1791591597.555066,
+    "ast_hash": "d28b8d73151cf5f2c3e59ce38de18d4f",
+    "semantic_hash": "d28b8d73151cf5f2c3e59ce38de18d4f"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-03-PLAN.md": {
+    "mtime": 1791583856.6242204,
+    "seen": 1791591597.5550666,
+    "ast_hash": "8cd9fd707aaebd27f61ae16be763e644",
+    "semantic_hash": "8cd9fd707aaebd27f61ae16be763e644"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-CONTEXT.md": {
+    "mtime": 1791553267.0661945,
+    "seen": 1791591597.555067,
+    "ast_hash": "664ffa6b98de040c395ab29b01f70449",
+    "semantic_hash": "664ffa6b98de040c395ab29b01f70449"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-DISCUSSION-LOG.md": {
+    "mtime": 1791553298.3745542,
+    "seen": 1791591597.5550675,
+    "ast_hash": "034ffab529408eca7cad43fa44f0c491",
+    "semantic_hash": "034ffab529408eca7cad43fa44f0c491"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-PATTERNS.md": {
+    "mtime": 1791556868.1465774,
+    "seen": 1791591597.5550683,
+    "ast_hash": "9d7e9e78390e3fa82872f1f70fc10d0e",
+    "semantic_hash": "9d7e9e78390e3fa82872f1f70fc10d0e"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-RESEARCH.md": {
+    "mtime": 1791556318.240258,
+    "seen": 1791591597.5550687,
+    "ast_hash": "9b968f88a2fbf2ddafd800331527e492",
+    "semantic_hash": "9b968f88a2fbf2ddafd800331527e492"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/01-VALIDATION.md": {
+    "mtime": 1791582417.9941561,
+    "seen": 1791591597.5550692,
+    "ast_hash": "06158331189814169b14c1d4f44fc175",
+    "semantic_hash": "06158331189814169b14c1d4f44fc175"
+  },
+  ".planning/phases/01-schema-e-contratos-de-despesas/SKELETON.md": {
+    "mtime": 1791582368.0215201,
+    "seen": 1791591597.5550697,
+    "ast_hash": "0c2e426631638707496909bb67bfe758",
+    "semantic_hash": "0c2e426631638707496909bb67bfe758"
+  },
+  ".planning/research/ARCHITECTURE.md": {
+    "mtime": 1791552072.095462,
+    "seen": 1791591597.5550702,
+    "ast_hash": "7c1d8014f520353aab032dc400842264",
+    "semantic_hash": "7c1d8014f520353aab032dc400842264"
+  },
+  ".planning/research/FEATURES.md": {
+    "mtime": 1791551829.7866774,
+    "seen": 1791591597.5550706,
+    "ast_hash": "ba7510a0a2b3aa10d2510a566bc7e337",
+    "semantic_hash": "ba7510a0a2b3aa10d2510a566bc7e337"
+  },
+  ".planning/research/PITFALLS.md": {
+    "mtime": 1791552019.3868563,
+    "seen": 1791591597.555071,
+    "ast_hash": "b70d9df4b3e33bafe36b232abada251b",
+    "semantic_hash": "b70d9df4b3e33bafe36b232abada251b"
+  },
+  ".planning/research/STACK.md": {
+    "mtime": 1791552054.5562603,
+    "seen": 1791591597.555072,
+    "ast_hash": "7ab6eee14a46c57a5da122244442683d",
+    "semantic_hash": "7ab6eee14a46c57a5da122244442683d"
+  },
+  ".planning/research/SUMMARY.md": {
+    "mtime": 1791552463.0999553,
+    "seen": 1791591597.5550725,
+    "ast_hash": "feec2c0d1a67ecbd54badaa6d559147a",
+    "semantic_hash": "feec2c0d1a67ecbd54badaa6d559147a"
+  },
+  "AGENTS.md": {
+    "mtime": 1791553083.1050804,
+    "seen": 1791591597.555073,
+    "ast_hash": "f19df5b15599bc91fb6c15e9f5f33a81",
+    "semantic_hash": "f19df5b15599bc91fb6c15e9f5f33a81"
+  },
+  "CAMARA_API_REFERENCE.md": {
+    "mtime": 1788395550.7782729,
+    "seen": 1791591597.5550735,
+    "ast_hash": "4aaf3d258721512c9a34e5d4214f4945",
+    "semantic_hash": "4aaf3d258721512c9a34e5d4214f4945"
+  },
+  "CONTEXT.md": {
+    "mtime": 1788295029.4777591,
+    "seen": 1791591597.555074,
+    "ast_hash": "629b3fb3cefe627261949e44a60eaa83",
+    "semantic_hash": "629b3fb3cefe627261949e44a60eaa83"
+  },
+  "README.md": {
+    "mtime": 1791506484.709207,
+    "seen": 1791591597.5550745,
+    "ast_hash": "19f18af69e225579f3b893500a35f231",
+    "semantic_hash": "19f18af69e225579f3b893500a35f231"
+  },
+  "ROADMAP.md": {
+    "mtime": 1788296565.6163456,
+    "seen": 1791591597.5550752,
+    "ast_hash": "35d2ac2753136b77fd453c368d3a2033",
+    "semantic_hash": "35d2ac2753136b77fd453c368d3a2033"
+  },
+  "src/app/icon.svg": {
+    "mtime": 1788400695.6263676,
+    "seen": 1791591597.555076,
+    "ast_hash": "f80fabe1bfa36181bfde6ae3e35482f6",
+    "semantic_hash": "f80fabe1bfa36181bfde6ae3e35482f6"
+  }
+}
