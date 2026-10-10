@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 current_phase: 01
 current_phase_name: Schema e Contratos de Despesas
-status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-10T03:16:53.199Z"
+status: verifying
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-10T03:45:45.974Z"
 last_activity: 2026-10-09
 last_activity_desc: Phase 01 execution started
-state_head: 976e6f7e6046981bbfbb78e122207bff035e1e13
+state_head: c2f446a8bcd7e847e12915138d5d6a44b2e1d0e8
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-09)
 
 Phase: 01 (Schema e Contratos de Despesas) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-09 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 25 min | 3 tasks | 8 files |
 | Phase 01-schema-e-contratos-de-despesas P02 | 7 min | 2 tasks | 3 files |
+| Phase 01-schema-e-contratos-de-despesas P03 | 6 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Module-source scan test mechanically enforces QA-02: zero parseFloat/Number( constructor calls in despesas.ts
 - [Phase 01]: parseDataFonte uses slice-10 + regex + Date.UTC(); validates by reading back UTC components; accepts typo years
 - [Phase 01]: ANOS_JANELA computed via IIFE from UTC clock — single source for Phase 2 import loop and retention (GAST-05)
+- [Phase 01]: Option A selected for Open Q2: id-first with name+UF fallback (metodo='idExterno' then 'nomeUf') — 556k rows probed, 100% idDeputado=Parlamentar.idExterno, 0 misattribution, 0.69% silent-drop recovered
+- [Phase 01]: GAST-08 wording amended: 'match é exato por nome normalizado + UF' → 'id direto quando disponível; nome+UF exato como fallback; nunca inventa' — Recorded for Phase 2 reconciliation; id-first evidence proves 0 misattribution and recovers 0.69% silent drop
+- [Phase 01]: DespesaNormalizada.valor/valorGlosa typed as string (canonical dot-decimal from parseBRL), never number — Float-free chain enforced at contract seam per QA-02; new Prisma.Decimal(valor) is lossless
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-10T03:16:53.180Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-10T03:45:45.949Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

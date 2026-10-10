@@ -37,13 +37,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `parseBRL` e `camara-name-match` têm cobertura Jest (acentos, caixa, divergência partido/UF, ambiguidade → `null`); nenhum `parseFloat` em dado externo e nenhum fuzzy/Levenshtein no match (QA-02)
   4. Gate `npx tsc --noEmit && npx next lint && npx jest && npx next build` verde (QA-01)
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans executed
 
 Plans:
 
 - [x] 01-01-PLAN.md
 - [x] 01-02-PLAN.md
-- [ ] 01-03-PLAN.md
+- [x] 01-03-PLAN.md
 
 **Wave 1**
 
@@ -51,7 +51,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02: `parseBRL`, `parseDataFonte` e `ANOS_JANELA` em `src/lib/despesas.ts` (TDD)
+- [x] 01-02: `parseBRL`, `parseDataFonte` e `ANOS_JANELA` em `src/lib/despesas.ts` (TDD)
 - [ ] 01-03: `camara-name-match` (checkpoint id-first, D-06) e tipo `DespesaNormalizada` (D-08)
 
 ### Phase 2: Ingestão e Sincronização (CEAP/CEAPS)
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 (Phase 3 pode ser construí
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema e Contratos de Despesas | 2/3 | In Progress|  |
+| 1. Schema e Contratos de Despesas | 3/3 | In Progress|  |
 | 2. Ingestão e Sincronização (CEAP/CEAPS) | 0/3 | Not started | - |
 | 3. API de Despesas | 0/3 | Not started | - |
 | 4. UI — Aba "Gastos" | 0/3 | Not started | - |
