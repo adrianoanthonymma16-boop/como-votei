@@ -92,6 +92,7 @@ model Parlamentar {
   discursos       Discurso[]
   proposicoes     Proposicao[]
   frequencias     Frequencia[]
+  despesas        Despesa[]
 
   @@index([casa, partidoId])
   @@index([casa, ufId])
@@ -220,4 +221,29 @@ model Frequencia {
 
   @@unique([parlamentarId, ano])
   @@map("frequencias")
+}
+
+model Despesa {
+  id                String   @id @default(cuid())
+  idExterno         String   @unique @map("id_externo") // "CAMARA:{idDoc}:{sha256[:16]}" | "SENADO:{id}"
+  parlamentarId     String?  @map("parlamentar_id") // FK anulável: linhas de liderança (ex.: LID.GOV-CD) ficam desvinculadas, nunca descartadas
+  casa              Casa
+  ano               Int
+  mes               Int
+  data              DateTime? // anulável: milhares de linhas chegam com dataEmissao vazia na fonte
+  categoria         String // label livre da fonte, sem enum (D-05)
+  fornecedor        String
+  cpfCnpj           String?  @map("cpf_cnpj")
+  documento         String?
+  valor             Decimal  @db.Decimal(14, 2) // signed — estornos/restituições negativos preservados (QA-02)
+  valorGlosa        Decimal? @db.Decimal(14, 2) @map("valor_glosa")
+  urlDocumento      String?  @map("url_documento")
+  nomeParlamentarRaw String  @map("nome_parlamentar_raw") // auditoria do match de nome (D-01)
+  importedAt        DateTime @default(now()) @updatedAt @map("imported_at") // D-04 — carimbo da última escrita (não é timestamp de UI)
+
+  parlamentar       Parlamentar? @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@index([parlamentarId, ano, data])
+  @@index([casa, ano])
+  @@map("despesas")
 }
