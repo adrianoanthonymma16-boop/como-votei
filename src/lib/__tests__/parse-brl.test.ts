@@ -145,7 +145,7 @@ describe('parseBRL (contrato de conversão monetária — QA-02)', () => {
 
   describe('entrega para new Prisma.Decimal — fidelidade ao centavo', () => {
     it('cada saída não-nula passa em new Prisma.Decimal(v).toFixed(2) igual à entrada (≤2 decimais)', () => {
-      const testCases: Array<unknown> = [
+      const testCases: Array<string | number> = [
         '705.92',
         '-1967.57',
         '1.234,56',
