@@ -17,7 +17,7 @@ Milestone enxuto que adiciona o módulo de despesas parlamentares ao produto em 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Schema e Contratos de Despesas** - Modelo, chave natural, name-match e parse de dinheiro congelados e testados antes de qualquer dado entrar
+- [x] **Phase 1: Schema e Contratos de Despesas** - Modelo, chave natural, name-match e parse de dinheiro congelados e testados antes de qualquer dado entrar (completed 2026-10-10)
 - [ ] **Phase 2: Ingestão e Sincronização (CEAP/CEAPS)** - Bulk da Câmara + API CEAPS do Senado nos últimos 3 anos, com upsert idempotente, retenção, guardrails e sync sob lock
 - [ ] **Phase 3: API de Despesas** - Rota `GET /api/parlamentares/[id]/despesas` com resumo e página do mesmo snapshot, envelope padrão
 - [ ] **Phase 4: UI — Aba "Gastos"** - Aba no perfil com total anual, barras por categoria, lista paginada, comprovantes e estados honestos
@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `parseBRL` e `camara-name-match` têm cobertura Jest (acentos, caixa, divergência partido/UF, ambiguidade → `null`); nenhum `parseFloat` em dado externo e nenhum fuzzy/Levenshtein no match (QA-02)
   4. Gate `npx tsc --noEmit && npx next lint && npx jest && npx next build` verde (QA-01)
 
-**Plans**: 3/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 
@@ -52,7 +52,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 01-02: `parseBRL`, `parseDataFonte` e `ANOS_JANELA` em `src/lib/despesas.ts` (TDD)
-- [ ] 01-03: `camara-name-match` (checkpoint id-first, D-06) e tipo `DespesaNormalizada` (D-08)
+- [x] 01-03: `camara-name-match` (checkpoint id-first, D-06) e tipo `DespesaNormalizada` (D-08)
 
 ### Phase 2: Ingestão e Sincronização (CEAP/CEAPS)
 
@@ -70,11 +70,20 @@ Plans:
 
 **Plans**: 3 plans
 
+**Wave 1** (Parallel — Independent Tracers)
+
+- [ ] 02-01-PLAN.md — Câmara CEAP streaming ingestion tracer: `yauzl` + `stream-json@2.1.0` chunk 1000, `DespesaNormalizada` via Phase 1 contracts, batch upsert 1000, retention DELETE, 5 sanity gates, advisory lock
+- [ ] 02-02-PLAN.md — Senado CEAPS ingestion tracer: API GET {ano}, direct `codSenador` = `idExterno` match, batch upsert 1000, retention DELETE, 5 sanity gates, advisory lock
+
+**Wave 2** (Blocked on Wave 1 checkpoints)
+
+- [ ] 02-03-PLAN.md — Workflow integration: OPS-01 fix (remove GH schedule per checkpoint), `--apenas-despesas` phases in both workflows with step timeouts, cron route passes flag for incremental, 3-year backfill script (`ANOS_JANELA` loop), cross-house integration sanity gates
+
 Plans:
 
-- [ ] 02-01: Pipeline de download/streaming do bulk (`yauzl` + `stream-json@2.1.0`) e adapter CEAPS do Senado
-- [ ] 02-02: Fase `--apenas-despesas` nos dois syncs: upsert em lotes, guardrails (GAST-08) e retenção de 3 anos (GAST-05)
-- [ ] 02-03: Integração nos workflows: advisory lock + timeouts, correção do gatilho duplicado (OPS-01) e backfill manual de validação
+- [ ] 02-01-PLAN.md — Pipeline de download/streaming do bulk Câmara (`yauzl` + `stream-json@2.1.0`), transform → `DespesaNormalizada`, batch upsert 1000, retention DELETE, 5 sanity gates, advisory lock
+- [ ] 02-02-PLAN.md — Senado CEAPS ingestion: API GET {ano}, direct `codSenador` match, batch upsert 1000, retention DELETE, 5 sanity gates, advisory lock
+- [ ] 02-03-PLAN.md — Workflow integration: OPS-01 fix (remove GH schedule), `--apenas-despesas` phases in both workflows, cron route passes flag, 3-year backfill script, integration sanity gates
 
 ### Phase 3: API de Despesas
 
@@ -129,7 +138,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 (Phase 3 pode ser construí
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Schema e Contratos de Despesas | 3/3 | In Progress|  |
-| 2. Ingestão e Sincronização (CEAP/CEAPS) | 0/3 | Not started | - |
+| 1. Schema e Contratos de Despesas | 3/3 | Complete   | 2026-10-10 |
+| 2. Ingestão e Sincronização (CEAP/CEAPS) | 3/3 | Planned | - |
 | 3. API de Despesas | 0/3 | Not started | - |
 | 4. UI — Aba "Gastos" | 0/3 | Not started | - |
