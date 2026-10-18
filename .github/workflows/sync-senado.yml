@@ -1,5 +1,8 @@
 name: Sync Senado Federal
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Diário às 04:00 UTC (01:00 BRT) - após Câmara
@@ -153,7 +156,7 @@ jobs:
 
       # Execução manual: respeita os inputs escolhidos (uma única invocação).
       - name: Sync Senado Federal (manual)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas != 'true'
         env:
           INPUT_ANO: ${{ github.event.inputs.ano }}
           INPUT_PARLAMENTARES: ${{ github.event.inputs.apenas-parlamentares }}
