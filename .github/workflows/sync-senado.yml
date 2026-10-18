@@ -93,7 +93,7 @@ jobs:
       - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
         run: |
-          for ano in 2024 2025 2026; do
+          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "🗳️  Sync votações $ano"
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-votacoes --ano=$ano
           done
@@ -101,7 +101,7 @@ jobs:
       - name: Sync discursos (3 anos)
         if: github.event_name == 'schedule'
         run: |
-          for ano in 2024 2025 2026; do
+          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "🎤 Sync discursos $ano"
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-discursos --ano=$ano
           done
@@ -109,7 +109,7 @@ jobs:
       - name: Sync proposições (3 anos)
         if: github.event_name == 'schedule'
         run: |
-          for ano in 2024 2025 2026; do
+          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "📋 Sync proposições $ano"
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-proposicoes --ano=$ano
           done
@@ -117,7 +117,7 @@ jobs:
       - name: Sync frequência (3 anos)
         if: github.event_name == 'schedule'
         run: |
-          for ano in 2024 2025 2026; do
+          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "📅 Sync frequência $ano"
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-frequencia --ano=$ano
           done
