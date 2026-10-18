@@ -7,8 +7,9 @@ import { PrismaClient, Casa } from '@prisma/client';
 import { ANOS_JANELA } from '@/lib/despesas';
 
 const prisma = new PrismaClient();
+const hasDb = Boolean(process.env.DATABASE_URL);
 
-describe('Retention DELETE', () => {
+(hasDb ? describe : describe.skip)('Retention DELETE', () => {
   const currentYear = new Date().getUTCFullYear();
   const anosJanela = [currentYear, currentYear - 1, currentYear - 2];
   const anoForaJanela = currentYear - 3;
@@ -16,6 +17,7 @@ describe('Retention DELETE', () => {
   let testPrefix: string;
 
   beforeAll(async () => {
+    if (!hasDb) return;
     await prisma.despesa.deleteMany({
       where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
     });
@@ -26,18 +28,21 @@ describe('Retention DELETE', () => {
   });
 
   beforeEach(async () => {
+    if (!hasDb) return;
     await prisma.despesa.deleteMany({
       where: { idExterno: { startsWith: testPrefix } },
     });
   });
 
   afterEach(async () => {
+    if (!hasDb) return;
     await prisma.despesa.deleteMany({
       where: { idExterno: { startsWith: testPrefix } },
     });
   });
 
   afterAll(async () => {
+    if (!hasDb) return;
     await prisma.despesa.deleteMany({
       where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
     });
@@ -80,11 +85,12 @@ describe('Retention DELETE', () => {
     expect(beforeOut).toBe(1);
 
     const deleted = await prisma.$executeRawUnsafe(
-      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
+      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4) AND "id_externo" LIKE $5`,
       'CAMARA',
       anosJanela[0],
       anosJanela[1],
-      anosJanela[2]
+      anosJanela[2],
+      `${testPrefix}%`
     );
 
     expect(Number(deleted)).toBe(1);
@@ -132,11 +138,12 @@ describe('Retention DELETE', () => {
     expect(beforeOut).toBe(1);
 
     const deleted = await prisma.$executeRawUnsafe(
-      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
+      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4) AND "id_externo" LIKE $5`,
       'SENADO',
       anosJanela[0],
       anosJanela[1],
-      anosJanela[2]
+      anosJanela[2],
+      `${testPrefix}%`
     );
 
     expect(Number(deleted)).toBe(1);
@@ -163,11 +170,12 @@ describe('Retention DELETE', () => {
     });
 
     await prisma.$executeRawUnsafe(
-      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
+      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4) AND "id_externo" LIKE $5`,
       'SENADO',
       anosJanela[0],
       anosJanela[1],
-      anosJanela[2]
+      anosJanela[2],
+      `${testPrefix}%`
     );
 
     const crossRecord = await prisma.despesa.findUnique({
@@ -204,11 +212,12 @@ describe('Retention DELETE', () => {
     await prisma.despesa.createMany({ data: inWindow });
 
     const deleted = await prisma.$executeRawUnsafe(
-      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
+      `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4) AND "id_externo" LIKE $5`,
       'CAMARA',
       anosJanela[0],
       anosJanela[1],
-      anosJanela[2]
+      anosJanela[2],
+      `${testPrefix}%`
     );
 
     expect(Number(deleted)).toBe(0);
@@ -216,6 +225,7 @@ describe('Retention DELETE', () => {
 });
 
 afterAll(async () => {
+  if (!hasDb) return;
   await prisma.despesa.deleteMany({
     where: { idExterno: { startsWith: 'RETENTION_TEST_' } },
   });

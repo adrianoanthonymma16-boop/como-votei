@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { DespesaNormalizada } from '@/lib/sync/types';
 
 const prisma = new PrismaClient();
+const hasDb = Boolean(process.env.DATABASE_URL);
 
 describe('Upsert batch 1000', () => {
   const mockDespesas: DespesaNormalizada[] = Array.from({ length: 1500 }, (_, i) => ({
@@ -27,12 +28,14 @@ describe('Upsert batch 1000', () => {
   }));
 
   beforeAll(async () => {
+    if (!hasDb) return;
     await prisma.despesa.deleteMany({
-      where: { idExterno: { startsWith: 'CAMARA:1' } },
+      where: { idExterno: { startsWith: 'CAMARA:TEST' } },
     });
   });
 
   afterAll(async () => {
+    if (!hasDb) return;
     await prisma.$disconnect();
   });
 

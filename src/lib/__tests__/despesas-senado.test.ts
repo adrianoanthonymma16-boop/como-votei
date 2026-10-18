@@ -10,6 +10,7 @@ import { parseBRL, parseDataFonte, ANOS_JANELA } from '@/lib/despesas';
 import { DespesaNormalizada } from '@/lib/sync/types';
 
 const prisma = new PrismaClient();
+const hasDb = Boolean(process.env.DATABASE_URL);
 
 const mockDiretorioSenado = new Map<string, string>([
   ['475', 'parl-sen-1'],
@@ -57,11 +58,11 @@ function transformSenadoRecord(
 
 describe('Senado CEAPS Ingestion', () => {
   let testPrefix: string;
-  beforeAll(async () => { await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); });
+  beforeAll(async () => { if (!hasDb) return; await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); });
   beforeEach(() => { testPrefix = `TEST_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; });
-  beforeEach(async () => { await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: testPrefix } } }); });
-  afterEach(async () => { await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: testPrefix } } }); });
-  afterAll(async () => { await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); await prisma.$disconnect(); });
+  beforeEach(async () => { if (!hasDb) return; await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: testPrefix } } }); });
+  afterEach(async () => { if (!hasDb) return; await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: testPrefix } } }); });
+afterAll(async () => { if (!hasDb) return; await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); await prisma.$disconnect(); });
 
   describe('transformSenadoRecord', () => {
     const ano = 2025;
@@ -115,7 +116,7 @@ describe('Senado CEAPS Ingestion', () => {
     });
   });
 
-  describe('Senado CEAPS Ingestion - Retention DELETE', () => {
+  (hasDb ? describe : describe.skip)('Senado CEAPS Ingestion - Retention DELETE', () => {
     const currentYear = new Date().getUTCFullYear();
     const anosJanela = [currentYear, currentYear - 1, currentYear - 2];
     const anoForaJanela = currentYear - 3;
@@ -130,7 +131,7 @@ describe('Senado CEAPS Ingestion', () => {
       const beforeIn = await prisma.despesa.count({ where: { idExterno: { startsWith: `${testPrefix}SENADO_IN_` } } });
       const beforeOut = await prisma.despesa.count({ where: { idExterno: { startsWith: `${testPrefix}SENADO_OUT_` } } });
       expect(beforeIn).toBe(anosJanela.length); expect(beforeOut).toBe(1);
-      const deleted = await prisma.despesa.deleteMany({ where: { casa: 'SENADO', ano: { notIn: anosJanela } } });
+      const deleted = await prisma.despesa.deleteMany({ where: { casa: 'SENADO', ano: { notIn: anosJanela }, idExterno: { startsWith: testPrefix } } });
       expect(deleted.count).toBe(1);
       const afterOut = await prisma.despesa.count({ where: { idExterno: { startsWith: `${testPrefix}SENADO_OUT_` } } });
       expect(afterOut).toBe(0);
@@ -148,7 +149,7 @@ describe('Senado CEAPS Ingestion', () => {
           nomeParlamentarRaw: 'TESTE',
         },
       });
-      await prisma.despesa.deleteMany({ where: { casa: 'SENADO', ano: { notIn: anosJanela } } });
+      await prisma.despesa.deleteMany({ where: { casa: 'SENADO', ano: { notIn: anosJanela }, idExterno: { startsWith: testPrefix } } });
       const crossRecord = await prisma.despesa.findUnique({ where: { idExterno: `${testPrefix}CAMARA_CROSS_2020` } });
       expect(crossRecord).not.toBeNull();
     });
@@ -163,4 +164,4 @@ describe('Senado CEAPS Ingestion', () => {
     });
   });
 });
-afterAll(async () => { await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); await prisma.$disconnect(); });
+afterAll(async () => { if (!hasDb) return; await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_' } } }); await prisma.$disconnect(); });

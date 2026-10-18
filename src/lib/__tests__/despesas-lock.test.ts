@@ -6,9 +6,11 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+const hasDb = Boolean(process.env.DATABASE_URL);
 
-describe('Advisory Lock (GRAY-12)', () => {
+(hasDb ? describe : describe.skip)('Advisory Lock (GRAY-12)', () => {
   afterAll(async () => {
+    if (!hasDb) return;
     await prisma.$disconnect();
   });
 
