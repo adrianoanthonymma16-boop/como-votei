@@ -101,11 +101,37 @@ GET /api/cron/sync-incremental
 scripts/
 ├── sync-camara.ts    # Deputados + Votações + Discursos + Proposições
 ├── sync-senado.ts    # Senadores + Votações + Discursos + Proposições
+├── gc.ts             # Coleta de lixo (retenção fora da janela de 3 anos)
 └── lib/
     ├── camara-normalizer.ts
     ├── senado-normalizer.ts
     └── normalizer-factory.ts
 ```
+
+### Coleta de lixo (retenção — janela de 3 anos)
+
+O produto cobre apenas os últimos 3 anos (janela rolante). Para o banco não
+crescer indefinidamente e estourar o limite do Neon free tier, um job de
+retenção ("coleta de lixo") apaga periodicamente tudo que sai da janela.
+
+- **Regra única:** `ano < anoCorte`, onde `anoCorte` = menor ano de `ANOS_JANELA`
+  (`src/lib/despesas.ts`) — hoje `2024`. Proposições/frequências/despesas cortam
+  pelo campo de ano; votações/discursos, por `data` (`< 1º/jan do anoCorte`).
+- **Fonte única:** `src/lib/gc.ts`. Os scripts de sync de despesas
+  (`sync-despesas-camara.ts` / `sync-despesas-senado.ts`) usam essa mesma retenção.
+- **Tabelas cobertas:** `votos`, `votacoes`, `tramitacoes`, `proposicoes`,
+  `discursos`, `frequencias`, `despesas` (`votos` e `tramitacoes` caem por cascade).
+- **Nunca apagadas:** `partidos`, `ufs`, `parlamentares`.
+
+```bash
+npm run gc           # dry-run (read-only): mostra o que SAIRIA, não apaga nada
+npm run gc:apply     # executa os DELETEs (idempotente, em lotes de 5000)
+```
+
+Roda sozinho nos workflows diários (`.github/workflows/sync-camara.yml` e
+`sync-senado.yml`) após o sync. Como a base só guarda os últimos 3 anos, o
+front-end mostra a legenda **"Janela de dados"** (`src/components/NotaPeriodo.tsx`)
+para o visitante entender por que registros antigos não aparecem.
 
 ## 🎯 Heurística de Temas
 

@@ -14,6 +14,7 @@ import { PrismaClient, Casa } from '@prisma/client';
 import { senadoClient } from '../src/lib/sync/http-client';
 import { derivarIdExternoDespesa } from '../src/lib/sync/despesa-id';
 import { parseBRL, parseDataFonte, ANOS_JANELA } from '../src/lib/despesas';
+import { deletarForaDaJanela, especDaTabela } from '../src/lib/gc';
 import { DespesaNormalizada } from '../src/lib/sync/types';
 
 // ANOS_JANELA como array mutável para uso em queries Prisma
@@ -265,20 +266,11 @@ async function syncDespesasSenado(options: SyncOptions = {}) {
       }
     }
 
-    // 5. Retention DELETE (GRAY-02) - após upsert bem-sucedido
+    // 5. Retention DELETE (GRAY-02) — retenção unificada (fonte única: src/lib/gc.ts)
     console.log('\n🗑️  Executando retenção (DELETE fora da janela de 3 anos)...');
-    for (const casa of ['CAMARA', 'SENADO'] as Casa[]) {
-      const deletedCount = await prisma.$executeRawUnsafe(
-        `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
-        casa,
-        ANOS_JANELA_ARR[0],
-        ANOS_JANELA_ARR[1],
-        ANOS_JANELA_ARR[2]
-      );
-      deleted += Number(deletedCount);
-      if (deletedCount > 0) {
-        console.log(`  🗑️  ${casa}: ${deletedCount} registros removidos (ano fora de ${ANOS_JANELA.join(', ')})`);
-      }
+    deleted = await deletarForaDaJanela(prisma, especDaTabela('despesas'));
+    if (deleted > 0) {
+      console.log(`  🗑️  ${deleted} despesas removidas (ano fora de ${ANOS_JANELA.join(', ')})`);
     }
 
     // 6. Sanity Gates (GRAY-10) - 5 gates com thresholds Senado

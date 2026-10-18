@@ -13,6 +13,7 @@
 import { PrismaClient, Casa } from '@prisma/client';
 import { derivarIdExternoDespesa } from '../src/lib/sync/despesa-id';
 import { parseBRL, parseDataFonte, ANOS_JANELA } from '../src/lib/despesas';
+import { deletarForaDaJanela, especDaTabela } from '../src/lib/gc';
 import { camaraNameMatch, DiretorioParlamentares, EntradaMatch } from '../src/lib/sync/camara-name-match';
 import { DespesaNormalizada } from '../src/lib/sync/types';
 import yauzl from 'yauzl';
@@ -317,16 +318,9 @@ async function upsertBatch(batch: DespesaNormalizada[]): Promise<{ inserted: num
   return { inserted: 0, updated: Number(result) };
 }
 
-async function runRetention(casa: 'CAMARA' | 'SENADO'): Promise<number> {
-  const anos = [...ANOS_JANELA] as number[];
-  const result = await prisma.$executeRawUnsafe(
-    `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
-    casa,
-    anos[0],
-    anos[1],
-    anos[2]
-  );
-  return Number(result);
+async function runRetention(): Promise<number> {
+  // Retenção unificada — fonte única em src/lib/gc.ts (predicado `ano < anoCorte`).
+  return deletarForaDaJanela(prisma, especDaTabela('despesas'));
 }
 
 async function runSanityGates(casa: 'CAMARA' | 'SENADO', anosJanela: readonly [number, number, number]): Promise<{ name: string; passed: boolean; details: string }[]> {
@@ -600,9 +594,9 @@ async function syncDespesasCamara(options: SyncOptions = {}) {
       console.log(`✅ Ano ${ano}: ingested=${result.ingested}, updated=${result.updated}, matched=${result.matched}, unmatched=${result.unmatched}, errors=${result.errors}, warnings=${result.warnings}`);
     }
 
-    // 4. Retention DELETE (GRAY-02)
+    // 4. Retention DELETE (GRAY-02) — retenção unificada (src/lib/gc.ts)
     console.log('\n🗑️  Executando retenção (DELETE anos fora da janela)...');
-    totalDeleted = await runRetention('CAMARA');
+    totalDeleted = await runRetention();
     console.log(`✅ ${totalDeleted} registros removidos`);
 
     // 5. Sanity Gates (GRAY-10)

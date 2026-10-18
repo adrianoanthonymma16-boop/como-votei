@@ -213,6 +213,12 @@ jobs:
             sleep 60
           done
 
+      - name: Coleta de lixo (retenção — janela de 3 anos)
+        if: github.event_name == 'schedule'
+        # Remove registros fora da janela de 3 anos (ver src/lib/gc.ts).
+        # Idempotente: roda também no Senado sem efeito colateral.
+        run: npm run gc:apply
+
       - name: Log completion
         if: always()
         run: |
