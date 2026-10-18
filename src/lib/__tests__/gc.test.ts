@@ -107,9 +107,12 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 (hasDb ? describe : describe.skip)('executarGc (integração)', () => {
   const corte = construirCorte();
   const sufixo = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const idVotacaoFora = `TEST_GC_VOT_OUT_${sufixo}`;
-  const idVotacaoDentro = `TEST_GC_VOT_IN_${sufixo}`;
-  const idDespesaFora = `TEST_GC_DESP_OUT_${sufixo}`;
+  // Prefixo exclusivo: NÃO pode começar com "TEST_" — despesas-*.test.ts
+  // apagam `idExterno startsWith 'TEST_'` no beforeAll/afterAll e apagariam
+  // estas fixtures em execução concorrente da suíte.
+  const idVotacaoFora = `GCTEST_VOT_OUT_${sufixo}`;
+  const idVotacaoDentro = `GCTEST_VOT_IN_${sufixo}`;
+  const idDespesaFora = `GCTEST_DESP_OUT_${sufixo}`;
 
   beforeAll(async () => {
     await prisma.votacao.createMany({
@@ -149,8 +152,8 @@ const hasDb = Boolean(process.env.DATABASE_URL);
   });
 
   afterAll(async () => {
-    await prisma.votacao.deleteMany({ where: { idExterno: { startsWith: 'TEST_GC_' } } });
-    await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'TEST_GC_' } } });
+    await prisma.votacao.deleteMany({ where: { idExterno: { startsWith: 'GCTEST_' } } });
+    await prisma.despesa.deleteMany({ where: { idExterno: { startsWith: 'GCTEST_' } } });
     await prisma.$disconnect();
   });
 
