@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { PresencaCard } from '@/components/PresencaCard';
+import { NotaPeriodo } from '@/components/NotaPeriodo';
 
 export type SecaoId = 'gastos' | 'votacoes' | 'proposicoes' | 'discursos' | 'dashboard' | 'produtividade';
 
@@ -197,6 +198,8 @@ export function ParlamentarHeader({
           ))}
         </div>
       </nav>
+
+      <NotaPeriodo />
     </>
   );
 }
