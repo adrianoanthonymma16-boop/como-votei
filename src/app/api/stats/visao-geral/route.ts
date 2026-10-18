@@ -3,9 +3,15 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-async function contarPorAno(tabelaColuna: { tabela: string; coluna: string }): Promise<{ ano: number; total: number }[]> {
+async function contarPorAno(
+  tabelaColuna: { tabela: string; coluna: string; tipo?: 'data' | 'ano' },
+): Promise<{ ano: number; total: number }[]> {
+  const exprs =
+    tabelaColuna.tipo === 'ano'
+      ? `"${tabelaColuna.coluna}"::int`
+      : `EXTRACT(YEAR FROM "${tabelaColuna.coluna}")::int`;
   const rows = await prisma.$queryRawUnsafe<{ ano: number; total: number }[]>(
-    `SELECT EXTRACT(YEAR FROM "${tabelaColuna.coluna}")::int as ano, COUNT(*)::int as total
+    `SELECT ${exprs} as ano, COUNT(*)::int as total
      FROM "${tabelaColuna.tabela}"
      GROUP BY 1
      ORDER BY ano DESC`
@@ -43,7 +49,7 @@ export async function GET() {
     prisma.proposicao.groupBy({ by: ['casa'], _count: { _all: true } }),
     contarPorAno({ tabela: 'votacoes', coluna: 'data' }),
     contarPorAno({ tabela: 'discursos', coluna: 'data' }),
-    contarPorAno({ tabela: 'proposicoes', coluna: 'data_apresentacao' }),
+    contarPorAno({ tabela: 'proposicoes', coluna: 'ano', tipo: 'ano' }),
   ]);
 
   const paraCasa = (rows: { casa: string; _count: { _all: number } }[]) => ({

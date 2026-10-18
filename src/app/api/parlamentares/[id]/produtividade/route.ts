@@ -57,7 +57,9 @@ export async function GET(
       by: ['tipo', 'autorPrincipal', 'status'],
       where: {
         parlamentarId: id,
-        ...(ano ? { dataApresentacao: { gte: new Date(`${ano}-01-01`), lte: new Date(`${ano}-12-31`) } } : {}),
+        // Ano da proposição = `ano` (número), não `dataApresentacao` (a fonte
+        // renumera proposições antigas — ver src/lib/gc.ts).
+        ...(ano ? { ano } : {}),
       },
       _count: { _all: true },
     }),

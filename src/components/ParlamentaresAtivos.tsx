@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ParlamentarCard, type ProdutividadeResumo } from '@/components/ParlamentarCard';
 import { Badge } from '@/components/ui/Badge';
 import { resumoProdutividade } from '@/lib/produtividade';
+import { anoCorrente } from '@/lib/ano-padrao';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentarComProdutividade extends Parlamentar {
@@ -50,7 +51,7 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
     let ativo = true;
     async function fetchData() {
       try {
-        const ano = new Date().getFullYear();
+        const ano = anoCorrente();
         const response = await fetch(`/api/parlamentares?sort=produtivos&limit=${limit}&ano=${ano}`, {
           cache: 'no-store',
         });

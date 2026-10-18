@@ -6,6 +6,7 @@ import { ParlamentaresList } from '@/components/ParlamentaresList';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { anoCorrente } from '@/lib/ano-padrao';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { formatNumber } from '@/lib/utils';
@@ -92,7 +93,7 @@ export function ParlamentaresPageClient() {
         params.set('limit', String(DEFAULT_PER_PAGE));
         // Produtividade é por ano corrente — sempre envia ano explícito
         if (params.get('sort') === 'produtivos' && !params.get('ano')) {
-          params.set('ano', String(new Date().getFullYear()));
+          params.set('ano', String(anoCorrente()));
         }
         const res = await fetch(`/api/parlamentares?${params.toString()}`, { signal: controller.signal });
         if (!res.ok) throw new Error('Falha ao carregar parlamentares');
@@ -198,11 +199,11 @@ export function ParlamentaresPageClient() {
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          Parlamentares{sort === 'produtivos' ? ` Mais Produtivos ${new Date().getFullYear()}` : ''}
+          Parlamentares{sort === 'produtivos' ? ` Mais Produtivos ${anoCorrente()}` : ''}
         </h1>
         <p className="text-muted-foreground">
           {sort === 'produtivos'
-            ? `Ranking de produtividade em ${new Date().getFullYear()} — pontuação baseada em proposições, votos e discursos do ano corrente.`
+            ? `Ranking de produtividade em ${anoCorrente()} — pontuação baseada em proposições, votos e discursos do ano corrente.`
             : 'Busque e filtre deputados e senadores por nome, partido, estado ou casa.'}
         </p>
       </div>

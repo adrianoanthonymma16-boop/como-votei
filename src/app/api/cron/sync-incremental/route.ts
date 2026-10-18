@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { anoCorrente } from '@/lib/ano-padrao';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   // Inputs válidos dos workflows (sync-camara.yml / sync-senado.yml):
   // ano + apenas-*. O recorte de 3 anos fica no evento `schedule`;
   // o cron dispara o ano corrente como incremental.
-  const ano = request.nextUrl.searchParams.get('ano') || String(new Date().getFullYear());
+  const ano = request.nextUrl.searchParams.get('ano') || String(anoCorrente());
 
   try {
     const resultados: Record<string, unknown> = {};

@@ -1,3 +1,5 @@
+import { janelaAnos } from './ano-padrao';
+
 /**
  * Conversões puras de despesa — dinheiro, datas, janela de anos.
  * Nenhum I/O, nenhum Prisma.
@@ -90,11 +92,13 @@ export function parseDataFonte(v: unknown): Date | null {
 
 /**
  * Janela de 3 anos para retenção/ingestão de despesas.
- * Computada a partir do ano UTC corrente — NÃO uma tupla estática.
- * Fonte única consumida por scripts/ (Phase 2 import loop) E retenção (GAST-05).
- * Evita o pitfall de duas constantes de ano que derivam (precedent: VotacoesPageClient.tsx ANOS estático).
+ * Deriva de `janelaAnos()` (src/lib/ano-padrao.ts) — fonte única do ano UTC
+ * corrente. Consumida por scripts/ (import loop), retenção (GAST-05) e o GC
+ * (src/lib/gc.ts), evitando o pitfall de duas constantes de ano que derivam.
  */
-export const ANOS_JANELA: readonly [number, number, number] = (() => {
-  const currentYear = new Date().getUTCFullYear();
-  return [currentYear, currentYear - 1, currentYear - 2] as const;
-})();
+const [anoAtual, anoAnterior, anoRetrasado] = janelaAnos(3);
+export const ANOS_JANELA: readonly [number, number, number] = [
+  anoAtual,
+  anoAnterior,
+  anoRetrasado,
+];

@@ -75,7 +75,9 @@ export async function GET(
       where,
       skip: (paginaSegura - 1) * limit,
       take: limit,
-      orderBy: { dataApresentacao: 'desc' },
+      // Ordena pelo ano da proposição (número) e, dentro dele, pela data de
+      // apresentação — a fonte renumera proposições antigas (ver src/lib/gc.ts).
+      orderBy: [{ ano: 'desc' }, { dataApresentacao: 'desc' }],
       include: {
         tramitacoes: {
           orderBy: { data: 'desc' },

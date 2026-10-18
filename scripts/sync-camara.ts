@@ -8,6 +8,7 @@
 
 import { PrismaClient, Casa, TipoVoto, TipoDiscurso, StatusProposicao } from '@prisma/client';
 import { NormalizerFactory } from '../src/lib/sync/normalizer-factory';
+import { anoCorrente } from '../src/lib/ano-padrao';
 
 const prisma = new PrismaClient({
   log: ['error', 'warn'],
@@ -25,7 +26,7 @@ interface SyncOptions {
 
 async function syncCamara(options: SyncOptions = {}) {
   const startTime = Date.now();
-  const ano = options.ano || new Date().getFullYear();
+  const ano = options.ano || anoCorrente();
   const camara = NormalizerFactory.getCamara();
   camara.resetStats();
 

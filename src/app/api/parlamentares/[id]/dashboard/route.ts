@@ -8,6 +8,7 @@ import {
   type AlinhamentoResult,
 } from '@/lib/dashboard';
 import { anosComDados } from '@/lib/parlamentar-anos';
+import { anoCorrente } from '@/lib/ano-padrao';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,13 +20,13 @@ const querySchema = z.object({
 
 async function anosComDadosGlobais(): Promise<number[]> {
   const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
-    `SELECT DISTINCT EXTRACT(YEAR FROM "data") AS ano FROM (
-      SELECT data FROM "votacoes"
-      UNION SELECT data FROM "discursos"
-      UNION SELECT "data_apresentacao" FROM "proposicoes"
-    ) a WHERE EXTRACT(YEAR FROM "data") >= 2023 GROUP BY 1 ORDER BY 1 DESC`
+    `SELECT a.ano FROM (
+      SELECT EXTRACT(YEAR FROM "data")::int AS ano FROM "votacoes"
+      UNION SELECT EXTRACT(YEAR FROM "data")::int FROM "discursos"
+      UNION SELECT "ano" FROM "proposicoes"
+    ) a WHERE a.ano >= 2023 GROUP BY 1 ORDER BY 1 DESC`
   );
-  return rows.map((r) => Math.round(r.ano));
+  return rows.map((r) => Math.round(Number(r.ano)));
 }
 
 let ANOS_GLOBAL: number[] = [];
@@ -96,7 +97,9 @@ export async function GET(
   const anos = Array.from(
     new Set([...anosAtividade, ...anosFrequencia.map((f) => f.ano)])
   ).sort((a, b) => b - a);
-  const ano = parsed.data.ano ?? (ANOS_GLOBAL.includes(2026) ? 2026 : anos[0] ?? new Date().getFullYear());
+  const ano =
+    parsed.data.ano ??
+    (ANOS_GLOBAL.includes(anoCorrente()) ? anoCorrente() : anos[0] ?? anoCorrente());
   const temDados = anos.length > 0;
 
   const dataInicio = new Date(ano, 0, 1);
@@ -144,7 +147,10 @@ export async function GET(
   const proposicoes = await prisma.proposicao.findMany({
     where: {
       parlamentarId: id,
-      dataApresentacao: { gte: dataInicio, lte: dataFim },
+      // Ano da proposição = `ano` (número), não `dataApresentacao` (a fonte
+      // renumera proposições antigas — ver src/lib/gc.ts). `dataApresentacao`
+      // segue no select apenas para o gráfico de atividade mensal.
+      ano,
     },
     select: { dataApresentacao: true, tema: true },
   });

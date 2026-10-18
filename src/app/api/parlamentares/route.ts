@@ -7,6 +7,7 @@ import {
   calcularPaginacao,
 } from '@/lib/parlamentar-query';
 import { calcularPontuacao, contadoresDeGrupos, type ContadoresProdutividade } from '@/lib/produtividade';
+import { anoCorrente } from '@/lib/ano-padrao';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   const { casa, partidoId, ufId, legislatura, situacao, search, sort, ano } = parsed.data;
 
   // Ano de referência para produtividade: ?ano= ou ano corrente
-  const anoRef = ano ?? new Date().getFullYear();
+  const anoRef = ano ?? anoCorrente();
   const inicioAno = new Date(`${anoRef}-01-01`);
   const fimAno = new Date(`${anoRef}-12-31T23:59:59.999Z`);
 
@@ -83,7 +84,11 @@ export async function GET(request: NextRequest) {
         by: ['parlamentarId', 'tipo', 'autorPrincipal', 'status'],
         where: {
           parlamentarId: { in: ids },
-          dataApresentacao: { gte: inicioAno, lte: fimAno },
+          // Ano da proposição = `ano` (número), não `dataApresentacao`: a fonte
+          // oficial reapresenta/renumera proposições antigas (ex.: PL 1342/2026
+          // com dataApresentacao de 2009). Filtrar por data perderia proposições
+          // da janela. Ver src/lib/gc.ts para o mesmo critério na retenção.
+          ano: anoRef,
         },
         _count: { _all: true },
       }),

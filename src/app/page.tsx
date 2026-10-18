@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ParlamentaresAtivos } from '@/components/ParlamentaresAtivos';
 import { MetricaProdutividadeInfo } from '@/components/MetricaProdutividadeInfo';
 import { LogoMark } from '@/components/Logo';
+import { anoCorrente } from '@/lib/ano-padrao';
 import { AvisoBanner } from '@/components/AvisoBanner';
 
 const StatsCards = dynamic(() => import('@/components/StatsCards').then((mod) => mod.StatsCards), {
@@ -94,7 +95,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                Parlamentares Mais Produtivos em {new Date().getFullYear()}
+                Parlamentares Mais Produtivos em {anoCorrente()}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Top 5 pelo ranking de produtividade — pontuação somada no ano corrente.
