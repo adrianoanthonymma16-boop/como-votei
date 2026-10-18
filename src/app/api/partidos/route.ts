@@ -11,5 +11,3 @@ export async function GET() {
 
   return NextResponse.json({ data: partidos });
 }
-
-export const revalidate = 3600;

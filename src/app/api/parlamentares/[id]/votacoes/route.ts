@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 const querySchema = z.object({
   cursor: z.string().optional(),
   page: z.coerce.number().int().min(1).optional(),
@@ -153,5 +155,3 @@ export async function GET(
     hasMore: !!nextCursor,
   });
 }
-
-export const revalidate = 3600;
