@@ -1,11 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { formatDate, formatCurrency, truncate, useDebounce } from '@/lib/utils';
 import { ANOS_JANELA } from '@/lib/despesas';
 import { FiltroAno } from '@/components/FiltroAno';
-import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Button } from '@/components/ui/Button';
@@ -16,8 +14,19 @@ interface Despesa {
   categoria: string;
   fornecedor: string;
   valor: string;
-  urlDocumento: string | undefined;
+  urlDocumento: string | null;
   nomeParlamentarRaw: string;
+}
+
+interface DespesaMeta {
+  pagina: number;
+  itensPorPagina: number;
+  totalPaginas: number;
+  totalItens: number;
+  totalGasto: number;
+  mesesComDespesa: number;
+  mediaMensal: number;
+  categorias: { nome: string; total: number }[];
 }
 
 interface GastoTabProps {
@@ -25,156 +34,132 @@ interface GastoTabProps {
   casa: 'CAMARA' | 'SENADO';
 }
 
+const ITENS_POR_PAGINA = 20;
+
 export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
+  const [meta, setMeta] = useState<DespesaMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [filtroPeriodo, setFiltroPeriodo] = useState<'todos' | number>('todos');
-  const [filtroCategoria, setFiltroCategoria] = useState<string>('todos');
-  const [busca, setBusca] = useState<string>('');
 
-  const loadData = useCallback(async (targetPage: number) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const params = new URLSearchParams({
-        pagina: String(targetPage),
-        itensPorPagina: '20',
-      });
-      if (filtroPeriodo !== 'todos') params.set('ano', String(filtroPeriodo));
-      if (filtroCategoria !== 'todos') params.set('categoria', filtroCategoria);
-      if (busca) params.set('busca', busca);
+  const [filtroAno, setFiltroAno] = useState<number | undefined>(undefined);
+  const [filtroCategoria, setFiltroCategoria] = useState<string | undefined>(undefined);
+  const [busca, setBusca] = useState('');
+  const buscaDebounced = useDebounce(busca, 350);
 
-      const res = await fetch(
-        `/api/parlamentares/${parlamentarId}/despesas?${params.toString()}`,
-        { cache: 'no-store' }
-      );
-
-      if (!res.ok) throw new Error('Erro ao carregar despesas');
-
-      const data = await res.json();
-      setDespesas(data.data || []);
-      setTotal(data.meta?.totalItens ?? data.data.length);
-      setTotalPages(data.meta?.totalPaginas ?? 1);
-      setPage(data.meta?.pagina ?? targetPage);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [parlamentarId, filtroPeriodo, filtroCategoria, busca]);
+  const temFiltro = filtroAno !== undefined || filtroCategoria !== undefined || busca.trim() !== '';
 
   useEffect(() => {
-    loadData(1);
-  }, [loadData]);
+    const controller = new AbortController();
+    let ativo = true;
 
-  const handleMudancaFiltro = useCallback((nome: string, valor: string | number | null) => {
-    const newPage = 1;
-    if (nome === 'periodo') {
-      setFiltroPeriodo(valor === 'todos' ? 'todos' : Number(valor));
-    } else if (nome === 'categoria') {
-      setFiltroCategoria(valor === 'todos' ? 'todos' : String(valor));
-    } else if (nome === 'busca') {
-      setBusca(String(valor) || '');
-    }
-    loadData(newPage);
-  }, [loadData]);
+    (async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const totalGasto = despesas.reduce(
-    (sum, d) => sum + (Number(d.valor) || 0),
-    0
-  );
-  const quantidade = despesas.length;
-  const mediaMensal = quantidade > 0 ? totalGasto / 12 : 0;
+        const params = new URLSearchParams({
+          pagina: String(page),
+          itensPorPagina: String(ITENS_POR_PAGINA),
+        });
+        if (filtroAno !== undefined) params.set('ano', String(filtroAno));
+        if (filtroCategoria) params.set('categoria', filtroCategoria);
+        if (buscaDebounced.trim()) params.set('busca', buscaDebounced.trim());
 
-  const handleVerComprovante = (url: string | undefined) => {
-    if (url) {
-      window.open(url, '_blank');
-    }
+        const res = await fetch(
+          `/api/parlamentares/${parlamentarId}/despesas?${params.toString()}`,
+          { cache: 'no-store', signal: controller.signal }
+        );
+
+        if (!res.ok) throw new Error('Não foi possível carregar as despesas');
+
+        const json = await res.json();
+        if (!ativo) return;
+
+        setDespesas(Array.isArray(json.data) ? json.data : []);
+        setMeta(json.meta ?? null);
+
+        // A API clampa páginas órfãs (ex.: filtro reduziu o total) — sincroniza a UI.
+        if (json.meta?.pagina && json.meta.pagina !== page) {
+          setPage(json.meta.pagina);
+        }
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        if (!ativo) return;
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      } finally {
+        if (ativo) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      ativo = false;
+      controller.abort();
+    };
+  }, [parlamentarId, page, filtroAno, filtroCategoria, buscaDebounced]);
+
+  const limparFiltros = () => {
+    setFiltroAno(undefined);
+    setFiltroCategoria(undefined);
+    setBusca('');
+    setPage(1);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-6 w rounded-md" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 rounded-md border border-destructive bg-destructive/10 text-destructive">
-        <p className="font-medium mb-2">Erro ao carregar despesas</p>
-        <p className="text-sm">{error}</p>
-        <Button
-          onClick={() => {
-            setError(null);
-            loadData(1);
-          }}
-          className="mt-3"
-        >
-          Tentar novamente
-        </Button>
-      </div>
-    );
-  }
-
-  if (quantidade === 0) {
-    return (
-      <div className="p-6 text-center text-muted-foreground">
-        <p>Não há despesas oficiais para este parlamentar neste período</p>
-        <p className="mt-2">
-          {filtroPeriodo !== 'todos' && (
-            <p>Tente alterar o período ou remover os filtros.</p>
-          )}
-        </p>
-      </div>
-    );
-  }
+  const fonteLabel = casa === 'CAMARA' ? 'Cota Parlamentar (CEAP)' : 'Custeio de Atividade Parlamentar (CEAPS)';
+  const totalItens = meta?.totalItens ?? 0;
+  const semResultados = !isLoading && !error && despesas.length === 0;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div>
-          <h3 className="font-semibold mb-3">Resumo Financeiro</h3>
+          <h3 className="font-semibold mb-1">Resumo Financeiro</h3>
+          <p className="mb-3 text-xs text-muted-foreground">
+            {fonteLabel}
+            {temFiltro ? ' · período filtrado' : ` · últimos ${ANOS_JANELA.length} anos`}
+          </p>
           <div className="grid grid-cols-3 gap-2 text-sm">
             <div>
-              <span className="text-muted-foreground">Total gasto</span>
-              <span className="font-bold">{formatCurrency(totalGasto)}</span>
+              <span className="block text-muted-foreground">Total gasto</span>
+              <span className="font-bold">{formatCurrency(meta?.totalGasto ?? 0)}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Quantidade</span>
-              <span className="font-bold">{quantidade}</span>
+              <span className="block text-muted-foreground">Despesas</span>
+              <span className="font-bold">{totalItens.toLocaleString('pt-BR')}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Média/mês</span>
-              <span className="font-bold">{formatCurrency(mediaMensal)}</span>
+              <span className="block text-muted-foreground">Média/mês</span>
+              <span className="font-bold">{formatCurrency(meta?.mediaMensal ?? 0)}</span>
             </div>
           </div>
         </div>
 
         <div>
           <h3 className="font-semibold mb-3">Filtros</h3>
-<FiltroAno
-          ano={filtroPeriodo === 'todos' ? '' : String(filtroPeriodo)}
-          anos={Array.from(ANOS_JANELA)}
-          onChange={(value: string) => handleMudancaFiltro('periodo', value)}
-        />
+          <FiltroAno
+            ano={filtroAno === undefined ? '' : String(filtroAno)}
+            anos={Array.from(ANOS_JANELA)}
+            onChange={(value: string) => {
+              setFiltroAno(value === '' ? undefined : Number(value));
+              setPage(1);
+            }}
+          />
           <select
-            value={filtroCategoria}
-            onChange={(e) => handleMudancaFiltro('categoria', e.target.value)}
+            value={filtroCategoria ?? ''}
+            onChange={(e) => {
+              setFiltroCategoria(e.target.value === '' ? undefined : e.target.value);
+              setPage(1);
+            }}
             aria-label="Filtrar por categoria"
             className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <option value="todos">Todas</option>
-            <option value="salario">Salário</option>
-            <option value="material de expediente">Material de expediente</option>
-            <option value="viagem">Viagem</option>
-            <option value="outros">Outros</option>
+            <option value="">Todas as categorias</option>
+            {(meta?.categorias ?? []).map((c) => (
+              <option key={c.nome} value={c.nome}>
+                {truncate(c.nome || 'Sem categoria', 60)} ({c.total.toLocaleString('pt-BR')})
+              </option>
+            ))}
           </select>
           <div className="mt-3">
             <label htmlFor="busca-despesas" className="text-sm text-muted-foreground">
@@ -184,99 +169,141 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
               id="busca-despesas"
               type="text"
               value={busca}
-              onChange={(e) => handleMudancaFiltro('busca', e.target.value)}
-              placeholder="Palavra-chave... "
+              onChange={(e) => {
+                setBusca(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Fornecedor, categoria..."
               className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           </div>
+          {temFiltro && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3">
+              Limpar filtros
+            </Button>
+          )}
         </div>
       </div>
 
-      <div>
-        <table className="w-full rounded-md border">
-          <thead>
-            <tr role="row">
-              <th
-                className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wider"
-                scope="col"
-              >
-                Data
-              </th>
-              <th
-                className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wider"
-                scope="col"
-              >
-                Categoria
-              </th>
-              <th
-                className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wider"
-                scope="col"
-              >
-                Fornecedor
-              </th>
-              <th
-                className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wider"
-                scope="col"
-              >
-                Valor
-              </th>
-              <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wider" scope="col">
-                Ação
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {despesas.map((d, i) => (
-              <tr
-                key={d.idExterno}
-                role="row"
-                className="border-b last:border-none hover:bg-accent/5"
-              >
-                <td
-                  role="gridcell"
-                  className="p-3 align-middle text-sm"
-                >
-                  {d.data ? formatDate(new Date(d.data)) : '—'}
-                </td>
-                <td role="gridcell" className="p-3 align-middle text-sm">
-                  {d.categoria}
-                </td>
-                <td role="gridcell" className="p-3 align-middle text-sm">
-                  {d.fornecedor}
-                </td>
-                <td role="gridcell" className="p-3 align-middle text-right text-sm">
-                  {formatCurrency(Number(d.valor))}
-                </td>
-                <td role="gridcell" className="p-3 align-middle text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleVerComprovante(d.urlDocumento)}
-                    aria-label={`Ver comprovante de ${d.categoria}`}
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M2 4lM2 4l10 20 10-20zM2 4l15.5 7.3L20 12l-5.3 8.7L2 4z" />
-                    </svg>
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="mt-4">
-<PaginacaoNumerica
-          page={page}
-          totalPages={totalPages}
-          onChange={(p: number) => loadData(p)}
-          total={total}
-/>
+      {error ? (
+        <div className="p-6 rounded-md border border-destructive bg-destructive/10 text-destructive">
+          <p className="font-medium mb-2">Erro ao carregar despesas</p>
+          <p className="text-sm">{error}</p>
+          <Button
+            onClick={() => {
+              setError(null);
+              setPage(1);
+            }}
+            className="mt-3"
+          >
+            Tentar novamente
+          </Button>
         </div>
-      </div>
+      ) : isLoading && despesas.length === 0 ? (
+        <div className="space-y-4">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-6 w-full rounded-md" />
+        </div>
+      ) : semResultados ? (
+        <div className="p-6 text-center text-muted-foreground">
+          <p>Nenhuma despesa encontrada{temFiltro ? ' com os filtros atuais' : ' neste parlamentar'}.</p>
+          {temFiltro && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3">
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div aria-busy={isLoading}>
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Data
+                  </th>
+                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Categoria
+                  </th>
+                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Fornecedor
+                  </th>
+                  <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Valor
+                  </th>
+                  <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Comprovante
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {despesas.map((d) => {
+                  const negativo = Number(d.valor) < 0;
+                  return (
+                    <tr key={d.idExterno} className="border-b last:border-none hover:bg-accent/5">
+                      <td className="p-3 align-middle text-sm whitespace-nowrap">
+                        {d.data ? formatDate(d.data) : '—'}
+                      </td>
+                      <td className="p-3 align-middle text-sm">
+                        {d.categoria || '—'}
+                      </td>
+                      <td className="p-3 align-middle text-sm">
+                        {d.fornecedor || '—'}
+                      </td>
+                      <td
+                        className={`p-3 align-middle text-right text-sm whitespace-nowrap tabular-nums ${
+                          negativo ? 'text-destructive' : ''
+                        }`}
+                      >
+                        {formatCurrency(Number(d.valor))}
+                      </td>
+                      <td className="p-3 align-middle text-right">
+                        {d.urlDocumento ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Ver comprovante de ${d.categoria || 'despesa'}`}
+                            onClick={() => window.open(d.urlDocumento as string, '_blank', 'noopener,noreferrer')}
+                          >
+                            <svg
+                              className="h-4 w-4"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                              <path d="M15 3h6v6" />
+                              <path d="M10 14 21 3" />
+                            </svg>
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground" aria-label="Sem comprovante disponível">
+                            —
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">
+            <PaginacaoNumerica
+              page={meta?.pagina ?? page}
+              totalPages={meta?.totalPaginas ?? 1}
+              onChange={(p: number) => setPage(p)}
+              total={totalItens}
+              label="Despesas"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
