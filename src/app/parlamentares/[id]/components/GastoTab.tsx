@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { formatDate, formatCurrency, formatNumber } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import { ANOS_JANELA } from '@/lib/despesas';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Badge } from '@/components/ui/Badge';
@@ -152,7 +152,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
             </div>
             <div>
               <span className="text-muted-foreground">Média/mês</span>
-              <span className="font-bold">{formatCurrency(mediaMensal / 12)}</span>
+              <span className="font-bold">{formatCurrency(mediaMensal)}</span>
             </div>
           </div>
         </div>
@@ -272,7 +272,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
 <PaginacaoNumerica
           page={page}
           totalPages={totalPages}
-          onChange={setPage}
+          onChange={(p: number) => loadData(p)}
           total={total}
 />
         </div>

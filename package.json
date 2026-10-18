@@ -14,6 +14,8 @@
     "sync:camara": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/sync-camara.ts",
     "backfill:status": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/backfill-status-proposicoes.ts",
     "sync:senado": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/sync-senado.ts",
+    "sync:despesas-camara": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/sync-despesas-camara.ts --apenas-despesas",
+    "sync:despesas-senado": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/sync-despesas-senado.ts --apenas-despesas",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test"

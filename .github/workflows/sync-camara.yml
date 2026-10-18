@@ -30,6 +30,10 @@ on:
         description: 'Sincronizar apenas frequência'
         required: false
         type: boolean
+      apenas-despesas:
+        description: 'Sincronizar apenas despesas (CEAP)'
+        required: false
+        type: boolean
 
 jobs:
   sync-camara:
@@ -78,7 +82,15 @@ jobs:
       # para evitar rate-limit entre discursos/proposições no mesmo processo.
       - name: Sync base (partidos + parlamentares)
         if: github.event_name == 'schedule'
-        run: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-parlamentares
+        # Retry: a API da Câmara devolve 504 transitório; sem retry, uma
+        # indisponibilidade momentânea derruba o job inteiro.
+        run: |
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-parlamentares && break
+            echo "sync base falhou (tentativa $tentativa/3) — retry em 60s..."
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 60
+          done
 
       - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
@@ -110,6 +122,16 @@ jobs:
           for ano in 2024 2025 2026; do
             echo "📅 Sync frequência $ano"
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-frequencia --ano=$ano
+          done
+
+      - name: Sync despesas CEAP (3 anos)
+        if: github.event_name == 'schedule'
+        run: |
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-despesas-camara.ts --apenas-despesas && break
+            echo "sync despesas falhou (tentativa $tentativa/3) — retry em 60s..."
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 60
           done
 
       - name: Guardrail — nominais sem votos
@@ -170,6 +192,20 @@ jobs:
           for tentativa in 1 2 3; do
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts $ARGS && break
             echo "sync falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
+
+      - name: Sync despesas CEAP (manual)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas == 'true'
+        env:
+          INPUT_ANO: ${{ github.event.inputs.ano }}
+        run: |
+          ARGS=""
+          [ -n "$INPUT_ANO" ] && ARGS="--ano=$INPUT_ANO"
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-despesas-camara.ts --apenas-despesas $ARGS && break
+            echo "sync despesas falhou (tentativa $tentativa/3) — retry em 60s..."
             [ "$tentativa" = 3 ] && exit 1
             sleep 60
           done

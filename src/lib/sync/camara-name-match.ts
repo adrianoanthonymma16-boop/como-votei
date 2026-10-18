@@ -15,13 +15,14 @@
  */
 
 export type ResultadoMatch =
-  | { parlamentarId: string; metodo: 'idExterno' | 'nomeUf' }
+  | { parlamentarId: string; idExterno: string; metodo: 'idExterno' | 'nomeUf' }
   | null;
 
 export interface DiretorioParlamentares {
   porIdExterno: Record<string, string>;        // idExterno (string) → parlamentarId
   porNomeUf: Record<string, string[]>;         // `${nomeNormalizado}|${ufNormalizado}` → parlamentarId[]
   partidosPorId: Record<string, string>;       // parlamentarId → partidoSigla
+  idExternoPorId?: Record<string, string>;     // parlamentarId → idExterno (reverse lookup)
 }
 
 export interface EntradaMatch {
@@ -61,7 +62,7 @@ export function camaraNameMatch(
     const idExterno = String(entrada.idDeputado);
     const parlamentarId = diretorio.porIdExterno[idExterno];
     if (parlamentarId) {
-      return { parlamentarId, metodo: 'idExterno' };
+      return { parlamentarId, idExterno, metodo: 'idExterno' };
     }
     // id não encontrado no diretório → cai para fallback nome+UF
   }
@@ -83,7 +84,8 @@ export function camaraNameMatch(
   }
 
   if (candidatos.length === 1) {
-    return { parlamentarId: candidatos[0], metodo: 'nomeUf' };
+    const idExterno = diretorio.idExternoPorId?.[candidatos[0]] ?? '';
+    return { parlamentarId: candidatos[0], idExterno, metodo: 'nomeUf' };
   }
 
   // ≥2 candidatos → ambiguidade: desempate por partidoSigla
@@ -106,7 +108,8 @@ export function camaraNameMatch(
   }
 
   if (matchUnico) {
-    return { parlamentarId: matchUnico, metodo: 'nomeUf' };
+    const idExterno = diretorio.idExternoPorId?.[matchUnico] ?? '';
+    return { parlamentarId: matchUnico, idExterno, metodo: 'nomeUf' };
   }
 
   return null;

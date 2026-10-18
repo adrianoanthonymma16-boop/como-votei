@@ -11,16 +11,12 @@
  */
 
 import { PrismaClient, Casa } from '@prisma/client';
-import { camaraClient } from '../src/lib/sync/http-client';
 import { derivarIdExternoDespesa } from '../src/lib/sync/despesa-id';
 import { parseBRL, parseDataFonte, ANOS_JANELA } from '../src/lib/despesas';
 import { camaraNameMatch, DiretorioParlamentares, EntradaMatch } from '../src/lib/sync/camara-name-match';
 import { DespesaNormalizada } from '../src/lib/sync/types';
-import { chain } from 'stream-chain';
 import yauzl from 'yauzl';
-import streamArray from '../src/lib/stream-json/streamers/stream-array.js';
 import { Readable } from 'stream';
-import { createHash } from 'crypto';
 import { EventEmitter } from 'events';
 
 const prisma = new PrismaClient({
@@ -44,6 +40,7 @@ class HttpRandomAccessReader extends EventEmitter {
   private url: string;
   private size: number;
   private fetchCache: Map<string, Uint8Array> = new Map();
+  private refCount: number = 0;
 
   constructor(url: string) {
     super();
@@ -132,6 +129,16 @@ class HttpRandomAccessReader extends EventEmitter {
     this.fetchCache.clear();
     callback(null);
   }
+
+  ref(): void {
+    this.refCount += 1;
+  }
+
+  unref(): void {
+    this.refCount -= 1;
+    if (this.refCount > 0) return;
+    this.emit('unref');
+  }
 }
 
 async function buildDiretorio(): Promise<DiretorioParlamentares> {
@@ -143,6 +150,7 @@ async function buildDiretorio(): Promise<DiretorioParlamentares> {
   const porIdExterno: Record<string, string> = {};
   const porNomeUf: Record<string, string[]> = {};
   const partidosPorId: Record<string, string> = {};
+  const idExternoPorId: Record<string, string> = {};
 
   function normalizarNome(nome: string): string {
     return String(nome || '')
@@ -160,6 +168,7 @@ async function buildDiretorio(): Promise<DiretorioParlamentares> {
   for (const p of parlamentares) {
     porIdExterno[p.idExterno] = p.id;
     partidosPorId[p.id] = p.partido?.sigla || '';
+    idExternoPorId[p.id] = p.idExterno;
 
     const nomeNorm = normalizarNome(p.nome);
     const ufNorm = normalizarUf(p.uf?.sigla || '');
@@ -170,7 +179,7 @@ async function buildDiretorio(): Promise<DiretorioParlamentares> {
     }
   }
 
-  return { porIdExterno, porNomeUf, partidosPorId };
+  return { porIdExterno, porNomeUf, partidosPorId, idExternoPorId };
 }
 
 function transformRecord(raw: Record<string, unknown>, diretorio: DiretorioParlamentares): DespesaNormalizada | null {
@@ -205,14 +214,14 @@ function transformRecord(raw: Record<string, unknown>, diretorio: DiretorioParla
     const nomeParlamentarRaw = String(raw.nomeParlamentar || '');
 
     const entrada: EntradaMatch = {
-      idDeputado: raw.idDeputado as number | string | undefined,
+      idDeputado: (raw.idDeputado ?? raw.numeroDeputadoID) as number | string | undefined,
       nomeParlamentar: String(raw.nomeParlamentar || ''),
       uf: String(raw.siglaUF || ''),
       partidoSigla: raw.siglaPartido ? String(raw.siglaPartido) : undefined,
     };
 
     const match = camaraNameMatch(entrada, diretorio);
-    const parlamentarIdExterno = match ? String(entrada.idDeputado) : undefined;
+    const parlamentarIdExterno = match && match.idExterno ? match.idExterno : undefined;
 
     return {
       idExterno,
@@ -239,17 +248,22 @@ function transformRecord(raw: Record<string, unknown>, diretorio: DiretorioParla
 async function upsertBatch(batch: DespesaNormalizada[]): Promise<{ inserted: number; updated: number }> {
   if (batch.length === 0) return { inserted: 0, updated: 0 };
 
-  // Resolve parlamentarId from parlamentarIdExterno
-  const recordsWithIds = await Promise.all(batch.map(async (d) => {
-    let parlamentarId: string | null = null;
-    if (d.parlamentarIdExterno) {
-      const parl = await prisma.parlamentar.findUnique({
-        where: { idExterno: d.parlamentarIdExterno },
-        select: { id: true },
-      });
-      parlamentarId = parl?.id ?? null;
-    }
-    return { ...d, parlamentarId };
+  // Resolve parlamentarId a partir de parlamentarIdExterno em UMA query (evita N+1)
+  const idExternos = Array.from(
+    new Set(batch.map((d) => d.parlamentarIdExterno).filter((x): x is string => Boolean(x)))
+  );
+  const idsPorExterno = new Map<string, string>();
+  if (idExternos.length > 0) {
+    const encontrados = await prisma.parlamentar.findMany({
+      where: { casa: Casa.CAMARA, idExterno: { in: idExternos } },
+      select: { id: true, idExterno: true },
+    });
+    for (const p of encontrados) idsPorExterno.set(p.idExterno, p.id);
+  }
+
+  const recordsWithIds = batch.map((d) => ({
+    ...d,
+    parlamentarId: d.parlamentarIdExterno ? idsPorExterno.get(d.parlamentarIdExterno) ?? null : null,
   }));
 
   const values: string[] = [];
@@ -257,7 +271,7 @@ async function upsertBatch(batch: DespesaNormalizada[]): Promise<{ inserted: num
 
   for (const d of recordsWithIds) {
     const idx = params.length;
-    values.push(`($${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9}, $${idx + 10}, $${idx + 11}, $${idx + 12}, $${idx + 13}, $${idx + 14}, $${idx + 15})`);
+    values.push(`(gen_random_uuid()::text, $${idx + 1}, $${idx + 2}, $${idx + 3}, $${idx + 4}, $${idx + 5}, $${idx + 6}, $${idx + 7}, $${idx + 8}, $${idx + 9}, $${idx + 10}, $${idx + 11}, $${idx + 12}, $${idx + 13}::"Casa", $${idx + 14}, $${idx + 15})`);
     
     params.push(
       d.idExterno,
@@ -280,7 +294,7 @@ async function upsertBatch(batch: DespesaNormalizada[]): Promise<{ inserted: num
 
   const placeholders = values.join(', ');
   const sql = `
-    INSERT INTO "despesas" ("id_externo", "parlamentar_id", "ano", "mes", "data", "categoria", "fornecedor", "cpf_cnpj", "documento", "valor", "valor_glosa", "url_documento", "casa", "nome_parlamentar_raw", "imported_at")
+    INSERT INTO "despesas" ("id", "id_externo", "parlamentar_id", "ano", "mes", "data", "categoria", "fornecedor", "cpf_cnpj", "documento", "valor", "valor_glosa", "url_documento", "casa", "nome_parlamentar_raw", "imported_at")
     VALUES ${placeholders}
     ON CONFLICT ("id_externo") DO UPDATE SET
       "parlamentar_id" = EXCLUDED."parlamentar_id",
@@ -306,7 +320,7 @@ async function upsertBatch(batch: DespesaNormalizada[]): Promise<{ inserted: num
 async function runRetention(casa: 'CAMARA' | 'SENADO'): Promise<number> {
   const anos = [...ANOS_JANELA] as number[];
   const result = await prisma.$executeRawUnsafe(
-    `DELETE FROM "despesas" WHERE "casa" = $1 AND "ano" NOT IN ($2, $3, $4)`,
+    `DELETE FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" NOT IN ($2, $3, $4)`,
     casa,
     anos[0],
     anos[1],
@@ -336,8 +350,9 @@ async function runSanityGates(casa: 'CAMARA' | 'SENADO', anosJanela: readonly [n
   // Gate 2: Total rows range
   try {
     const count = await prisma.despesa.count({ where: { casa, ano: { in: anos } } });
-    const min = casa === 'CAMARA' ? 100_000 : 10_000;
-    const max = casa === 'CAMARA' ? 250_000 : 30_000;
+    // Janela de 3 anos: Câmara ≈ 230k linhas/ano (≈ 230k + 210k + parcial) — não 100k/ano.
+    const min = casa === 'CAMARA' ? 400_000 : 10_000;
+    const max = casa === 'CAMARA' ? 900_000 : 30_000;
     gates.push({
       name: 'rows-in-range',
       passed: count >= min && count <= max,
@@ -355,7 +370,7 @@ async function runSanityGates(casa: 'CAMARA' | 'SENADO', anosJanela: readonly [n
       where: { casa, ano: { in: anos } },
     });
     const baselines: Record<string, { mean: number; sigma: number }> = {
-      'CAMARA': { mean: 1_000_000_000, sigma: 200_000_000 },
+      'CAMARA': { mean: 250_000_000, sigma: 60_000_000 },
       'SENADO': { mean: 50_000_000, sigma: 15_000_000 },
     };
     const baseline = baselines[casa];
@@ -377,7 +392,7 @@ async function runSanityGates(casa: 'CAMARA' | 'SENADO', anosJanela: readonly [n
   // Gate 4: Zero duplicate idExterno
   try {
     const dupes = await prisma.$queryRawUnsafe(
-      `SELECT "id_externo", COUNT(*) as cnt FROM "despesas" WHERE "casa" = $1 AND "ano" IN ($2, $3, $4) GROUP BY "id_externo" HAVING COUNT(*) > 1`,
+      `SELECT "id_externo", COUNT(*) as cnt FROM "despesas" WHERE "casa" = $1::"Casa" AND "ano" IN ($2, $3, $4) GROUP BY "id_externo" HAVING COUNT(*) > 1`,
       casa,
       anos[0],
       anos[1],
@@ -436,6 +451,14 @@ async function ingestYear(ano: number, diretorio: DiretorioParlamentares): Promi
   return new Promise((resolve, reject) => {
     const batch: DespesaNormalizada[] = [];
 
+    const flush = async () => {
+      if (batch.length === 0) return;
+      const lote = batch.splice(0, batch.length);
+      const { updated: upd } = await upsertBatch(lote);
+      ingested += lote.length;
+      updated += upd;
+    };
+
     yauzl.fromRandomAccessReader(reader, reader.getSize(), { lazyEntries: true }, (err, zipfile) => {
       if (err) {
         reject(err);
@@ -450,84 +473,82 @@ async function ingestYear(ano: number, diretorio: DiretorioParlamentares): Promi
       zipfile.readEntry();
 
       zipfile.on('entry', (entry) => {
-        if (entry.fileName.endsWith('.json')) {
-          zipfile.openReadStream(entry, { decodeFileData: true }, (err, readStream) => {
-            if (err) {
-              errors++;
-              console.warn('⚠️  Erro ao abrir stream do entry:', err.message);
-              zipfile.readEntry();
-              return;
-            }
-
-            const pipeline = chain([
-              readStream as Readable,
-              streamArray(),
-            ]);
-
-            pipeline.on('data', (chunk) => {
-              try {
-                const raw = chunk.value;
-                const normalized = transformRecord(raw, diretorio);
-                if (normalized) {
-                  if (normalized.parlamentarIdExterno) matched++; else unmatched++;
-                  batch.push(normalized);
-                  if (batch.length >= BATCH_SIZE) {
-                    pipeline.pause();
-                    upsertBatch(batch)
-                      .then(({ updated: upd }) => {
-                        ingested += batch.length;
-                        updated += upd;
-                        batch.length = 0;
-                        pipeline.resume();
-                      })
-                      .catch((err) => {
-                        errors++;
-                        console.error('❌ Erro no upsert batch:', err);
-                        batch.length = 0;
-                        pipeline.resume();
-                      });
-                  }
-                } else {
-                  warnings++;
-                }
-              } catch (err) {
-                errors++;
-                console.warn('⚠️  Erro ao processar chunk:', err instanceof Error ? err.message : String(err));
-              }
-            });
-
-            pipeline.on('end', () => {
-              zipfile.readEntry();
-            });
-
-            pipeline.on('error', (err) => {
-              errors++;
-              console.warn('⚠️  Erro no pipeline:', err.message);
-              zipfile.readEntry();
-            });
-          });
-        } else {
+        if (!entry.fileName.endsWith('.json')) {
           zipfile.readEntry();
+          return;
         }
+
+        zipfile.openReadStream(entry, { decompress: true }, (streamErr, readStream) => {
+          if (streamErr || !readStream) {
+            errors++;
+            console.warn('⚠️  Erro ao abrir stream do entry:', streamErr?.message);
+            zipfile.readEntry();
+            return;
+          }
+
+          const chunks: Buffer[] = [];
+          readStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+          readStream.on('end', async () => {
+            try {
+              const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
+              // Bulk oficial da Câmara: `{ "dados": [ ... ] }`. Também aceita array puro.
+              const registros: unknown[] = Array.isArray(parsed)
+                ? parsed
+                : Array.isArray((parsed as { dados?: unknown })?.dados)
+                  ? ((parsed as { dados: unknown[] }).dados)
+                  : [];
+
+              if (registros.length === 0) {
+                warnings++;
+                console.warn('⚠️  Nenhum registro no JSON do ZIP (estrutura inesperada)');
+              }
+
+              for (const item of registros) {
+                try {
+                  const normalized = transformRecord(item as Record<string, unknown>, diretorio);
+                  if (!normalized) {
+                    warnings++;
+                    continue;
+                  }
+                  if (normalized.parlamentarIdExterno) matched++;
+                  else unmatched++;
+                  batch.push(normalized);
+                  if (batch.length >= BATCH_SIZE) await flush();
+                } catch (itemErr) {
+                  errors++;
+                  warnings++;
+                  console.warn('⚠️  Erro ao transformar item:', itemErr instanceof Error ? itemErr.message : String(itemErr));
+                }
+              }
+            } catch (parseErr) {
+              errors++;
+              console.warn('⚠️  Erro ao parsear JSON do ZIP entry:', parseErr instanceof Error ? parseErr.message : String(parseErr));
+            } finally {
+              zipfile.readEntry();
+            }
+          });
+
+          readStream.on('error', (readErr) => {
+            errors++;
+            console.warn('⚠️  Erro ao ler stream do entry:', readErr.message);
+            zipfile.readEntry();
+          });
+        });
       });
 
       zipfile.on('end', async () => {
-        if (batch.length > 0) {
-          try {
-            const { updated: upd } = await upsertBatch(batch);
-            ingested += batch.length;
-            updated += upd;
-            batch.length = 0;
-          } catch (err) {
-            errors++;
-            console.error('❌ Erro no upsert final:', err);
-          }
+        try {
+          await flush();
+        } catch (flushErr) {
+          errors++;
+          console.error('❌ Erro no upsert final:', flushErr);
         }
         resolve({ ingested, updated, errors, warnings, matched, unmatched });
       });
 
-      zipfile.on('error', (err) => {
-        reject(err);
+      zipfile.on('error', (zipErr) => {
+        reject(zipErr);
       });
     });
   });
