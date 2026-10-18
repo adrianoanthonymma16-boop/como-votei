@@ -81,8 +81,8 @@ export async function GET(
     );
   }
 
-  // Sem ?ano, usa 2026 se houver dados globais para esse ano;
-  // senão o ano mais recente com registros do parlamentar;
+  // Sem ?ano, prioriza o ano corrente (anoCorrente()) se houver dados globais
+  // para ele; senão o ano mais recente com registros do parlamentar;
   // nunca o ano corrente vazio.
   // `anos` inclui anos de frequência oficial mesmo sem atividade
   // (ex.: 2025 tem frequência sincronizada mas votações ainda não).
