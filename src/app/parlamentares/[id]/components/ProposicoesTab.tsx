@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { descreverTipoProposicao } from '@/lib/temas';
 
 interface Proposicao {
@@ -54,57 +55,76 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
   const [tema, setTema] = useState('');
   const [ano, setAno] = useState('');
   const [anos, setAnos] = useState<number[]>([]);
+  const [anosProntos, setAnosProntos] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [temas, setTemas] = useState<Array<{ tema: string; total: number }>>([]);
 
-  const loadData = useCallback(
-    async (targetPage: number, filtros?: { aprovada: string; tema: string; ano: string }) => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const f = filtros ?? { aprovada, tema, ano };
-        const params = new URLSearchParams({
-          page: String(targetPage),
-          limit: String(PER_PAGE),
-        });
-        if (f.aprovada) params.set('aprovada', f.aprovada);
-        if (f.tema) params.set('tema', f.tema);
-        if (f.ano) params.set('ano', f.ano);
-        const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`);
-        if (!response.ok) throw new Error('Erro ao carregar proposições');
-        const data = await response.json();
-        setProposicoes(data.data);
-        setTotal(data.total ?? data.data.length);
-        setTotalPages(data.totalPages ?? 1);
-        setPage(data.page ?? targetPage);
-        if (Array.isArray(data.temas)) setTemas(data.temas);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [parlamentarId, aprovada, tema, ano]
-  );
-
-  useEffect(() => {
-    loadData(1);
-  }, [loadData]);
-
+  // Os anos com dados definem o ano padrão (prioriza o corrente) antes de carregar a lista.
   useEffect(() => {
     let ativo = true;
     fetch(`/api/parlamentares/${parlamentarId}/anos`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (ativo && Array.isArray(d?.anos)) setAnos(d.anos);
+        if (!ativo) return;
+        const lista: number[] = Array.isArray(d?.anos) ? d.anos : [];
+        setAnos(lista);
+        const padrao = escolherAnoPadrao(lista);
+        if (padrao !== undefined) setAno(String(padrao));
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (ativo) setAnosProntos(true);
+      });
     return () => {
       ativo = false;
     };
   }, [parlamentarId]);
 
+  useEffect(() => {
+    if (!anosProntos) return;
+    const controller = new AbortController();
+    let ativo = true;
+
+    (async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(PER_PAGE),
+        });
+        if (aprovada) params.set('aprovada', aprovada);
+        if (tema) params.set('tema', tema);
+        if (ano) params.set('ano', ano);
+        const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Erro ao carregar proposições');
+        const data = await response.json();
+        if (!ativo) return;
+        setProposicoes(data.data);
+        setTotal(data.total ?? data.data.length);
+        setTotalPages(data.totalPages ?? 1);
+        if (Array.isArray(data.temas)) setTemas(data.temas);
+        // A API clampa páginas órfãs — sincroniza a UI.
+        if (typeof data.page === 'number' && data.page !== page) setPage(data.page);
+      } catch (err) {
+        if ((err as Error).name === 'AbortError' || !ativo) return;
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      } finally {
+        if (ativo) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      ativo = false;
+      controller.abort();
+    };
+  }, [parlamentarId, aprovada, tema, ano, page, anosProntos, reloadKey]);
+
   const handlePageChange = (p: number) => {
-    loadData(p);
+    setPage(p);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -112,8 +132,8 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     setAprovada(novaAprovada);
     setTema(novoTema);
     setAno(novoAno);
+    setPage(1);
     setAbertas(new Set());
-    loadData(1, { aprovada: novaAprovada, tema: novoTema, ano: novoAno });
   };
 
   const filtrosAtivos = aprovada !== '' || tema !== '' || ano !== '';
@@ -158,7 +178,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => loadData(page)}>Tentar novamente</button>
+        <button className="btn-outline" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</button>
       </div>
     );
   }

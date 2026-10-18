@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatDate, formatCurrency, truncate, useDebounce } from '@/lib/utils';
+import { cn, formatDate, formatCurrency, truncate, useDebounce } from '@/lib/utils';
 import { ANOS_JANELA } from '@/lib/despesas';
+import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
@@ -42,8 +43,9 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const [filtroAno, setFiltroAno] = useState<number | undefined>(undefined);
+  const [filtroAno, setFiltroAno] = useState<number | undefined>(() => escolherAnoPadrao(Array.from(ANOS_JANELA)));
   const [filtroCategoria, setFiltroCategoria] = useState<string | undefined>(undefined);
   const [busca, setBusca] = useState('');
   const buscaDebounced = useDebounce(busca, 350);
@@ -97,7 +99,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
       ativo = false;
       controller.abort();
     };
-  }, [parlamentarId, page, filtroAno, filtroCategoria, buscaDebounced]);
+  }, [parlamentarId, page, filtroAno, filtroCategoria, buscaDebounced, reloadKey]);
 
   const limparFiltros = () => {
     setFiltroAno(undefined);
@@ -192,7 +194,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
           <Button
             onClick={() => {
               setError(null);
-              setPage(1);
+              setReloadKey((k) => k + 1);
             }}
             className="mt-3"
           >
@@ -259,11 +261,16 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
                       </td>
                       <td className="p-3 align-middle text-right">
                         {d.urlDocumento ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Ver comprovante de ${d.categoria || 'despesa'}`}
-                            onClick={() => window.open(d.urlDocumento as string, '_blank', 'noopener,noreferrer')}
+                          <a
+                            href={d.urlDocumento}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Ver comprovante de ${d.categoria || 'despesa'} na fonte oficial (abre em nova aba)`}
+                            title="Ver comprovante na fonte oficial"
+                            className={cn(
+                              'inline-flex items-center justify-center rounded-lg p-2 font-medium text-foreground transition-colors',
+                              'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background'
+                            )}
                           >
                             <svg
                               className="h-4 w-4"
@@ -279,7 +286,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
                               <path d="M15 3h6v6" />
                               <path d="M10 14 21 3" />
                             </svg>
-                          </Button>
+                          </a>
                         ) : (
                           <span className="text-muted-foreground" aria-label="Sem comprovante disponível">
                             —

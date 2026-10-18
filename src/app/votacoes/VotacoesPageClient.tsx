@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { anoCorrente, janelaAnos } from '@/lib/ano-padrao';
 import { temaCor, classificarTemas, descreverTipoProposicao } from '@/lib/temas';
 
 interface VotacaoGlobal {
@@ -28,7 +29,7 @@ interface ApiResponse {
 }
 
 const PER_PAGE = 10;
-const ANOS = [2026, 2025, 2024, 2023] as const;
+const ANOS = janelaAnos(3);
 const TEMAS = [
   'saúde',
   'educação',
@@ -265,7 +266,7 @@ export function VotacoesPageClient() {
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const [casa, setCasa] = useState<string>('');
-  const [ano, setAno] = useState<string>('');
+  const [ano, setAno] = useState<string>(() => String(anoCorrente()));
   const [resultado, setResultado] = useState<string>('');
   const [tema, setTema] = useState<string>('');
   const [votacoes, setVotacoes] = useState<VotacaoGlobal[]>([]);
