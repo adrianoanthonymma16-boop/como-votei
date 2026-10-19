@@ -31,10 +31,11 @@ const TIPO_VOTO_LABEL: Record<string, string> = {
   SIM: 'Sim',
   NAO: 'Não',
   ABSTENCAO: 'Abstenção',
+  VOTOU: 'Votou (sigilo)',
   ARTICULACAO: 'Articulação',
   OBSTRUCAO: 'Obstrução',
   LICENCA: 'Licença',
-  MISSAO: 'Missa',
+  MISSAO: 'Missão',
   AUSENTE: 'Ausente',
 };
 
@@ -50,6 +51,7 @@ const TIPO_VOTO_COR: Record<string, string> = {
   SIM: 'bg-green-600',
   NAO: 'bg-red-600',
   ABSTENCAO: 'bg-amber-600',
+  VOTOU: 'bg-teal-600',
   ARTICULACAO: 'bg-blue-600',
   OBSTRUCAO: 'bg-violet-600',
   LICENCA: 'bg-slate-500',
@@ -67,6 +69,8 @@ const TIPO_DISCURSO_COR: Record<string, string> = {
 
 export function DashboardFilters({ filtros, disponiveis, onFilterChange }: DashboardFiltersProps) {
   const temFiltro = filtros.tipoVoto.length > 0 || filtros.tipoDiscurso.length > 0;
+  const tipoVotoAtivos = new Set(filtros.tipoVoto);
+  const tipoDiscursoAtivos = new Set(filtros.tipoDiscurso);
 
   if (!disponiveis) return null;
 
@@ -77,7 +81,7 @@ export function DashboardFilters({ filtros, disponiveis, onFilterChange }: Dashb
       {/* Tipo de voto */}
       <div className="flex flex-wrap gap-1.5">
         {disponiveis.tipoVoto.map((v) => {
-          const ativo = filtros.tipoVoto.includes(v.tipo);
+          const ativo = tipoVotoAtivos.has(v.tipo);
           return (
             <button
               key={v.tipo}
@@ -88,7 +92,7 @@ export function DashboardFilters({ filtros, disponiveis, onFilterChange }: Dashb
                   : [...filtros.tipoVoto, v.tipo];
                 onFilterChange('tipoVoto', next);
               }}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors border ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors border ${
                 ativo
                   ? `${TIPO_VOTO_COR[v.tipo]} text-white border-transparent`
                   : 'border-border bg-background text-muted-foreground hover:bg-muted'
@@ -105,7 +109,7 @@ export function DashboardFilters({ filtros, disponiveis, onFilterChange }: Dashb
       {/* Tipo de discurso */}
       <div className="flex flex-wrap gap-1.5">
         {disponiveis.tipoDiscurso.map((v) => {
-          const ativo = filtros.tipoDiscurso.includes(v.tipo);
+          const ativo = tipoDiscursoAtivos.has(v.tipo);
           return (
             <button
               key={v.tipo}
@@ -116,7 +120,7 @@ export function DashboardFilters({ filtros, disponiveis, onFilterChange }: Dashb
                   : [...filtros.tipoDiscurso, v.tipo];
                 onFilterChange('tipoDiscurso', next);
               }}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors border ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors border ${
                 ativo
                   ? `${TIPO_DISCURSO_COR[v.tipo]} text-white border-transparent`
                   : 'border-border bg-background text-muted-foreground hover:bg-muted'
@@ -135,9 +139,9 @@ export function DashboardFilters({ filtros, disponiveis, onFilterChange }: Dashb
           variant="ghost"
           size="sm"
           onClick={() => { onFilterChange('tipoVoto', []); onFilterChange('tipoDiscurso', []); }}
-          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+          className="h-7 text-xs text-muted-foreground hover:text-foreground"
         >
-          <IconX className="h-3 w-3 mr-1" aria-hidden="true" /> Limpar
+          <IconX className="size-3 mr-1" aria-hidden="true" /> Limpar
         </Button>
       )}
     </div>

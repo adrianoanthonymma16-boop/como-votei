@@ -15,11 +15,13 @@ export function formatDate(date: Date | string, locale: string = 'pt-BR'): strin
   });
 }
 
+const CURRENCY_FORMATTER = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
+  return CURRENCY_FORMATTER.format(value);
 }
 
 export function truncate(str: string, length: number): string {

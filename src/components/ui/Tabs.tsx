@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface TabsContextValue {
@@ -26,8 +26,10 @@ interface TabsProps {
 }
 
 export function Tabs({ value, onValueChange, children, className }: TabsProps) {
+  const contextValue = useMemo(() => ({ value, onValueChange }), [value, onValueChange]);
+
   return (
-    <TabsContext.Provider value={{ value, onValueChange }}>
+    <TabsContext.Provider value={contextValue}>
       <div className={cn(className)}>{children}</div>
     </TabsContext.Provider>
   );
@@ -70,7 +72,7 @@ export function TabsTrigger({ value, children, disabled, className }: TabsTrigge
       disabled={disabled}
       onClick={() => !disabled && onValueChange(value)}
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',
         isActive

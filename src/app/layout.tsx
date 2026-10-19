@@ -12,10 +12,20 @@ const atkinson = Atkinson_Hyperlegible({
   weight: ['400', '700'],
 });
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://comovotei.vercel.app';
+const FALLBACK_APP_URL = 'https://comovotei.vercel.app';
+
+function resolveAppUrl(value?: string): URL {
+  try {
+    return new URL(value ?? FALLBACK_APP_URL);
+  } catch {
+    return new URL(FALLBACK_APP_URL);
+  }
+}
+
+const appUrl = resolveAppUrl(process.env.NEXT_PUBLIC_APP_URL);
 
 export const metadata: Metadata = {
-  metadataBase: new URL(APP_URL),
+  metadataBase: appUrl,
   title: {
     default: 'Como Votei — Transparência Legislativa',
     template: '%s | Como Votei',
@@ -26,33 +36,18 @@ export const metadata: Metadata = {
   creator: 'Como Votei',
   publisher: 'Como Votei',
   robots: 'index, follow',
-  icons: {
-    icon: '/icon.svg',
-  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: APP_URL,
+    url: appUrl.toString(),
     siteName: 'Como Votei',
     title: 'Como Votei — Transparência Legislativa',
     description: 'Analise como deputados e senadores brasileiros atuam no Congresso',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Como Votei - Transparência Legislativa',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Como Votei — Transparência Legislativa',
     description: 'Analise como deputados e senadores brasileiros atuam no Congresso',
-    images: ['/og-image.png'],
-  },
-  verification: {
-    google: 'google-site-verification-code',
   },
 };
 
@@ -73,11 +68,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${atkinson.variable}`} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+      <body className="min-h-dvh bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -111,7 +102,7 @@ export default function RootLayout({
               </Link>
             </nav>
           </header>
-          <main className="min-h-[calc(100vh-3.5rem)]">
+          <main className="min-h-[calc(100dvh-3.5rem)]">
             {children}
           </main>
         </ThemeProvider>

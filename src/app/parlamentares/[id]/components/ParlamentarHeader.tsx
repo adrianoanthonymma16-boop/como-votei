@@ -94,7 +94,7 @@ export function ParlamentarHeader({
 
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-xl sm:text-2xl md:text-3xl flex-shrink-0 ring-2 ring-border overflow-hidden">
+          <div className="size-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold text-xl sm:text-2xl md:text-3xl flex-shrink-0 ring-2 ring-border overflow-hidden">
             {parlamentar.fotoUrl ? (
               <Image
                 src={parlamentar.fotoUrl}

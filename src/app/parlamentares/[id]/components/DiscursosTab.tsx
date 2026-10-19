@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -153,7 +154,7 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</button>
+        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>
       </div>
     );
   }
@@ -211,18 +212,18 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
                     </span>
                   </span>
                   <span
-                    className={`shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
+                    className={`shrink-0 inline-flex items-center justify-center size-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
                       aberta ? 'rotate-180 text-accent border-accent' : ''
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </span>
                 </button>
 
                 {aberta && (
-                  <div id={`discurso-${d.id}`} className="border-t border-border bg-muted/20 px-4 py-4 animate-fade-in">
+                  <div id={`discurso-${d.id}`} className="border-t border-border bg-muted/20 p-4 animate-fade-in">
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       <span className="font-medium text-foreground">Resumo do pronunciamento: </span>
                       {d.resumo || 'Sem resumo disponível.'}
@@ -239,7 +240,7 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
                       >
                         Ler texto integral na fonte oficial
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </a>

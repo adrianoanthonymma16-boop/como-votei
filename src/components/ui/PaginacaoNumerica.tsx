@@ -24,7 +24,7 @@ export function PaginacaoNumerica({ page, totalPages, onChange, total, label = '
   };
 
   const baseBtn =
-    'inline-flex items-center justify-center min-w-9 h-9 px-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center min-size-9 px-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
     <nav aria-label="Paginação de resultados" className="flex flex-col items-center gap-3 py-6">
@@ -44,7 +44,7 @@ export function PaginacaoNumerica({ page, totalPages, onChange, total, label = '
           className={cn(baseBtn, 'border border-border bg-card text-foreground hover:bg-muted disabled:hover:bg-card')}
           aria-label="Página anterior"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -79,7 +79,7 @@ export function PaginacaoNumerica({ page, totalPages, onChange, total, label = '
           className={cn(baseBtn, 'border border-border bg-card text-foreground hover:bg-muted disabled:hover:bg-card')}
           aria-label="Próxima página"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>

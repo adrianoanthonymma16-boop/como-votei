@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ParlamentaresPageClient } from './ParlamentaresPageClient';
-import { Skeleton, SkeletonTable } from '@/components/ui/Skeleton';
+import { PageBreadcrumb } from '@/components/PageBreadcrumb';
+import { ParlamentarCardSkeleton } from '@/components/ParlamentarCardSkeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export const metadata: Metadata = {
   title: 'Parlamentares',
@@ -19,66 +21,37 @@ export default function ParlamentaresPage() {
 function ParlamentaresPageSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><a href="/" className="hover:text-foreground">Início</a></li>
-          <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium" aria-current="page">Parlamentares</li>
-        </ol>
-      </nav>
+      <PageBreadcrumb current="Parlamentares" />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Parlamentares</h1>
-        <p className="text-muted-foreground">Busque e filtre deputados e senadores</p>
+        <p className="text-muted-foreground">Busque e filtre deputados e senadores por nome, partido, estado ou casa.</p>
       </div>
 
-      <div className="bg-card rounded-xl border border-border p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <label htmlFor="search" className="sr-only">Buscar parlamentar</label>
-            <input type="search" className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50" id="search" placeholder="Nome, CPF ou ID..." value="" disabled />
+      <div className="bg-card rounded-xl border border-border p-4 sm:p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-10 w-full" />
           </div>
-          <select className="flex h-10 appearance-none rounded-md border bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-56" disabled>
-            <option value="" selected={true}>Todas as Casas</option>
-            <option value="CAMARA">Câmara dos Deputados</option>
-            <option value="SENADO">Senado Federal</option>
-          </select>
-          <select className="flex h-10 appearance-none rounded-md border bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-56" disabled>
-            <option value="" selected={true}>Todos os Partidos</option>
-          </select>
-          <select className="flex h-10 appearance-none rounded-md border bg-white px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-40" disabled>
-            <option value="" selected={true}>Todos os Estados</option>
-          </select>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-1">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">
-          0 parlamentar<span className="sr-only">es</span> encontrado<span className="sr-only">s</span>
-        </p>
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <ParlamentarCardSkeleton key={i} />
+        ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
-            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 w-16">Foto</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">Nome</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 hidden md:table-cell">Partido</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 hidden lg:table-cell">UF</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 hidden lg:table-cell">Casa</th>
-              <th className="h-12 px-4 align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 w-32 text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0"></tbody>
-        </table>
+      <div className="flex items-center justify-center py-6">
+        <Skeleton className="h-9 w-64" />
       </div>
-      <div className="flex items-center justify-center py-4">
-        <button className="inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border border-border bg-background text-foreground hover:bg-muted focus:ring-ring px-4 py-2 text-base gap-2 min-w-[200px]" disabled>
-          Carregando...
-        </button>
-      </div>
-      <div className="py-4"><div className="flex justify-center">Carregando...</div></div>
     </div>
   );
 }

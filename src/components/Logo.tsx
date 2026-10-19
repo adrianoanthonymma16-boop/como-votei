@@ -40,7 +40,7 @@ export function LogoMark({ className }: { className?: string }) {
 export function Logo({ className, withText = true }: LogoProps) {
   return (
     <span className={`inline-flex items-center gap-2 ${className ?? ''}`}>
-      <LogoMark className="w-8 h-8 shrink-0" />
+      <LogoMark className="size-8 shrink-0" />
       {withText && (
         <span className="font-bold leading-none tracking-tight text-lg">
           <span className="text-foreground">Como</span>{' '}

@@ -1,6 +1,7 @@
 'use client';
 
 import { ParlamentarCard } from '@/components/ParlamentarCard';
+import { ParlamentarCardSkeleton } from '@/components/ParlamentarCardSkeleton';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentaresListProps {
@@ -34,28 +35,6 @@ export function ParlamentaresList({ parlamentares, isLoading, total }: Parlament
       )}
 
       {!isLoading && total === 0 && parlamentares.length > 0 && null}
-    </div>
-  );
-}
-
-function ParlamentarCardSkeleton() {
-  return (
-    <div className="parlamentar-card animate-pulse pointer-events-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20">
-          <div className="w-full h-full rounded-full bg-muted" />
-        </div>
-        <div className="flex-1 min-w-0 w-full">
-          <div className="h-5 w-1/3 bg-muted rounded mb-2" />
-          <div className="h-4 w-1/4 bg-muted rounded mb-4" />
-          <div className="flex gap-2">
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-28 bg-muted rounded" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

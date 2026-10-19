@@ -120,24 +120,23 @@ export async function GET(
 
   const { tipoVoto, tipoDiscurso } = parsed.data;
 
-  // Votos do parlamentar no período (filtrados por tipo)
-  let votosRaw = await prisma.voto.findMany({
+  // Votos do parlamentar no período (sem filtro de tipo: o filtro é aplicado
+  // em memória para manter as contagens de opções disponíveis completas)
+  const votosRaw = await prisma.voto.findMany({
     where: {
       parlamentarId: id,
       votacao: { data: { gte: dataInicio, lte: dataFim } },
-      ...(tipoVoto && tipoVoto.length > 0 ? { tipo: { in: tipoVoto } } : {}),
     },
     include: {
       votacao: { select: { id: true, data: true, tema: true } },
     },
   });
 
-  // Discursos no período (filtrados por tipo)
-  let discursosRaw = await prisma.discurso.findMany({
+  // Discursos no período (sem filtro de tipo, mesma razão)
+  const discursosRaw = await prisma.discurso.findMany({
     where: {
       parlamentarId: id,
       data: { gte: dataInicio, lte: dataFim },
-      ...(tipoDiscurso && tipoDiscurso.length > 0 ? { tipo: { in: tipoDiscurso } } : {}),
     },
     select: { data: true, tema: true, tipo: true },
   });
@@ -169,8 +168,10 @@ export async function GET(
   });
 
   // Aplicar filtros aos dados para computação
-  const votos = tipoVoto?.length ? votosRaw.filter((v) => tipoVoto.includes(v.tipo)) : votosRaw;
-  const discursos = tipoDiscurso?.length ? discursosRaw.filter((d) => tipoDiscurso.includes(d.tipo)) : discursosRaw;
+  const tipoVotoSet = tipoVoto && tipoVoto.length > 0 ? new Set(tipoVoto) : null;
+  const tipoDiscursoSet = tipoDiscurso && tipoDiscurso.length > 0 ? new Set(tipoDiscurso) : null;
+  const votos = tipoVotoSet ? votosRaw.filter((v) => tipoVotoSet.has(v.tipo)) : votosRaw;
+  const discursos = tipoDiscursoSet ? discursosRaw.filter((d) => tipoDiscursoSet.has(d.tipo)) : discursosRaw;
 
   // Frequência — SOMENTE dados oficiais da tabela `frequencias`
   // (populada pelo sync). Sem registro oficial, retorna zeros e o
@@ -199,6 +200,7 @@ export async function GET(
   const votacoesIds = votos
     .filter((v) => ['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO'].includes(v.tipo))
     .map((v) => v.votacaoId);
+  const votacoesIdsSet = new Set(votacoesIds);
 
   let alinhamento: AlinhamentoResult = {
     totalVotacoes: 0,
@@ -219,7 +221,7 @@ export async function GET(
 
     alinhamento = computeAlinhamento(
       votos
-        .filter((v) => votacoesIds.includes(v.votacaoId))
+        .filter((v) => votacoesIdsSet.has(v.votacaoId))
         .map((v) => ({ votacaoId: v.votacaoId, tipo: v.tipo })),
       votosPartido.map((v) => ({
         votacaoId: v.votacaoId,

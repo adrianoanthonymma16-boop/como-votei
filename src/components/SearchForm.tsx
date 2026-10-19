@@ -71,27 +71,36 @@ export function SearchForm() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Select id="casa-busca" value={casa} onChange={(e) => setCasa(e.target.value)} className="h-11">
-          <SelectOption value="">Todas as casas</SelectOption>
-          <SelectOption value="CAMARA">Câmara dos Deputados</SelectOption>
-          <SelectOption value="SENADO">Senado Federal</SelectOption>
-        </Select>
-        <Select id="partido-busca" value={partidoId} onChange={(e) => setPartidoId(e.target.value)} className="h-11">
-          <SelectOption value="">Todos os partidos</SelectOption>
-          {partidos.map((p) => (
-            <SelectOption key={p.id} value={p.id}>
-              {p.sigla} - {p.nome}
-            </SelectOption>
-          ))}
-        </Select>
-        <Select id="uf-busca" value={ufId} onChange={(e) => setUfId(e.target.value)} className="h-11">
-          <SelectOption value="">Todos os estados</SelectOption>
-          {ufs.map((u) => (
-            <SelectOption key={u.id} value={u.id}>
-              {u.sigla} - {u.nome}
-            </SelectOption>
-          ))}
-        </Select>
+        <div>
+          <label htmlFor="casa-busca" className="sr-only">Casa legislativa</label>
+          <Select id="casa-busca" value={casa} onChange={(e) => setCasa(e.target.value)} className="h-11">
+            <SelectOption value="">Todas as casas</SelectOption>
+            <SelectOption value="CAMARA">Câmara dos Deputados</SelectOption>
+            <SelectOption value="SENADO">Senado Federal</SelectOption>
+          </Select>
+        </div>
+        <div>
+          <label htmlFor="partido-busca" className="sr-only">Partido</label>
+          <Select id="partido-busca" value={partidoId} onChange={(e) => setPartidoId(e.target.value)} className="h-11">
+            <SelectOption value="">Todos os partidos</SelectOption>
+            {partidos.map((p) => (
+              <SelectOption key={p.id} value={p.id}>
+                {p.sigla} - {p.nome}
+              </SelectOption>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <label htmlFor="uf-busca" className="sr-only">Estado (UF)</label>
+          <Select id="uf-busca" value={ufId} onChange={(e) => setUfId(e.target.value)} className="h-11">
+            <SelectOption value="">Todos os estados</SelectOption>
+            {ufs.map((u) => (
+              <SelectOption key={u.id} value={u.id}>
+                {u.sigla} - {u.nome}
+              </SelectOption>
+            ))}
+          </Select>
+        </div>
       </div>
     </form>
   );

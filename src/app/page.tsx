@@ -19,7 +19,7 @@ const SearchForm = dynamic(() => import('@/components/SearchForm').then((mod) =>
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-dvh">
       {/* Aviso anti-polarização */}
       <AvisoBanner />
 
@@ -27,8 +27,8 @@ export default function HomePage() {
       <section className="relative overflow-hidden bg-primary-950 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-primary-900" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
-          <div className="inline-flex items-center gap-3 mb-6 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm text-primary-100">
-            <LogoMark className="w-6 h-6" />
+          <div className="inline-flex items-center gap-3 mb-6 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-primary-100">
+            <LogoMark className="size-6" />
             <span>Dados oficiais da Câmara dos Deputados e do Senado Federal</span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance max-w-3xl">
@@ -44,7 +44,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-6 py-3 bg-sky-400 text-primary-950 font-semibold rounded-lg hover:bg-sky-300 transition-colors"
             >
               Explorar parlamentares
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -106,7 +106,7 @@ export default function HomePage() {
               className="hidden sm:inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
             >
               Ver ranking completo
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -121,14 +121,14 @@ export default function HomePage() {
               className="inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
             >
               Ver ranking completo
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

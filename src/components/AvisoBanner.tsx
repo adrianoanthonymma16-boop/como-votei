@@ -79,7 +79,7 @@ export function AvisoBanner() {
         aria-label="Reler manifesto pelo voto consciente"
         className="flex w-full items-center justify-center gap-2 bg-slate-950 px-4 py-2 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-900 hover:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300 animate-fade-in"
       >
-        <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-300" aria-hidden="true" />
+        <span className="inline-block size-1.5 rounded-full bg-amber-300" aria-hidden="true" />
         Manifesto: voto não é torcida — toque para reler
       </button>
     );
@@ -88,7 +88,7 @@ export function AvisoBanner() {
   const fechando = estado === 'fechando';
   // Cascata de saída: ícone sai primeiro, CTAs por último.
   const cascata = (atraso: number) =>
-    `transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+    `transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
       fechando ? `opacity-0 -translate-y-2 [transition-delay:${atraso}ms]` : '[transition-delay:0ms]'
     }`;
 
@@ -109,28 +109,23 @@ export function AvisoBanner() {
           {/* Fundo: gradiente + palavra fantasma */}
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/60" aria-hidden="true" />
           <div
-            className={`pointer-events-none absolute -bottom-7 left-0 select-none whitespace-nowrap text-[22vw] sm:text-[11rem] font-black leading-none tracking-tighter text-white/[0.04] transition-all duration-500 ${
+            className={`pointer-events-none absolute -bottom-7 left-0 select-none whitespace-nowrap text-[22vw] sm:text-[11rem] font-black leading-none tracking-tighter text-white/[0.04] transition-[opacity,transform] duration-500 ${
               fechando ? 'opacity-0 translate-x-8' : ''
             }`}
             aria-hidden="true"
           >
             PODER
           </div>
-          <div
-            className="pointer-events-none absolute -top-10 right-6 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl"
-            aria-hidden="true"
-          />
-
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
             <div className="flex items-start gap-4 sm:gap-6">
               {/* Ícone */}
-              <div className={`hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/30 bg-amber-400/10 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.15)] ${cascata(0)}`}>
-                <UrnaIcon className="h-7 w-7" />
+              <div className={`hidden sm:flex size-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/30 bg-amber-400/10 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.15)] ${cascata(0)}`}>
+                <UrnaIcon className="size-7" />
               </div>
 
               {/* Texto */}
               <div className="flex-1 min-w-0">
-                <p className={`flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-amber-300/90 ${cascata(60)}`}>
+                <p className={`flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-amber-300/90 ${cascata(60)}`}>
                   <span className="inline-block h-px w-6 bg-amber-300/60" aria-hidden="true" />
                   Todo o poder emana do povo
                 </p>
@@ -145,10 +140,10 @@ export function AvisoBanner() {
                   <Link
                     href="/parlamentares"
                     tabIndex={fechando ? -1 : undefined}
-                    className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(251,191,36,0.35)] transition-all hover:bg-amber-200 hover:shadow-[0_4px_28px_rgba(251,191,36,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-100"
+                    className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(251,191,36,0.35)] transition-[background-color,box-shadow] hover:bg-amber-200 hover:shadow-[0_4px_28px_rgba(251,191,36,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-100"
                   >
                     Começar a estudar
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>
@@ -168,9 +163,9 @@ export function AvisoBanner() {
                 onClick={fechar}
                 disabled={fechando}
                 aria-label="Fechar manifesto"
-                className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-400 transition-all hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-90 ${cascata(0)}`}
+                className={`shrink-0 flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-400 transition-[background-color,color,transform] hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-90 ${cascata(0)}`}
               >
-                <CloseIcon className="h-4 w-4" />
+                <CloseIcon className="size-4" />
               </button>
             </div>
           </div>

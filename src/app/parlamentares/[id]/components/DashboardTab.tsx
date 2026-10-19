@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
 import { DashboardFilters } from './DashboardFilters';
@@ -103,7 +104,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => loadData(ano, filtros)}>Tentar novamente</button>
+        <Button variant="outline" size="sm" onClick={() => loadData(ano, filtros)}>Tentar novamente</Button>
       </div>
     );
   }
@@ -208,7 +209,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center justify-between gap-2 mb-4">
             <h3 className="text-lg font-semibold text-foreground">Frequência em Plenário</h3>
-            <span className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
               Fonte oficial
             </span>
           </div>
@@ -246,10 +247,10 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
                 {alinhamento.percentualAlinhamento?.toFixed(1) || 0}%
               </div>
               <div className="w-48 h-8 bg-muted rounded-full overflow-hidden mx-auto">
-                <div 
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${alinhamento.percentualAlinhamento || 0}%`,
+                <div
+                  className="h-full origin-left rounded-full transition-transform duration-500"
+                  style={{
+                    transform: `scaleX(${(alinhamento.percentualAlinhamento || 0) / 100})`,
                     backgroundColor: (alinhamento.percentualAlinhamento || 0) >= 80 ? '#16A34A' : (alinhamento.percentualAlinhamento || 0) >= 60 ? '#CA8A04' : '#DC2626'
                   }}
                 />
@@ -272,15 +273,15 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
   );
 }
 
-function StatCard({ 
-  label, 
-  value, 
-  icon, 
-  trend, 
-  subtitle 
-}: { 
-  label: string; 
-  value: string; 
+function StatCard({
+  label,
+  value,
+  icon,
+  trend,
+  subtitle
+}: {
+  label: string;
+  value: string;
   icon: 'calendario' | 'maos' | 'votacao' | 'grafico';
   trend?: 'positive' | 'neutral' | 'negative';
   subtitle?: string;
@@ -293,22 +294,22 @@ function StatCard({
 
   const icones = {
     calendario: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
     ),
     maos: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
       </svg>
     ),
     votacao: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     grafico: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
@@ -335,38 +336,43 @@ function StatCard({
 
 function ActivityChart({ data }: { data: Array<{ mes: string; votações: number; discursos: number; proposicoes: number }> }) {
   const maxValue = Math.max(...data.map(d => d.votações + d.discursos + d.proposicoes), 1);
-  
+
   return (
-    <div className="h-64 flex items-end gap-2" style={{ minHeight: '256px' }}>
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-          <div 
-            className="w-full flex gap-1 justify-center"
-            style={{ height: `${((d.votações + d.discursos + d.proposicoes) / maxValue) * 200}px`, minHeight: '4px' }}
-          >
-            <div 
-              className="bg-blue-500 rounded-t" 
-              style={{ width: `${(d.votações / (d.votações + d.discursos + d.proposicoes || 1)) * 100}%`, minWidth: '4px' }}
-              title={`Votações: ${d.votações}`}
-            />
-            <div 
-              className="bg-green-500 rounded-t" 
-              style={{ width: `${(d.discursos / (d.votações + d.discursos + d.proposicoes || 1)) * 100}%`, minWidth: '4px' }}
-              title={`Discursos: ${d.discursos}`}
-            />
-            <div 
-              className="bg-purple-500 rounded-t" 
-              style={{ width: `${(d.proposicoes / (d.votações + d.discursos + d.proposicoes || 1)) * 100}%`, minWidth: '4px' }}
-              title={`Proposições: ${d.proposicoes}`}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground font-medium">{d.mes}</span>
-        </div>
-      ))}
+    <div>
+      <div className="h-64 flex items-end gap-2">
+        {data.map((d) => {
+          const total = d.votações + d.discursos + d.proposicoes;
+          return (
+            <div key={d.mes} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+              <div
+                className="w-full flex gap-1 justify-center"
+                style={{ height: `${(total / maxValue) * 200}px`, minHeight: '4px' }}
+              >
+                <div
+                  className="bg-blue-500 rounded-t"
+                  style={{ width: `${(d.votações / (total || 1)) * 100}%`, minWidth: '4px' }}
+                  title={`Votações: ${d.votações}`}
+                />
+                <div
+                  className="bg-green-500 rounded-t"
+                  style={{ width: `${(d.discursos / (total || 1)) * 100}%`, minWidth: '4px' }}
+                  title={`Discursos: ${d.discursos}`}
+                />
+                <div
+                  className="bg-purple-500 rounded-t"
+                  style={{ width: `${(d.proposicoes / (total || 1)) * 100}%`, minWidth: '4px' }}
+                  title={`Proposições: ${d.proposicoes}`}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">{d.mes}</span>
+            </div>
+          );
+        })}
+      </div>
       <div className="flex gap-4 mt-4 justify-center text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-blue-500 rounded" /> Votações</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-500 rounded" /> Discursos</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-purple-500 rounded" /> Proposições</span>
+        <span className="flex items-center gap-1"><span className="size-3 bg-blue-500 rounded" aria-hidden="true" /> Votações</span>
+        <span className="flex items-center gap-1"><span className="size-3 bg-green-500 rounded" aria-hidden="true" /> Discursos</span>
+        <span className="flex items-center gap-1"><span className="size-3 bg-purple-500 rounded" aria-hidden="true" /> Proposições</span>
       </div>
     </div>
   );
@@ -386,15 +392,15 @@ function TemasList({ temas }: { temas: Array<{ tema: string; total: number; vota
             <span className="text-sm font-bold text-foreground">{t.total}</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-accent rounded-full transition-all duration-300"
-              style={{ width: `${(t.total / (temas[0]?.total || 1)) * 100}%` }}
+            <div
+              className="h-full origin-left bg-accent rounded-full transition-transform duration-300"
+              style={{ transform: `scaleX(${t.total / (temas[0]?.total || 1)})` }}
             />
           </div>
           <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" aria-hidden="true" /> {t.votações} votações</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" aria-hidden="true" /> {t.discursos} discursos</span>
-            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500" aria-hidden="true" /> {t.proposicoes} proposições</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-blue-500" aria-hidden="true" /> {t.votações} votações</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-purple-500" aria-hidden="true" /> {t.discursos} discursos</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-green-500" aria-hidden="true" /> {t.proposicoes} proposições</span>
           </div>
         </div>
       ))}
@@ -404,7 +410,7 @@ function TemasList({ temas }: { temas: Array<{ tema: string; total: number; vota
 
 function FrequencyBar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   const percentage = total > 0 ? (value / total) * 100 : 0;
-  
+
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
@@ -412,9 +418,9 @@ function FrequencyBar({ label, value, total, color }: { label: string; value: nu
         <span className="font-medium text-foreground">{value} ({percentage.toFixed(1)}%)</span>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div 
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%`, backgroundColor: color.replace('bg-', '') }}
+        <div
+          className={cn('h-full origin-left rounded-full transition-transform duration-500', color)}
+          style={{ transform: `scaleX(${percentage / 100})` }}
         />
       </div>
     </div>

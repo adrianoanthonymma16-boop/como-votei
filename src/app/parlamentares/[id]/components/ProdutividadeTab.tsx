@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { FonteOficial } from '@/components/FonteOficial';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -105,9 +106,9 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => setReloadKey((k) => k + 1)}>
+        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
           Tentar novamente
-        </button>
+        </Button>
       </div>
     );
   }
@@ -155,7 +156,7 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
           className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
         >
           Ver cada proposição e sua situação
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>

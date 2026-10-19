@@ -18,7 +18,7 @@ export function NotaPeriodo() {
       className="mb-6 flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-4 py-3 text-xs sm:text-sm text-muted-foreground"
     >
       <svg
-        className="mt-0.5 h-4 w-4 shrink-0 text-accent"
+        className="mt-0.5 size-4 shrink-0 text-accent"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

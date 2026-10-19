@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ParlamentarCard, type ProdutividadeResumo } from '@/components/ParlamentarCard';
+import { ParlamentarCardSkeleton } from '@/components/ParlamentarCardSkeleton';
 import { Badge } from '@/components/ui/Badge';
 import { resumoProdutividade } from '@/lib/produtividade';
 import { anoCorrente } from '@/lib/ano-padrao';
@@ -111,11 +112,11 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
               <div className="relative">
                 {isTop && (
                   <span className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none select-none drop-shadow-sm" aria-hidden="true">
-                    <CrownIcon className="w-7 h-7" />
+                    <CrownIcon className="size-7" />
                   </span>
                 )}
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-black tracking-tight transition-all duration-200 ${rankClass} ${
+                  className={`flex size-10 items-center justify-center rounded-full border-2 text-sm font-black tracking-tight transition-transform duration-200 ${rankClass} ${
                     isTop ? 'scale-110' : 'group-hover:scale-[1.03]'
                   }`}
                   aria-hidden="true"
@@ -131,15 +132,15 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
               {/* Número mobile */}
               <div className="sm:hidden mb-2 flex items-center gap-2">
                 <span
-                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold ${rankClass}`}
+                  className={`inline-flex size-6 items-center justify-center rounded-full border text-xs font-bold ${rankClass}`}
                 >
                   {idx + 1}
                 </span>
-                {isTop && <CrownIcon className="w-5 h-5" />}
+                {isTop && <CrownIcon className="size-5" />}
                 <span className="text-xs font-medium text-muted-foreground">#{idx + 1} mais produtivo</span>
               </div>
 
-              <div className={`rounded-xl transition-all duration-200 ${isTop ? 'ring-1 ring-amber-300/50 shadow-md' : ''}`}>
+              <div className={`rounded-xl transition-shadow duration-200 ${isTop ? 'ring-1 ring-amber-300/50 shadow-md' : ''}`}>
                 <ParlamentarCard parlamentar={parlamentar} />
               </div>
 
@@ -152,7 +153,7 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
                       : 'bg-card'
                   }`}
                 >
-                  <span className="inline-block h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+                  <span className="inline-block size-2 rounded-full bg-accent" aria-hidden="true" />
                   {score.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} pts
                 </Badge>
                 <span className="text-xs text-muted-foreground">
@@ -170,25 +171,5 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
         );
       })}
     </ol>
-  );
-}
-
-function ParlamentarCardSkeleton() {
-  return (
-    <div className="parlamentar-card animate-pulse pointer-events-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted" />
-        <div className="flex-1 min-w-0 w-full space-y-3">
-          <div className="h-5 w-1/3 bg-muted rounded" />
-          <div className="h-4 w-1/4 bg-muted rounded" />
-          <div className="flex gap-2">
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-24 bg-muted rounded" />
-            <div className="h-12 w-28 bg-muted rounded" />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

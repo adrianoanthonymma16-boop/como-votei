@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { FiltroAno } from '@/components/FiltroAno';
@@ -178,7 +179,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <button className="btn-outline" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</button>
+        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>
       </div>
     );
   }
@@ -198,7 +199,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
             value={aprovada}
             onChange={(e) => handleFiltro(e.target.value, tema, ano)}
             aria-label="Filtrar por situação"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base sm:text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <option value="">Todas</option>
             <option value="true">Aprovadas</option>
@@ -211,7 +212,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
             value={tema}
             onChange={(e) => handleFiltro(aprovada, e.target.value, ano)}
             aria-label="Filtrar por tema"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-base sm:text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <option value="">Todos</option>
             {temas.map((t) => (
@@ -279,18 +280,18 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
                     <span className="block">{getStatusBadge(p.status)}</span>
                   </span>
                   <span
-                    className={`shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
+                    className={`shrink-0 inline-flex items-center justify-center size-7 rounded-full border border-border text-muted-foreground transition-transform duration-200 ${
                       aberta ? 'rotate-180 text-accent border-accent' : ''
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </span>
                 </button>
 
                 {aberta && (
-                  <div id={`proposicao-${p.id}`} className="border-t border-border bg-muted/20 px-4 py-4 animate-fade-in">
+                  <div id={`proposicao-${p.id}`} className="border-t border-border bg-muted/20 p-4 animate-fade-in">
                     <p className="text-sm leading-relaxed text-foreground">
                       <span className="font-medium">{descreverTipoProposicao(p.tipo)} </span>
                       {p.numero}/{p.ano} — {p.autorPrincipal ? 'de autoria do parlamentar' : 'em coautoria'}.
@@ -328,7 +329,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
                       >
                         Ver ficha oficial da tramitação
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </a>

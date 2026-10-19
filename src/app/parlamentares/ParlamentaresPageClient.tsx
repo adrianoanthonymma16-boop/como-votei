@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { anoCorrente } from '@/lib/ano-padrao';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { PageBreadcrumb } from '@/components/PageBreadcrumb';
 import { formatNumber } from '@/lib/utils';
 import { DEFAULT_PER_PAGE } from '@/lib/parlamentar-query';
 import type { ProdutividadeResumo } from '@/components/ParlamentarCard';
@@ -48,11 +49,11 @@ export function ParlamentaresPageClient() {
   const [partidos, setPartidos] = useState<PartidoItem[]>([]);
   const [ufs, setUfs] = useState<UfItem[]>([]);
 
-  const [query, setQuery] = useState(searchParams.get('search') ?? '');
-  const [casa, setCasa] = useState(searchParams.get('casa') ?? '');
-  const [partidoId, setPartidoId] = useState(searchParams.get('partidoId') ?? '');
-  const [ufId, setUfId] = useState(searchParams.get('ufId') ?? '');
-  const [sort, setSort] = useState(searchParams.get('sort') ?? '');
+  const [query, setQuery] = useState(() => searchParams.get('search') ?? '');
+  const [casa, setCasa] = useState(() => searchParams.get('casa') ?? '');
+  const [partidoId, setPartidoId] = useState(() => searchParams.get('partidoId') ?? '');
+  const [ufId, setUfId] = useState(() => searchParams.get('ufId') ?? '');
+  const [sort, setSort] = useState(() => searchParams.get('sort') ?? '');
   const [page, setPage] = useState(() => {
     const p = Number(searchParams.get('page') ?? '1');
     return Number.isInteger(p) && p >= 1 ? p : 1;
@@ -189,13 +190,7 @@ export function ParlamentaresPageClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <nav className="mb-6" aria-label="Trilha de navegação">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><a href="/" className="hover:text-foreground transition-colors">Início</a></li>
-          <li aria-hidden="true">/</li>
-          <li className="text-foreground font-medium" aria-current="page">Parlamentares</li>
-        </ol>
-      </nav>
+      <PageBreadcrumb current="Parlamentares" />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -266,7 +261,7 @@ export function ParlamentaresPageClient() {
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {f.label}
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>

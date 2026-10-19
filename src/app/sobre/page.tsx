@@ -17,7 +17,7 @@ const MODULOS = [
     hover: 'hover:border-blue-400 dark:hover:border-blue-700',
     texto: 'text-blue-700 dark:text-blue-300',
     icone: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -30,7 +30,7 @@ const MODULOS = [
     hover: 'hover:border-purple-400 dark:hover:border-purple-700',
     texto: 'text-purple-700 dark:text-purple-300',
     icone: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h8m-8 4h5m-9 5V7a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H9l-4 4z" />
       </svg>
     ),
@@ -43,7 +43,7 @@ const MODULOS = [
     hover: 'hover:border-green-400 dark:hover:border-green-700',
     texto: 'text-green-700 dark:text-green-300',
     icone: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     ),
@@ -71,15 +71,15 @@ const PRINCIPIOS = [
 
 export default function SobrePage() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary-950 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-sky-950" aria-hidden="true" />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
           <div className="flex justify-center mb-6">
-            <LogoMark className="w-14 h-14" />
+            <LogoMark className="size-14" />
           </div>
-          <p className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm text-primary-100 mb-5">
+          <p className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-primary-100 mb-5">
             Ferramenta de transparência legislativa
           </p>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance">
@@ -96,7 +96,7 @@ export default function SobrePage() {
               className="inline-flex items-center gap-2 rounded-lg bg-sky-400 px-6 py-3 font-semibold text-primary-950 transition-colors hover:bg-sky-300"
             >
               Explorar parlamentares
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -126,9 +126,9 @@ export default function SobrePage() {
               <Link
                 key={m.titulo}
                 href="/parlamentares"
-                className={`group rounded-2xl border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${m.cor} ${m.hover}`}
+                className={`group rounded-2xl border bg-card p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:shadow-lg ${m.cor} ${m.hover}`}
               >
-                <span className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted ${m.texto}`}>
+                <span className={`inline-flex size-12 items-center justify-center rounded-xl bg-muted ${m.texto}`}>
                   {m.icone}
                 </span>
                 <h3 className="mt-4 text-lg font-bold group-hover:underline">{m.titulo}</h3>
@@ -176,11 +176,11 @@ export default function SobrePage() {
               href="https://dadosabertos.camara.leg.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="group rounded-2xl border border-border bg-background p-6 transition-all duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg"
+              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg"
             >
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <span className="inline-flex size-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                  <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </span>
@@ -197,11 +197,11 @@ export default function SobrePage() {
               href="https://legis.senado.leg.br/dadosabertos"
               target="_blank"
               rel="noopener noreferrer"
-              className="group rounded-2xl border border-border bg-background p-6 transition-all duration-200 hover:-translate-y-1 hover:border-green-400 hover:shadow-lg"
+              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-green-400 hover:shadow-lg"
             >
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <span className="inline-flex size-11 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300">
+                  <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
                   </svg>
                 </span>
@@ -260,12 +260,12 @@ export default function SobrePage() {
             className="mt-7 inline-flex items-center gap-2 rounded-lg bg-sky-400 px-6 py-3 font-semibold text-primary-950 transition-colors hover:bg-sky-300"
           >
             Explorar parlamentares
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
