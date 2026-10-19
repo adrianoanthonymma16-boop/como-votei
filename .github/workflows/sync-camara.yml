@@ -37,6 +37,19 @@ on:
         description: 'Sincronizar apenas despesas (CEAP)'
         required: false
         type: boolean
+      bulk:
+        description: 'Usar arquivos JSON em lote para votações/proposições (recomendado)'
+        required: false
+        type: boolean
+        default: true
+      offset:
+        description: 'Índice inicial de deputados (retomada por faixa; só fases por deputado)'
+        required: false
+        type: string
+      limite:
+        description: 'Quantidade de deputados a processar a partir do offset'
+        required: false
+        type: string
 
 jobs:
   sync-camara:
@@ -95,12 +108,15 @@ jobs:
             sleep 60
           done
 
+      # `--bulk` troca 1 request por votação (e 3 por proposição) pelos
+      # arquivos JSON oficiais publicados por ano. Sem isso, a fase de
+      # proposições leva ~30h e nunca termina dentro do teto de 6h do runner.
       - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "🗳️  Sync votações $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes --ano=$ano
+            echo "🗳️  Sync votações $ano (bulk)"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes --bulk --ano=$ano
           done
 
       - name: Sync discursos (3 anos)
@@ -115,8 +131,8 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "📋 Sync proposições $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes --ano=$ano
+            echo "📋 Sync proposições $ano (bulk)"
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes --bulk --ano=$ano
           done
 
       - name: Sync frequência (3 anos)
@@ -181,6 +197,9 @@ jobs:
           INPUT_DISCURSOS: ${{ github.event.inputs.apenas-discursos }}
           INPUT_PROPOSICOES: ${{ github.event.inputs.apenas-proposicoes }}
           INPUT_FREQUENCIA: ${{ github.event.inputs.apenas-frequencia }}
+          INPUT_BULK: ${{ github.event.inputs.bulk }}
+          INPUT_OFFSET: ${{ github.event.inputs.offset }}
+          INPUT_LIMITE: ${{ github.event.inputs.limite }}
         run: |
           ARGS=""
           [ -n "$INPUT_ANO" ] && ARGS="$ARGS --ano=$INPUT_ANO"
@@ -189,6 +208,9 @@ jobs:
           [ "$INPUT_DISCURSOS" = "true" ] && ARGS="$ARGS --apenas-discursos"
           [ "$INPUT_PROPOSICOES" = "true" ] && ARGS="$ARGS --apenas-proposicoes"
           [ "$INPUT_FREQUENCIA" = "true" ] && ARGS="$ARGS --apenas-frequencia"
+          [ "$INPUT_BULK" = "true" ] && ARGS="$ARGS --bulk"
+          [ -n "$INPUT_OFFSET" ] && ARGS="$ARGS --offset=$INPUT_OFFSET"
+          [ -n "$INPUT_LIMITE" ] && ARGS="$ARGS --limite=$INPUT_LIMITE"
           echo "Args: '${ARGS:-<full sync>}'"
           # Retry (upserts são idempotentes): protege de P1002 transitório.
           # shellcheck disable=SC2086

@@ -17,6 +17,8 @@ import {
   criarSeletorDeFases,
   imprimirCabecalho,
   imprimirResumo,
+  aplicarFaixa,
+  descreverFaixa,
   type SyncOptions,
 } from './lib/sync-comum';
 import {
@@ -27,6 +29,7 @@ import {
   upsertFrequencia,
   upsertProposicao,
 } from './lib/persistencia';
+import { syncProposicoesBulk, syncVotacoesBulk } from './lib/camara-bulk';
 
 const prisma = new PrismaClient({
   log: ['error', 'warn'],
@@ -80,15 +83,19 @@ async function syncCamara(options: SyncOptions = {}) {
     }
 
     // Deputados ativos para os syncs subsequentes
-    const deputadosDb = await prisma.parlamentar.findMany({
+    const deputadosDbTotal = await prisma.parlamentar.findMany({
       where: {
         casa: Casa.CAMARA,
         OR: [{ situacao: 'EXERCICIO' }, { situacao: null }],
       },
       select: { id: true, idExterno: true, nome: true },
+      orderBy: { id: 'asc' },
     });
+    const deputadosDb = aplicarFaixa(deputadosDbTotal, options);
 
-    console.log(`\n📊 ${deputadosDb.length} deputados ativos para sincronizar`);
+    console.log(
+      `\n📊 ${descreverFaixa(deputadosDbTotal.length, deputadosDb.length, options)} deputados ativos para sincronizar`
+    );
 
     // 3. Votações e Votos
     if (sync(options.apenasVotacoes)) {
@@ -96,29 +103,53 @@ async function syncCamara(options: SyncOptions = {}) {
       let totalVotacoes = 0;
       let totalVotos = 0;
 
-      for await (const votacoes of camara.fetchVotacoes(ano)) {
-        for (const v of votacoes) {
-          await upsertVotacao(prisma, v);
-          totalVotacoes++;
-        }
+      if (options.bulk) {
+        // Arquivos em lote: 2 downloads por ano em vez de 1 request por votação.
+        const resultado = await syncVotacoesBulk(prisma, ano, console.log);
+        console.log(`   ${resultado.votos} votos (bulk)`);
+        totalVotacoes = resultado.votacoes;
+        totalVotos = resultado.votos;
+      } else {
+        for await (const votacoes of camara.fetchVotacoes(ano)) {
+          for (const v of votacoes) {
+            await upsertVotacao(prisma, v);
+            totalVotacoes++;
+          }
 
-        for (const v of votacoes) {
-          const votos = await camara.fetchVotosVotacao(v.idExterno);
-          for (const voto of votos) {
-            if (await upsertVotoDoParlamentar(prisma, voto)) totalVotos++;
+          for (const v of votacoes) {
+            const votos = await camara.fetchVotosVotacao(v.idExterno);
+            for (const voto of votos) {
+              if (await upsertVotoDoParlamentar(prisma, voto)) totalVotos++;
+            }
           }
         }
       }
+
       console.log(`✅ ${totalVotacoes} votações, ${totalVotos} votos sincronizados`);
     }
 
+    // 3b. Proposições via bulk (independente de deputado).
+    if (sync(options.apenasProposicoes) && options.bulk) {
+      console.log('\n📋 Sincronizando proposições (bulk)...');
+      const resultado = await syncProposicoesBulk(prisma, ano, console.log);
+      console.log(
+        `✅ ${resultado.proposicoes} proposições, ${resultado.tramitacoes} tramitações (fora do ano ignoradas: ${resultado.ignoradasSemAno})`
+      );
+    }
+
     // 4. Discursos, Proposições e Frequência por deputado
-    if (sync(options.apenasDiscursos || options.apenasProposicoes || options.apenasFrequencia)) {
+    const precisaPassarPorDeputado =
+      sync(options.apenasDiscursos) ||
+      sync(options.apenasFrequencia) ||
+      (sync(options.apenasProposicoes) && !options.bulk);
+
+    if (precisaPassarPorDeputado) {
       console.log('\n🎤 Sincronizando discursos, proposições e frequência...');
 
       let totalDiscursos = 0;
       let totalProposicoes = 0;
       let totalFrequencias = 0;
+      let deputadosComFalha = 0;
       const batchSize = 10;
 
       for (let i = 0; i < deputadosDb.length; i += batchSize) {
@@ -126,30 +157,39 @@ async function syncCamara(options: SyncOptions = {}) {
 
         await Promise.all(
           batch.map(async (dep) => {
-            if (sync(options.apenasDiscursos)) {
-              for await (const discursos of camara.fetchDiscursosDeputado(dep.idExterno, ano)) {
-                for (const d of discursos) {
-                  await upsertDiscurso(prisma, dep.id, d);
-                  totalDiscursos++;
+            try {
+              if (sync(options.apenasDiscursos)) {
+                for await (const discursos of camara.fetchDiscursosDeputado(dep.idExterno, ano)) {
+                  for (const d of discursos) {
+                    await upsertDiscurso(prisma, dep.id, d);
+                    totalDiscursos++;
+                  }
                 }
               }
-            }
 
-            if (sync(options.apenasProposicoes)) {
-              for await (const proposicoes of camara.fetchProposicoesDeputado(dep.idExterno, ano)) {
-                for (const p of proposicoes) {
-                  await upsertProposicao(prisma, dep.id, p);
-                  totalProposicoes++;
+              if (sync(options.apenasProposicoes) && !options.bulk) {
+                for await (const proposicoes of camara.fetchProposicoesDeputado(dep.idExterno, ano)) {
+                  for (const p of proposicoes) {
+                    await upsertProposicao(prisma, dep.id, p);
+                    totalProposicoes++;
+                  }
                 }
               }
-            }
 
-            if (sync(options.apenasFrequencia)) {
-              const freq = await camara.fetchFrequencia(dep.idExterno, ano);
-              if (freq) {
-                await upsertFrequencia(prisma, dep.id, freq);
-                totalFrequencias++;
+              if (sync(options.apenasFrequencia)) {
+                const freq = await camara.fetchFrequencia(dep.idExterno, ano);
+                if (freq) {
+                  await upsertFrequencia(prisma, dep.id, freq);
+                  totalFrequencias++;
+                }
               }
+            } catch (error) {
+              // Um deputado com erro na fonte não pode derrubar o sync inteiro
+              // (a fonte devolve 500 esporádico em discursos); segue para o próximo.
+              deputadosComFalha++;
+              console.warn(
+                `   ⚠️  ${dep.nome}: ${error instanceof Error ? error.message : 'falha ao sincronizar'}`
+              );
             }
           })
         );
@@ -157,7 +197,10 @@ async function syncCamara(options: SyncOptions = {}) {
         const progress = Math.min(i + batchSize, deputadosDb.length);
         console.log(`  📈 Progresso: ${progress}/${deputadosDb.length} deputados`);
       }
-      console.log(`✅ ${totalDiscursos} discursos, ${totalProposicoes} proposições, ${totalFrequencias} frequências`);
+      console.log(
+        `✅ ${totalDiscursos} discursos, ${totalProposicoes} proposições, ${totalFrequencias} frequências` +
+          (deputadosComFalha ? ` (${deputadosComFalha} deputados com falha na fonte)` : '')
+      );
     }
 
     imprimirResumo('CÂMARA', camara.getStats(), startTime);

@@ -17,11 +17,14 @@ import {
   criarSeletorDeFases,
   imprimirCabecalho,
   imprimirResumo,
+  aplicarFaixa,
+  descreverFaixa,
   type SyncOptions,
 } from './lib/sync-comum';
 import {
   upsertParlamentar,
   upsertVotacao,
+  upsertVotosEmLote,
   upsertVotoDoParlamentar,
   upsertDiscurso,
   upsertFrequencia,
@@ -69,12 +72,16 @@ async function syncSenado(options: SyncOptions = {}) {
     }
 
     // Senadores ativos
-    const senadoresDb = await prisma.parlamentar.findMany({
+    const senadoresDbTotal = await prisma.parlamentar.findMany({
       where: { casa: Casa.SENADO, situacao: 'EXERCICIO' },
       select: { id: true, idExterno: true, nome: true },
+      orderBy: { id: 'asc' },
     });
+    const senadoresDb = aplicarFaixa(senadoresDbTotal, options);
 
-    console.log(`\n📊 ${senadoresDb.length} senadores ativos para sincronizar`);
+    console.log(
+      `\n📊 ${descreverFaixa(senadoresDbTotal.length, senadoresDb.length, options)} senadores ativos para sincronizar`
+    );
 
     // 2. Votações e Votos
     if (sync(options.apenasVotacoes)) {
@@ -82,23 +89,23 @@ async function syncSenado(options: SyncOptions = {}) {
       let totalVotacoes = 0;
       let totalVotos = 0;
 
-      for (const senador of senadoresDb) {
-        for await (const votacoes of senado.fetchVotacoesSenador(senador.idExterno, ano)) {
-          for (const v of votacoes) {
-            await upsertVotacao(prisma, v);
-            totalVotacoes++;
-          }
+      // Uma requisição por ano traz todas as votações e os votos de todos os
+      // senadores. O laço antigo (senador × votação) fazia ~10 mil requests e
+      // deixava a maioria dos votos de fora quando o job era interrompido.
+      const { votacoes, votos } = await senado.fetchVotacoesAnoSenado(ano);
 
-          for (const v of votacoes) {
-            const votos = await senado.fetchVotosVotacao(senador.idExterno, v.idExterno);
-            for (const voto of votos) {
-              if (await upsertVotoDoParlamentar(prisma, voto)) totalVotos++;
-            }
-          }
-        }
-
-        console.log(`  📈 ${senador.nome}: ${totalVotacoes} votações processadas`);
+      for (const v of votacoes) {
+        await upsertVotacao(prisma, v);
+        totalVotacoes++;
       }
+
+      const { gravados, ignorados } = await upsertVotosEmLote(prisma, votos, 'SENADO');
+      totalVotos += gravados;
+
+      console.log(
+        `  📈 ${votacoes.length} votações na fonte, ${votos.length} votos ` +
+          `(${gravados} gravados, ${ignorados} de parlamentares fora da base)`
+      );
       console.log(`✅ ${totalVotacoes} votações, ${totalVotos} votos sincronizados`);
     }
 
@@ -107,6 +114,7 @@ async function syncSenado(options: SyncOptions = {}) {
       console.log('\n🎤 Sincronizando discursos e frequência...');
       let totalDiscursos = 0;
       let totalFrequencias = 0;
+      let senadoresComFalha = 0;
       const batchSize = 10;
 
       for (let i = 0; i < senadoresDb.length; i += batchSize) {
@@ -114,21 +122,28 @@ async function syncSenado(options: SyncOptions = {}) {
 
         await Promise.all(
           batch.map(async (sen) => {
-            if (sync(options.apenasDiscursos)) {
-              for await (const discursos of senado.fetchDiscursosSenador(sen.idExterno, ano)) {
-                for (const d of discursos) {
-                  await upsertDiscurso(prisma, sen.id, d);
-                  totalDiscursos++;
+            try {
+              if (sync(options.apenasDiscursos)) {
+                for await (const discursos of senado.fetchDiscursosSenador(sen.idExterno, ano)) {
+                  for (const d of discursos) {
+                    await upsertDiscurso(prisma, sen.id, d);
+                    totalDiscursos++;
+                  }
                 }
               }
-            }
 
-            if (sync(options.apenasFrequencia)) {
-              const freq = await senado.fetchFrequencia(sen.idExterno, ano);
-              if (freq) {
-                await upsertFrequencia(prisma, sen.id, freq);
-                totalFrequencias++;
+              if (sync(options.apenasFrequencia)) {
+                const freq = await senado.fetchFrequencia(sen.idExterno, ano);
+                if (freq) {
+                  await upsertFrequencia(prisma, sen.id, freq);
+                  totalFrequencias++;
+                }
               }
+            } catch (error) {
+              senadoresComFalha++;
+              console.warn(
+                `   ⚠️  ${sen.nome}: ${error instanceof Error ? error.message : 'falha ao sincronizar'}`
+              );
             }
           })
         );
@@ -136,7 +151,10 @@ async function syncSenado(options: SyncOptions = {}) {
         const progress = Math.min(i + batchSize, senadoresDb.length);
         console.log(`  📈 Progresso: ${progress}/${senadoresDb.length} senadores`);
       }
-      console.log(`✅ ${totalDiscursos} discursos, ${totalFrequencias} frequências`);
+      console.log(
+        `✅ ${totalDiscursos} discursos, ${totalFrequencias} frequências` +
+          (senadoresComFalha ? ` (${senadoresComFalha} senadores com falha na fonte)` : '')
+      );
     }
 
     // 4. Proposições (autoria) + Tramitações
@@ -145,6 +163,7 @@ async function syncSenado(options: SyncOptions = {}) {
       console.log('   Fonte: /senador/{codigo}/autorias + /materia/situacaoatual + /materia/movimentacoes');
       let totalProposicoes = 0;
       let totalTramitacoes = 0;
+      let senadoresComFalha = 0;
       const batchSize = 5; // detalhe por matéria (2 req) — lote conservador p/ rate limit
 
       for (let i = 0; i < senadoresDb.length; i += batchSize) {
@@ -152,12 +171,19 @@ async function syncSenado(options: SyncOptions = {}) {
 
         await Promise.all(
           batch.map(async (sen) => {
-            for await (const proposicoes of senado.fetchProposicoesSenador(sen.idExterno, ano)) {
-              for (const p of proposicoes) {
-                const gravadas = await upsertProposicao(prisma, sen.id, p);
-                totalProposicoes++;
-                totalTramitacoes += gravadas;
+            try {
+              for await (const proposicoes of senado.fetchProposicoesSenador(sen.idExterno, ano)) {
+                for (const p of proposicoes) {
+                  const gravadas = await upsertProposicao(prisma, sen.id, p);
+                  totalProposicoes++;
+                  totalTramitacoes += gravadas;
+                }
               }
+            } catch (error) {
+              senadoresComFalha++;
+              console.warn(
+                `   ⚠️  ${sen.nome}: ${error instanceof Error ? error.message : 'falha ao sincronizar'}`
+              );
             }
           })
         );
@@ -165,7 +191,10 @@ async function syncSenado(options: SyncOptions = {}) {
         const progress = Math.min(i + batchSize, senadoresDb.length);
         console.log(`  📈 Progresso: ${progress}/${senadoresDb.length} senadores`);
       }
-      console.log(`✅ ${totalProposicoes} proposições, ${totalTramitacoes} tramitações`);
+      console.log(
+        `✅ ${totalProposicoes} proposições, ${totalTramitacoes} tramitações` +
+          (senadoresComFalha ? ` (${senadoresComFalha} senadores com falha na fonte)` : '')
+      );
     }
 
     imprimirResumo('SENADO', senado.getStats(), startTime);

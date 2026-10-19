@@ -53,7 +53,7 @@ export interface VotacaoNormalizada {
 export interface VotoNormalizado {
   parlamentarIdExterno: string;
   votacaoIdExterno: string;
-  tipo: 'SIM' | 'NAO' | 'ABSTENCAO' | 'ARTICULACAO' | 'OBSTRUCAO' | 'AUSENTE' | 'LICENCA' | 'MISSAO';
+  tipo: 'SIM' | 'NAO' | 'ABSTENCAO' | 'VOTOU' | 'ARTICULACAO' | 'OBSTRUCAO' | 'AUSENTE' | 'LICENCA' | 'MISSAO';
 }
 
 export interface DiscursoNormalizado {

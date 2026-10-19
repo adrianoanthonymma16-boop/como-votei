@@ -6,6 +6,7 @@
 import { senadoClient, USER_AGENT } from './http-client';
 import { createHash } from 'crypto';
 import { extrairTemaPrincipal } from '../temas';
+import { normalizarUrlFoto } from '../imagens';
 import type {
   ParlamentarNormalizado,
   VotacaoNormalizada,
@@ -60,6 +61,14 @@ interface VotacaoSenado {
   ementa?: string;
 }
 
+interface VotacaoSenadoComVotos extends VotacaoSenado {
+  /** Presente quando a consulta é feita sem `codigoParlamentar` — traz todos os votos da sessão. */
+  votos?: Array<{
+    codigoParlamentar: number;
+    siglaVotoParlamentar: string;
+  }>;
+}
+
 interface VotoSenado {
   votos?: Array<{
     siglaVotoParlamentar: string;
@@ -104,20 +113,26 @@ function normalizarNome(nome: string): string {
     .trim();
 }
 
-function mapTipoVotoSenado(sigla: string): 'SIM' | 'NAO' | 'ABSTENCAO' | 'ARTICULACAO' | 'OBSTRUCAO' | 'AUSENTE' | 'LICENCA' | 'MISSAO' {
+export function mapTipoVotoSenado(
+  sigla: string
+): 'SIM' | 'NAO' | 'ABSTENCAO' | 'VOTOU' | 'ARTICULACAO' | 'OBSTRUCAO' | 'AUSENTE' | 'LICENCA' | 'MISSAO' {
   const siglaNorm = normalizarNome(sigla);
   
   const siglasSim = new Set(['SIM', 'SI', 'VS', 'VOTO DO PRESIDENTE', 'PRESIDENTE (ART. 51 RISF)']);
   const siglasNao = new Set(['NAO', 'NÃO']);
   const siglasAbstencao = new Set(['ABSTENCAO', 'ABSTENÇÃO']);
+  // 'Votou' = voto registrado sem direção divulgada (ex.: escolha secreta).
+  // Conta como presença, mas não entra no cálculo de alinhamento.
+  const siglasVotou = new Set(['VOTOU', 'VO']);
   const siglasArticulacao = new Set(['ARTICULACAO', 'ARTICULAÇÃO', 'P-NRV', 'P-OD']);
   const siglasObstrucao = new Set(['OB', 'OBSTRUCAO', 'OBSTRUÇÃO']);
-  const siglasLicenca = new Set(['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'LA', 'LAF', 'LAP', 'LC', 'LCS', 'LEG', 'LG', 'LGA', 'LL', 'LN', 'LP', 'LPA', 'LS', 'LSP', 'AFO', 'AUS', 'AP', 'MIS', 'MER', 'REP', 'DJ', 'GR', 'CAS', 'IL', 'EP', 'EPR', 'RET', 'REN', 'TER', 'PER', 'IMP', 'NA']);
-  const siglasMissao = new Set(['MISSAO', 'MISSÃO']);
+  const siglasLicenca = new Set(['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'LA', 'LAF', 'LAP', 'LC', 'LCS', 'LEG', 'LG', 'LGA', 'LL', 'LN', 'LP', 'LPA', 'LS', 'LSP', 'AFO', 'AUS', 'AP', 'MER', 'REP', 'DJ', 'GR', 'CAS', 'IL', 'EP', 'EPR', 'RET', 'REN', 'TER', 'PER', 'IMP', 'NA']);
+  const siglasMissao = new Set(['MIS', 'MISSAO', 'MISSÃO']);
   
   if (siglasSim.has(siglaNorm)) return 'SIM';
   if (siglasNao.has(siglaNorm)) return 'NAO';
   if (siglasAbstencao.has(siglaNorm)) return 'ABSTENCAO';
+  if (siglasVotou.has(siglaNorm)) return 'VOTOU';
   if (siglasArticulacao.has(siglaNorm)) return 'ARTICULACAO';
   if (siglasObstrucao.has(siglaNorm)) return 'OBSTRUCAO';
   if (siglasLicenca.has(siglaNorm)) return 'LICENCA';
@@ -323,7 +338,7 @@ export class SenadoAdapter {
         partidoSigla: id.SiglaPartidoParlamentar,
         ufSigla: id.UfParlamentar,
         legislatura: 57, // Senado não tem legislatura como Câmara
-        fotoUrl: id.UrlFotoParlamentar,
+        fotoUrl: normalizarUrlFoto(id.UrlFotoParlamentar),
         email: id.EmailParlamentar,
         telefone,
         situacao: 'EXERCICIO',
@@ -356,7 +371,7 @@ export class SenadoAdapter {
         partidoSigla: idObj.SiglaPartidoParlamentar,
         ufSigla: idObj.UfParlamentar,
         legislatura: 57,
-        fotoUrl: idObj.UrlFotoParlamentar,
+        fotoUrl: normalizarUrlFoto(idObj.UrlFotoParlamentar),
         email: idObj.EmailParlamentar,
         telefone,
         situacao: 'EXERCICIO',
@@ -385,6 +400,63 @@ export class SenadoAdapter {
       });
     }
     return fatias.reverse();
+  }
+
+  /**
+   * Busca todas as votações de um ano **e** os votos de todos os senadores em
+   * uma única requisição.
+   *
+   * A API do Senado ignora `codigoParlamentar` para filtrar a lista (devolve as
+   * mesmas votações do ano), mas usa o parâmetro para reduzir `votos` ao voto
+   * daquele senador. Consultar sem o parâmetro devolve a sessão inteira — é o
+   * que evita o O(senadores × votações) do laço antigo.
+   */
+  async fetchVotacoesAnoSenado(
+    ano: number
+  ): Promise<{ votacoes: VotacaoNormalizada[]; votos: VotoNormalizado[] }> {
+    const url = buildUrl(`${SENADO_LEGIS_BASE}/votacao`, {
+      dataInicio: `${ano}-01-01`,
+      dataFim: `${ano}-12-31`,
+    });
+    const response = await senadoClient.get(url);
+    if (!response.ok) return { votacoes: [], votos: [] };
+
+    const registros = (await response.json()) as VotacaoSenadoComVotos[];
+    const votacoes: VotacaoNormalizada[] = [];
+    const votos: VotoNormalizado[] = [];
+    const vistas = new Set<string>();
+
+    for (const v of registros) {
+      const idExterno = String(v.codigoSessaoVotacao);
+      if (!vistas.has(idExterno)) {
+        vistas.add(idExterno);
+        votacoes.push({
+          idExterno,
+          casa: 'SENADO',
+          legislatura: 57,
+          sessao: v.codigoSessao,
+          numero: 0,
+          data: toDate(v.dataSessao)!,
+          descricao: v.identificacao || 'Votação',
+          ementa: v.descricaoVotacao || v.ementa,
+          tema: extrairTemaPrincipal(v.descricaoVotacao || v.ementa || ''),
+          resultado: undefined,
+          quorum: undefined,
+        });
+      }
+
+      for (const voto of v.votos ?? []) {
+        votos.push({
+          parlamentarIdExterno: String(voto.codigoParlamentar),
+          votacaoIdExterno: idExterno,
+          tipo: mapTipoVotoSenado(voto.siglaVotoParlamentar),
+        });
+      }
+    }
+
+    this.stats.votacoes += votacoes.length;
+    this.stats.votos += votos.length;
+    return { votacoes, votos };
   }
 
   async *fetchVotacoesSenador(senadorIdExterno: string, ano: number): AsyncGenerator<VotacaoNormalizada[]> {

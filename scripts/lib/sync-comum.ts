@@ -10,6 +10,15 @@ import type { SyncStats } from '../../src/lib/sync/types';
 
 export interface SyncOptions {
   ano?: number;
+  /** Índice inicial (0-based) na lista de parlamentares ativos — retomada por faixa. */
+  offset?: number;
+  /** Quantidade máxima de parlamentares a processar a partir do offset. */
+  limite?: number;
+  /**
+   * Usa os arquivos JSON em lote da Câmara para proposições e votações.
+   * Troca O(deputados × proposições) requests por 5 downloads por ano.
+   */
+  bulk?: boolean;
   apenasParlamentares?: boolean;
   apenasVotacoes?: boolean;
   apenasDiscursos?: boolean;
@@ -18,19 +27,46 @@ export interface SyncOptions {
   debug?: boolean;
 }
 
-/** Lê os argumentos `--ano=`, `--apenas-*` e `--debug` da linha de comando. */
+/** Lê os argumentos `--ano=`, `--offset=`, `--limite=`, `--apenas-*`, `--bulk` e `--debug`. */
 export function parseSyncArgs(argv: string[]): SyncOptions {
   const options: SyncOptions = {};
   for (const arg of argv) {
     if (arg.startsWith('--ano=')) options.ano = parseInt(arg.split('=')[1]);
+    if (arg.startsWith('--offset=')) options.offset = parseInt(arg.split('=')[1]);
+    if (arg.startsWith('--limite=')) options.limite = parseInt(arg.split('=')[1]);
     if (arg === '--apenas-parlamentares') options.apenasParlamentares = true;
     if (arg === '--apenas-votacoes') options.apenasVotacoes = true;
     if (arg === '--apenas-discursos') options.apenasDiscursos = true;
     if (arg === '--apenas-proposicoes') options.apenasProposicoes = true;
     if (arg === '--apenas-frequencia') options.apenasFrequencia = true;
+    if (arg === '--bulk') options.bulk = true;
     if (arg === '--debug') options.debug = true;
   }
   return options;
+}
+
+/**
+ * Recorta a lista de parlamentares para a faixa pedida (`--offset`/`--limite`).
+ *
+ * Motivo: as fases por parlamentar (proposições, discursos, frequência) gastam
+ * vários requests por item e passam do teto de 6h do runner do GitHub Actions
+ * quando rodam sobre os 513 deputados. A faixa permite quebrar o mesmo ano em
+ * vários jobs retomáveis, sem repetir o que já foi feito (upserts idempotentes).
+ *
+ * `offset` e `limite` inválidos (negativos/NaN) são ignorados.
+ */
+export function aplicarFaixa<T>(lista: T[], options: SyncOptions): T[] {
+  const offset = Number.isFinite(options.offset) && (options.offset as number) > 0 ? (options.offset as number) : 0;
+  const limite =
+    Number.isFinite(options.limite) && (options.limite as number) > 0 ? (options.limite as number) : undefined;
+  return limite === undefined ? lista.slice(offset) : lista.slice(offset, offset + limite);
+}
+
+/** Descreve a faixa em uso, para o log do sync. */
+export function descreverFaixa(total: number, selecionados: number, options: SyncOptions): string {
+  if (options.offset === undefined && options.limite === undefined) return `${selecionados}/${total}`;
+  const inicio = options.offset ?? 0;
+  return `${selecionados}/${total} (offset ${inicio}, limite ${options.limite ?? '∞'})`;
 }
 
 /**

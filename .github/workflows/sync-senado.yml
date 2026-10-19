@@ -37,6 +37,14 @@ on:
         description: 'Sincronizar apenas despesas (CEAPS)'
         required: false
         type: boolean
+      offset:
+        description: 'Índice inicial de senadores (retomada por faixa)'
+        required: false
+        type: string
+      limite:
+        description: 'Quantidade de senadores a processar a partir do offset'
+        required: false
+        type: string
 
 jobs:
   sync-senado:
@@ -164,6 +172,8 @@ jobs:
           INPUT_DISCURSOS: ${{ github.event.inputs.apenas-discursos }}
           INPUT_PROPOSICOES: ${{ github.event.inputs.apenas-proposicoes }}
           INPUT_FREQUENCIA: ${{ github.event.inputs.apenas-frequencia }}
+          INPUT_OFFSET: ${{ github.event.inputs.offset }}
+          INPUT_LIMITE: ${{ github.event.inputs.limite }}
         run: |
           ARGS=""
           [ -n "$INPUT_ANO" ] && ARGS="$ARGS --ano=$INPUT_ANO"
@@ -172,6 +182,8 @@ jobs:
           [ "$INPUT_DISCURSOS" = "true" ] && ARGS="$ARGS --apenas-discursos"
           [ "$INPUT_PROPOSICOES" = "true" ] && ARGS="$ARGS --apenas-proposicoes"
           [ "$INPUT_FREQUENCIA" = "true" ] && ARGS="$ARGS --apenas-frequencia"
+          [ -n "$INPUT_OFFSET" ] && ARGS="$ARGS --offset=$INPUT_OFFSET"
+          [ -n "$INPUT_LIMITE" ] && ARGS="$ARGS --limite=$INPUT_LIMITE"
           echo "Args: '${ARGS:-<full sync>}'"
           # Retry (upserts são idempotentes): protege de P1002 transitório.
           # shellcheck disable=SC2086

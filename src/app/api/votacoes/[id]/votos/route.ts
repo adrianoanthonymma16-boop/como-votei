@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
-  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO', 'AUSENTE', 'LICENCA', 'MISSAO']).optional(),
+  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'VOTOU', 'ARTICULACAO', 'OBSTRUCAO', 'AUSENTE', 'LICENCA', 'MISSAO']).optional(),
   q: z.string().optional(),
 });
 

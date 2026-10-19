@@ -1,0 +1,113 @@
+name: Sync Emendas (Portal da Transparência)
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    # Diário às 05:00 UTC (02:00 BRT) — após os syncs das casas.
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano para sincronizar (padrão: janela de 3 anos)'
+        required: false
+        type: string
+
+jobs:
+  sync-emendas:
+    name: Sync Emendas
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      # Timeouts estendidos: o Neon free tier suspende o compute parado e a
+      # primeira conexão (cold start) estoura o pool_timeout padrão (P1002).
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}&connect_timeout=30&pool_timeout=60
+      PORTAL_API_KEY: ${{ secrets.PORTAL_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run migrations
+        # Retry: primeira conexão após idle do Neon pode dar P1002 (cold start).
+        run: |
+          for tentativa in 1 2 3 4 5; do
+            npx prisma migrate deploy && break
+            echo "migrate falhou (tentativa $tentativa/5) — retry em 30s..."
+            [ "$tentativa" = 5 ] && exit 1
+            sleep 30
+          done
+
+      - name: Sync emendas (janela de 3 anos)
+        if: github.event_name == 'schedule'
+        # Retry: upserts por codigoEmenda são idempotentes.
+        run: |
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-emendas.ts --apenas-emendas && break
+            echo "sync emendas falhou (tentativa $tentativa/3) — retry em 60s..."
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 60
+          done
+
+      - name: Sync emendas (manual)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_ANO: ${{ github.event.inputs.ano }}
+        run: |
+          # Valida o input antes de montar os argumentos (evita injeção de flag).
+          if [ -n "$INPUT_ANO" ] && ! printf '%s' "$INPUT_ANO" | grep -qE '^[0-9]{4}$'; then
+            echo "ano inválido: '$INPUT_ANO' (esperado YYYY)"; exit 1
+          fi
+          ARGS="--apenas-emendas"
+          [ -n "$INPUT_ANO" ] && ARGS="$ARGS --ano=$INPUT_ANO"
+          # shellcheck disable=SC2086
+          for tentativa in 1 2 3; do
+            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-emendas.ts $ARGS && break
+            echo "sync emendas falhou (tentativa $tentativa/3) — retry em 60s..."
+            [ "$tentativa" = 3 ] && exit 1
+            sleep 60
+          done
+
+      - name: Guardrail — emendas e match de autoria
+        if: github.event_name == 'schedule'
+        run: |
+          node -e "
+          const { PrismaClient } = require('@prisma/client');
+          const p = new PrismaClient();
+          (async () => {
+            const total = await p.emenda.count();
+            console.log('Emendas:', total);
+            if (total === 0) { console.error('❌ Nenhuma emenda — sync quebrou'); process.exit(1); }
+            const comDono = await p.emenda.count({ where: { parlamentarId: { not: null } } });
+            const pct = (comDono / total) * 100;
+            console.log('Com autor resolvido:', comDono, pct.toFixed(1) + '%');
+            if (pct < 50) { console.error('❌ Match de autoria abaixo de 50% — diretório de nomes quebrou'); process.exit(1); }
+            const semUf = await p.emenda.count({ where: { localidadeTipo: 'DESCONHECIDO' } });
+            const pctSemUf = (semUf / total) * 100;
+            console.log('Localidade não parseada:', semUf, pctSemUf.toFixed(1) + '%');
+            if (pctSemUf > 20) { console.error('❌ >20% de localidades não parseadas — mudança de formato na fonte'); process.exit(1); }
+            console.log('✅ Guardrail emendas OK');
+            await p.\$disconnect();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+
+      - name: Log completion
+        if: always()
+        run: |
+          echo "✅ Sync Emendas concluído em $(date)"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run: ${{ github.run_id }}"

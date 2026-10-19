@@ -1,4 +1,11 @@
-export const TIPOS_PRESENCA = ['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO'] as const;
+export const TIPOS_PRESENCA = [
+  'SIM',
+  'NAO',
+  'ABSTENCAO',
+  'VOTOU',
+  'ARTICULACAO',
+  'OBSTRUCAO',
+] as const;
 export const TIPOS_FALTA_JUSTIFICADA = ['LICENCA', 'MISSAO'] as const;
 export const TIPO_AUSENTE = 'AUSENTE' as const;
 
@@ -115,7 +122,7 @@ export function computeAlinhamento(
   const majorityByVotacao = new Map<string, string>();
   const byVotacao = new Map<string, string[]>();
   for (const pv of votosPartido) {
-    if (!isPresenca(pv.tipo)) continue;
+    if (!isPresenca(pv.tipo) || pv.tipo === 'VOTOU') continue;
     if (!byVotacao.has(pv.votacaoId)) byVotacao.set(pv.votacaoId, []);
     byVotacao.get(pv.votacaoId)!.push(pv.tipo);
   }
@@ -127,7 +134,7 @@ export function computeAlinhamento(
   let votosAlinhados = 0;
   let totalVotacoes = 0;
   for (const mv of meusVotos) {
-    if (!isPresenca(mv.tipo)) continue;
+    if (!isPresenca(mv.tipo) || mv.tipo === 'VOTOU') continue;
     const maioria = majorityByVotacao.get(mv.votacaoId);
     if (!maioria) continue;
     totalVotacoes++;
@@ -136,7 +143,7 @@ export function computeAlinhamento(
 
   const memberStats = new Map<string, { aligned: number; total: number }>();
   for (const pv of votosPartido) {
-    if (!isPresenca(pv.tipo)) continue;
+    if (!isPresenca(pv.tipo) || pv.tipo === 'VOTOU') continue;
     const maioria = majorityByVotacao.get(pv.votacaoId);
     if (!maioria) continue;
     if (!memberStats.has(pv.parlamentarId)) {

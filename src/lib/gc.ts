@@ -111,6 +111,12 @@ export const ESPEC_GC: readonly EspecGc[] = [
     foraDaJanela: (c) => ({ sql: `"ano" < $1`, params: [c.anoCorte] }),
   },
   {
+    tabela: 'emendas',
+    rotulo: 'Emendas',
+    // Corte pelo `ano` da emenda (campo próprio da fonte), como proposições.
+    foraDaJanela: (c) => ({ sql: `"ano" < $1`, params: [c.anoCorte] }),
+  },
+  {
     tabela: 'despesas',
     rotulo: 'Despesas',
     foraDaJanela: (c) => ({ sql: `"ano" < $1`, params: [c.anoCorte] }),

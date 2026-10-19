@@ -57,8 +57,16 @@ describe('ESPEC_GC — predicados', () => {
       'proposicoes',
       'discursos',
       'frequencias',
+      'emendas',
       'despesas',
     ]);
+  });
+
+  it('tabelas com ano (proposicoes, emendas, despesas) usam anoCorte', () => {
+    for (const tabela of ['proposicoes', 'emendas', 'despesas'] as const) {
+      const espec = ESPEC_GC.find((e) => e.tabela === tabela);
+      expect(espec?.foraDaJanela(corte).params).toEqual([corte.anoCorte]);
+    }
   });
 
   it('tabelas com data usam dataCorte', () => {

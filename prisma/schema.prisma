@@ -16,6 +16,7 @@ enum TipoVoto {
   SIM
   NAO
   ABSTENCAO
+  VOTOU
   ARTICULACAO
   OBSTRUCAO
   AUSENTE
@@ -93,6 +94,7 @@ model Parlamentar {
   proposicoes     Proposicao[]
   frequencias     Frequencia[]
   despesas        Despesa[]
+  emendas         Emenda[]
 
   @@index([casa, partidoId])
   @@index([casa, ufId])
@@ -221,6 +223,42 @@ model Frequencia {
 
   @@unique([parlamentarId, ano])
   @@map("frequencias")
+}
+
+/// Emenda parlamentar individual/de bancada/de comissão (Portal da Transparência).
+/// `parlamentarId` é nullable porque ~8% dos autores não casam por nome
+/// (ex-parlamentares, autores institucionais) — o código fica gravado mesmo sem
+/// dono resolvido, para o total por ano continuar auditável.
+model Emenda {
+  id                  String     @id @default(cuid())
+  codigoEmenda        String     @unique @map("codigo_emenda")
+  parlamentarId       String?    @map("parlamentar_id")
+  ano                 Int
+  tipo                String
+  numeroEmenda        String?    @map("numero_emenda")
+  nomeAutorRaw        String     @map("nome_autor_raw")
+  funcao              String?
+  subfuncao           String?
+  localidadeRaw       String?    @map("localidade_raw")
+  uf                  String?
+  municipio           String?
+  localidadeTipo      String?    @map("localidade_tipo")
+  valorEmpenhado      Decimal    @default(0) @db.Decimal(14, 2) @map("valor_empenhado")
+  valorLiquidado      Decimal    @default(0) @db.Decimal(14, 2) @map("valor_liquidado")
+  valorPago           Decimal    @default(0) @db.Decimal(14, 2) @map("valor_pago")
+  valorRestoInscrito  Decimal    @default(0) @db.Decimal(14, 2) @map("valor_resto_inscrito")
+  valorRestoCancelado Decimal    @default(0) @db.Decimal(14, 2) @map("valor_resto_cancelado")
+  valorRestoPago      Decimal    @default(0) @db.Decimal(14, 2) @map("valor_resto_pago")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+
+  parlamentar Parlamentar? @relation(fields: [parlamentarId], references: [id], onDelete: SetNull)
+
+  @@index([parlamentarId, ano])
+  @@index([ano])
+  @@index([funcao])
+  @@index([uf])
+  @@map("emendas")
 }
 
 model Despesa {

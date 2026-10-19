@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
   ano: z.coerce.number().optional(),
-  tipoVoto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO', 'LICENCA', 'MISSAO', 'AUSENTE']).array().optional(),
+  tipoVoto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'VOTOU', 'ARTICULACAO', 'OBSTRUCAO', 'LICENCA', 'MISSAO', 'AUSENTE']).array().optional(),
   tipoDiscurso: z.enum(['ORDEM_DIA', 'PLENARIO', 'COMISSAO', 'LIDERANCA', 'OUTRO']).array().optional(),
 });
 
@@ -198,7 +198,7 @@ export async function GET(
 
   // Alinhamento partidário
   const votacoesIds = votos
-    .filter((v) => ['SIM', 'NAO', 'ABSTENCAO', 'ARTICULACAO', 'OBSTRUCAO'].includes(v.tipo))
+    .filter((v) => ['SIM', 'NAO', 'ABSTENCAO', 'VOTOU', 'ARTICULACAO', 'OBSTRUCAO'].includes(v.tipo))
     .map((v) => v.votacaoId);
   const votacoesIdsSet = new Set(votacoesIds);
 

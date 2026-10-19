@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { UFS } from '../src/lib/ufs'
 
 const prisma = new PrismaClient()
 
@@ -31,35 +32,6 @@ const partidos = [
   { sigla: 'PCO', nome: 'Partido da Causa Operária', ideologia: 'ESQUERDA', cor: '#CC0000' },
 ]
 
-const ufs = [
-  { sigla: 'AC', nome: 'Acre', regiao: 'NORTE' },
-  { sigla: 'AL', nome: 'Alagoas', regiao: 'NORDESTE' },
-  { sigla: 'AP', nome: 'Amapá', regiao: 'NORTE' },
-  { sigla: 'AM', nome: 'Amazonas', regiao: 'NORTE' },
-  { sigla: 'BA', nome: 'Bahia', regiao: 'NORDESTE' },
-  { sigla: 'CE', nome: 'Ceará', regiao: 'NORDESTE' },
-  { sigla: 'DF', nome: 'Distrito Federal', regiao: 'CENTRO_OESTE' },
-  { sigla: 'ES', nome: 'Espírito Santo', regiao: 'SUDESTE' },
-  { sigla: 'GO', nome: 'Goiás', regiao: 'CENTRO_OESTE' },
-  { sigla: 'MA', nome: 'Maranhão', regiao: 'NORDESTE' },
-  { sigla: 'MT', nome: 'Mato Grosso', regiao: 'CENTRO_OESTE' },
-  { sigla: 'MS', nome: 'Mato Grosso do Sul', regiao: 'CENTRO_OESTE' },
-  { sigla: 'MG', nome: 'Minas Gerais', regiao: 'SUDESTE' },
-  { sigla: 'PA', nome: 'Pará', regiao: 'NORTE' },
-  { sigla: 'PB', nome: 'Paraíba', regiao: 'NORDESTE' },
-  { sigla: 'PR', nome: 'Paraná', regiao: 'SUL' },
-  { sigla: 'PE', nome: 'Pernambuco', regiao: 'NORDESTE' },
-  { sigla: 'PI', nome: 'Piauí', regiao: 'NORDESTE' },
-  { sigla: 'RJ', nome: 'Rio de Janeiro', regiao: 'SUDESTE' },
-  { sigla: 'RN', nome: 'Rio Grande do Norte', regiao: 'NORDESTE' },
-  { sigla: 'RS', nome: 'Rio Grande do Sul', regiao: 'SUL' },
-  { sigla: 'RO', nome: 'Rondônia', regiao: 'NORTE' },
-  { sigla: 'RR', nome: 'Roraima', regiao: 'NORTE' },
-  { sigla: 'SC', nome: 'Santa Catarina', regiao: 'SUL' },
-  { sigla: 'SP', nome: 'São Paulo', regiao: 'SUDESTE' },
-  { sigla: 'SE', nome: 'Sergipe', regiao: 'NORDESTE' },
-  { sigla: 'TO', nome: 'Tocantins', regiao: 'NORTE' },
-]
 
 async function main() {
   console.log('🌱 Iniciando seed de dados de referência...')
@@ -73,14 +45,14 @@ async function main() {
   }
   console.log(`✅ ${partidos.length} partidos criados/atualizados`)
 
-  for (const uf of ufs) {
+  for (const uf of UFS) {
     await prisma.uf.upsert({
       where: { sigla: uf.sigla },
       update: uf,
       create: uf,
     })
   }
-  console.log(`✅ ${ufs.length} UFs criadas/atualizadas`)
+  console.log(`✅ ${UFS.length} UFs criadas/atualizadas`)
 
   console.log('🎉 Seed concluído!')
 }

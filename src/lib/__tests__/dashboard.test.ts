@@ -22,11 +22,30 @@ describe('isPresenca', () => {
     expect(isPresenca('SIM')).toBe(true);
     expect(isPresenca('NAO')).toBe(true);
     expect(isPresenca('ABSTENCAO')).toBe(true);
+    expect(isPresenca('VOTOU')).toBe(true);
   });
 
   it('não considera ausência como presença', () => {
     expect(isPresenca('AUSENTE')).toBe(false);
     expect(isPresenca('LICENCA')).toBe(false);
+  });
+});
+
+describe('computeAlinhamento com voto sigiloso', () => {
+  it('ignora VOTOU no numerador e no denominador', () => {
+    const meus = [
+      { votacaoId: 'v1', tipo: 'SIM' },
+      { votacaoId: 'v2', tipo: 'VOTOU' },
+    ];
+    const partido = [
+      { votacaoId: 'v1', tipo: 'SIM', parlamentarId: 'p1' },
+      { votacaoId: 'v1', tipo: 'SIM', parlamentarId: 'p2' },
+      { votacaoId: 'v2', tipo: 'VOTOU', parlamentarId: 'p1' },
+      { votacaoId: 'v2', tipo: 'VOTOU', parlamentarId: 'p2' },
+    ];
+    const r = computeAlinhamento(meus, partido, 'p1');
+    expect(r.totalVotacoes).toBe(1);
+    expect(r.votosAlinhados).toBe(1);
   });
 });
 

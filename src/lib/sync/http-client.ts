@@ -6,6 +6,14 @@
 export interface RateLimitConfig {
   requestsPerMinute: number;
   burstLimit?: number;
+  /** Intervalo mínimo entre requests. Padrão: derivado de `requestsPerMinute`. */
+  minIntervalMs?: number;
+}
+
+/** Lê um número inteiro positivo de env, com fallback. */
+function numeroDeEnv(nome: string, padrao: number): number {
+  const bruto = Number.parseInt(process.env[nome] || '', 10);
+  return Number.isFinite(bruto) && bruto > 0 ? bruto : padrao;
 }
 
 /** URL pública do app, usada no User-Agent — configurável por env. */
@@ -33,12 +41,16 @@ export class HttpClient {
   private queue: QueuedRequest[] = [];
   private processing = false;
   private requestTimestamps: number[] = [];
-  private config: RateLimitConfig;
+  private config: Required<RateLimitConfig>;
 
   constructor(config: RateLimitConfig) {
     this.config = {
       requestsPerMinute: config.requestsPerMinute,
       burstLimit: config.burstLimit || 10,
+      // Deriva o espaçamento do limite: com 120/min eram 100ms fixos, o que
+      // somava um teto efetivo de 600/min — mas o gargalo real era a fase por
+      // deputado, não o intervalo. Manter derivado evita config divergente.
+      minIntervalMs: config.minIntervalMs ?? Math.ceil(60_000 / config.requestsPerMinute),
     };
   }
 
@@ -83,8 +95,8 @@ export class HttpClient {
         item.reject(error as Error);
       }
 
-      // Pequeno delay entre requests para não estourar burst
-      await this.sleep(100);
+      // Intervalo entre requests para não estourar burst
+      await this.sleep(this.config.minIntervalMs);
     }
 
     this.processing = false;
@@ -92,9 +104,6 @@ export class HttpClient {
 
   private async executeRequest(url: string, options: RequestOptions): Promise<Response> {
     const { method = 'GET', headers = {}, body, timeout = 30_000, retries = 3 } = options;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const defaultHeaders: Record<string, string> = {
       'User-Agent': USER_AGENT,
@@ -103,8 +112,14 @@ export class HttpClient {
     };
 
     let lastError: Error;
-    
+
     for (let attempt = 0; attempt <= retries; attempt++) {
+      // Um AbortController por tentativa: reaproveitar o mesmo signal (já
+      // abortado/limpo) deixava as retentativas sem timeout e um fetch travado
+      // segurava a fila indefinidamente.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
       try {
         const response = await fetch(url, {
           method,
@@ -112,8 +127,6 @@ export class HttpClient {
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
         });
-
-        clearTimeout(timeoutId);
 
         if (response.status === 429) {
           // Rate limited - wait and retry
@@ -131,7 +144,7 @@ export class HttpClient {
         return response;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (error instanceof Error && error.name === 'AbortError') {
           throw new Error(`Request timeout after ${timeout}ms`);
         }
@@ -141,10 +154,11 @@ export class HttpClient {
           console.warn(`[HTTP] Request failed (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${waitTime}ms...`);
           await this.sleep(waitTime);
         }
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
-    clearTimeout(timeoutId);
     throw lastError!;
   }
 
@@ -169,18 +183,20 @@ export class HttpClient {
   }
 }
 
-// Instâncias pré-configuradas para cada API (free tier limits)
+// Instâncias pré-configuradas para cada API (free tier limits).
+// Os limites são ajustáveis por env para permitir backfill em lote (o teto
+// conservador de 120/min tornava o backfill de um ano inviável em 6h).
 export const camaraClient = new HttpClient({
-  requestsPerMinute: 120, // Conservador: 120/min (oficial permite mais)
+  requestsPerMinute: numeroDeEnv('CAMARA_REQUESTS_PER_MINUTE', 120),
   burstLimit: 10,
 });
 
 export const senadoClient = new HttpClient({
-  requestsPerMinute: 60, // Senado não publica limite oficial, conservador
+  requestsPerMinute: numeroDeEnv('SENADO_REQUESTS_PER_MINUTE', 60), // Senado não publica limite oficial
   burstLimit: 5,
 });
 
 export const portalTransparenciaClient = new HttpClient({
-  requestsPerMinute: 350, // Portal: 400/min dia, 700/min madrugada
+  requestsPerMinute: numeroDeEnv('PORTAL_REQUESTS_PER_MINUTE', 350), // Portal: 400/min dia, 700/min madrugada
   burstLimit: 20,
 });
