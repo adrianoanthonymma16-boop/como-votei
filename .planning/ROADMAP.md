@@ -134,11 +134,59 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 (Phase 3 pode ser construída em paralelo com a Phase 2 após a Phase 1)
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Schema e Contratos de Despesas | 3/3 | Complete   | 2026-10-10 |
-| 2. Ingestão e Sincronização (CEAP/CEAPS) | 3/3 | Planned | - |
-| 3. API de Despesas | 0/3 | Not started | - |
-| 4. UI — Aba "Gastos" | 0/3 | Not started | - |
+| 2. Ingestão e Sincronização (CEAP/CEAPS) | 3/3 | Complete   | 2026-10-10 |
+| 3. API de Despesas | 3/3 | Complete   | 2026-10-10 |
+| 4. UI — Aba "Gastos" | 3/3 | Complete   | 2026-10-10 |
+| 5. Cobertura de dados | 3/3 | Complete   | 2026-10-19 |
+| 6. Emendas parlamentares | 4/4 | Complete   | 2026-10-19 |
+
+### Phase 5: Fechar lacunas de cobertura de votações, proposições e discursos nas duas casas
+
+**Goal**: Toda a janela 2024–2026, nas duas casas, tem votações, votos, proposições e discursos presentes **e medidos**; lacunas da fonte são documentadas e a UI as mostra como "sem dados oficiais", nunca como zero.
+**Mode:** mvp
+**Depends on**: Phase 4
+**Requirements**: COV-01, COV-02, COV-03
+**Success Criteria** (what must be TRUE):
+
+  1. `scripts/coverage.ts` imprime, por casa/ano/dataset, contagem, presença e variação ano a ano; sai ≠ 0 quando um dataset com fonte disponível está zerado (COV-01)
+  2. Guardrail de votações nominais sem nenhum voto = 0 continua verde após o backfill (COV-01)
+  3. Senado: votos 2025 > 0 e proposições 2024/2026 > 0; Câmara: discursos 2025/2026 > 0 — ou lacuna documentada com evidência da fonte em `05-GAPS.md` (COV-01)
+  4. UI de votações/proposições/discursos distingue "sem dados oficiais" de "nenhum registro" (COV-03)
+  5. Gate de verificação verde (QA-01)
+
+**Plans**: 3 plans
+
+Plans:
+
+- [x] 05-01: `scripts/coverage.ts` + testes — contagem por casa/ano/dataset, presença e variação ±30%
+- [x] 05-02: Diagnóstico e backfill dos gaps (Senado votos 2025, Câmara discursos 2025/2026, Senado proposições 2024/2026, Senado discursos 2024)
+- [x] 05-03: Estado honesto "sem dados oficiais" na UI onde a fonte não publica + gate
+
+### Phase 6: Emendas parlamentares do Portal da Transparência na aba Gastos
+
+**Goal**: Cidadão vê, no perfil, quanto o parlamentar indicou em emendas por ano — pago e empenhado, por função e localidade, com lista verificável no Portal — em bloco separado da cota parlamentar.
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: EMEN-01, EMEN-02, EMEN-03, EMEN-04, EMEN-05, EMEN-06, EMEN-07, EMEN-08
+**Success Criteria** (what must be TRUE):
+
+  1. Modelo `Emenda` com `codigoEmenda @unique`, `parlamentarId` nullable, `ano`, tipo, função, localidade bruta + `uf`/`municipio`/`localidadeTipo`, seis valores `Decimal(14,2)` e índices; migração aplica limpa (EMEN-01)
+  2. Sync `--apenas-emendas` ingere 2024–2026 (15/página, para na primeira vazia), upsert idempotente, retenção 3 anos, gate de contagem e log de unmatched; roda em step diário (EMEN-02, EMEN-03)
+  3. Match exato por nome normalizado + aliases curados à mão; zero fuzzy; unmatched contabilizados (EMEN-04)
+  4. `GET /api/parlamentares/[id]/emendas` valida com zod (400/404), responde no envelope padrão e serve resumo + página do mesmo snapshot (EMEN-05)
+  5. Bloco na aba Gastos: total próprio, pago em destaque, empenhado ao lado, top funções, top localidades, lista paginada com link `.../emendas?codigoEmenda=`, filtro ano + função e estados honestos (EMEN-06, EMEN-07)
+  6. Jest das funções puras (parse de localidade, agregações, alias) e Playwright do bloco; gate verde (EMEN-08, QA-01)
+
+**Plans**: 4 plans
+
+Plans:
+
+- [x] 06-01: Schema `Emenda` + migração + parser de localidade + aliases (TDD)
+- [x] 06-02: Sync de emendas + workflow + backfill 3 anos
+- [x] 06-03: Rota `GET /api/parlamentares/[id]/emendas` + testes
+- [x] 06-04: Bloco na `GastoTab` + e2e + gate

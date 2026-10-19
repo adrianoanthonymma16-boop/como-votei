@@ -1,19 +1,19 @@
 ---
 gsd_state_version: 1.0
-current_phase: 04
-current_phase_name: UI Aba "Gastos"
-status: completed
-completed_phases: 3
-last_updated: "2026-10-10T12:00:00.000Z"
-last_activity: 2026-10-10
-last_activity_desc: Phase 04 UI Aba Gastos implemented and verified
+current_phase: 06
+current_phase_name: Emendas parlamentares
+status: complete
+completed_phases: 6
+last_updated: "2026-10-19T17:05:00.000Z"
+last_activity: 2026-10-19
+last_activity_desc: Phases 05 e 06 concluídas — cobertura verde, emendas no ar
 state_head: b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 5
-  percent: 62.5
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 15
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -23,15 +23,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-09)
 
 **Core value:** Dar visibilidade pública e gratuita ao comportamento parlamentar — se o dado oficial de uma votação, discurso, proposição ou gasto não estiver acessível e verificável aqui, o produto falhou.
-**Current focus:** Phase 04 — UI Aba "Gastos" (concluída)
+**Current focus:** Milestone concluído — fases 01–06 completas
 
 ## Current Position
 
-Phase: 04 (UI Aba "Gastos") — COMPLETED
-Plan: 04-01
-Status: Phase 04 executed and verified
-Last activity: 2026-10-10 — Phase 04 GastoTab component implemented and all gates passed
-Progress: [▓▓▓▓░░░░░░] 62.5%
+Phase: 06 (Emendas parlamentares) — COMPLETE
+Plan: 06-01..06-04
+Status: Todas as fases concluídas; gates verdes; pronto para commit/push/deploy
+Last activity: 2026-10-19 — cobertura 2024–2026 verde; emendas ingeridas (18.966) e expostas na aba Gastos
+Progress: [▓▓▓▓▓▓▓▓▓▓] 100%
 
 ## Performance Metrics
 
@@ -63,6 +63,25 @@ Progress: [▓▓▓▓░░░░░░] 62.5%
 | Phase 04 P01 | — min | 3 tasks | 3 files (GastoTab.tsx, page.tsx, styles) |
 
 ## Accomplished
+
+### Phase 06 — Emendas parlamentares do Portal da Transparência
+
+**Implemented:**
+- Modelo `Emenda` (+ enum `TipoVoto.VOTOU`) com migrações `20261019120000_add_votou_enum` e `20261019130000_add_emenda` aplicadas.
+- `src/lib/emendas.ts` (parser de localidade, agregações, `urlEmenda`), `src/lib/emendas-match.ts` (match exato + aliases), `src/lib/ufs.ts` (27 UFs, fonte única; `seed.ts` refatorado).
+- `scripts/sync-emendas.ts` (`--apenas-emendas`, 15/página, upsert idempotente, retenção 3 anos, log de unmatched) + script `sync:emendas` + workflow `.github/workflows/sync-emendas.yml` (cron 05:00 UTC, guardrails).
+- `GET /api/parlamentares/[id]/emendas` (zod 400/404, envelope + resumo/página) e bloco `EmendasBlock.tsx` na aba Gastos.
+- Backfill 2024–2026: 18.966 emendas (~94.8% com autor); `scripts/coverage.ts` com bloco/gate de emendas.
+- Testes: `emendas.test.ts`, `emendas-match.test.ts`; e2e `e2e/emendas-gastos.spec.ts`.
+
+### Phase 05 — Cobertura de dados 2024–2026
+
+**Implemented:**
+- `scripts/coverage.ts` (contagem por casa/ano/dataset, presença, variação ±30%, gate) + testes.
+- Correção estrutural de votos do Senado (fetch anual completo; `VOTOU`/`MISSAO`); backfill de votos 2024–2026.
+- Backfill de lacunas: Senado proposições (2026 > 0), Câmara discursos (2025/2026 > 0), Senado votos 2025.
+- **Fix de produção:** fotos do Senado em `http://` quebravam `/parlamentares` (next/image) → `src/lib/imagens.ts` (normalização https + guarda), `ParlamentarCard` e `VotacoesPageClient` protegidos, adapter do Senado normaliza; 85 linhas do banco corrigidas.
+- `npm run coverage` → **✅ Cobertura OK** (Nominais sem votos: 12).
 
 ### Phase 04 — UI Aba "Gastos"
 
@@ -121,7 +140,7 @@ Status: Executed (infrastructure complete)
 
 ## Session Continuity
 
-Last session: 2026-10-10T12:00:00.000Z
+Last session: 2026-10-19T17:05:00.000Z
 Resumed at: .planning/STATE.md
-Completed phases: 01, 02, 03, 04
-Next: Phase 05 deferred (v1.x enhancements: link-health, evolução mensal, CSV) — REQUIREMENTS.md GAST-V2-01..06
+Completed phases: 01, 02, 03, 04, 05, 06
+Next: Milestone concluído — commit/push/deploy. Deferred v1.x: link-health, evolução mensal, CSV — REQUIREMENTS.md GAST-V2-01..06

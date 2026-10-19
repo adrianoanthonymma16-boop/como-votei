@@ -11,23 +11,33 @@
     {
       "number": "2",
       "name": "Ingestão e Sincronização (CEAP/CEAPS)",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "3",
       "name": "API de Despesas",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "4",
       "name": "UI — Aba \"Gastos\"",
-      "status": "pending"
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Cobertura de dados",
+      "status": "complete"
+    },
+    {
+      "number": "6",
+      "name": "Emendas parlamentares",
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 2 of 4 · 25% · executing"
+    "command": "/gsd:progress",
+    "label": "Milestone concluído",
+    "reason": "Todas as fases completas — pronto para commit/push/deploy"
   },
-  "updated_at": "2026-10-10T05:15:10.487Z"
+  "updated_at": "2026-10-19T17:05:00.000Z"
 }
