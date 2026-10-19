@@ -18,12 +18,13 @@ test.describe('Aba Gastos — cota parlamentar', () => {
     await expect(page.getByText(/Cota Parlamentar \(CEAP\)|Custeio de Atividade Parlamentar \(CEAPS\)/)).toBeVisible();
 
     // Sem estimativa: ou há tabela de despesas, ou a ausência é explícita.
-    const tabela = page.locator('table');
+    // Escopar por "Fornecedor" evita colidir com a tabela do bloco de emendas.
+    const tabela = page.getByRole('table').filter({ hasText: 'Fornecedor' });
     const semDespesas = page.getByText(/Nenhuma despesa encontrada/);
     await expect(tabela.or(semDespesas).first()).toBeVisible();
 
-    if (await tabela.isVisible()) {
-      await expect(tabela.locator('th', { hasText: 'Fornecedor' })).toBeVisible();
+    if (await tabela.count()) {
+      await expect(tabela.getByRole('columnheader', { name: 'Fornecedor' })).toBeVisible();
       // Quando existe comprovante, o link abre em nova aba de forma segura.
       const comprovante = tabela.locator('a[target="_blank"][rel="noopener noreferrer"]').first();
       if (await comprovante.count()) {
