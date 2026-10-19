@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
+import { fotoRemotaValida } from '@/lib/imagens';
 import { anoCorrente, janelaAnos } from '@/lib/ano-padrao';
 import { temaCor, classificarTemas, descreverTipoProposicao } from '@/lib/temas';
 
@@ -239,7 +240,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
               className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-2.5 transition-colors hover:border-slate-700 hover:bg-slate-800"
             >
               <div className="size-8 shrink-0 overflow-hidden rounded-full bg-slate-700">
-                {v.parlamentar.fotoUrl ? (
+                {fotoRemotaValida(v.parlamentar.fotoUrl) ? (
                   <Image src={v.parlamentar.fotoUrl} alt={v.parlamentar.nome} width={32} height={32} className="size-8 object-cover" />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-400">{v.parlamentar.nome.slice(0,2).toUpperCase()}</span>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { getInitials } from '@/lib/utils';
+import { fotoRemotaValida } from '@/lib/imagens';
 import { resumoProdutividade, type ContagemPorGrupo } from '@/lib/produtividade';
 import type { Parlamentar } from '@prisma/client';
 
@@ -33,14 +34,15 @@ interface ParlamentarCardProps {
 }
 
 export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
+  const fotoValida = fotoRemotaValida(parlamentar.fotoUrl) ? parlamentar.fotoUrl : null;
   return (
     <div className="parlamentar-card group w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         {/* Foto / Avatar */}
         <div className="relative flex-shrink-0 size-16 sm:w-20 sm:h-20">
-          {parlamentar.fotoUrl ? (
+          {fotoValida ? (
             <Image
-              src={parlamentar.fotoUrl}
+              src={fotoValida}
               alt={parlamentar.nome}
               width={80}
               height={80}

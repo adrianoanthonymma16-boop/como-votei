@@ -8,6 +8,7 @@ import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Button } from '@/components/ui/Button';
+import { EmendasBlock } from './EmendasBlock';
 
 interface Despesa {
   idExterno: string;
@@ -154,7 +155,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
               setPage(1);
             }}
             aria-label="Filtrar por categoria"
-            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-base sm:text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <option value="">Todas as categorias</option>
             {(meta?.categorias ?? []).map((c) => (
@@ -176,7 +177,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
                 setPage(1);
               }}
               placeholder="Fornecedor, categoria..."
-              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-base sm:text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             />
           </div>
           {temFiltro && (
@@ -273,7 +274,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
                             )}
                           >
                             <svg
-                              className="h-4 w-4"
+                              className="size-4"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -311,6 +312,8 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
           </div>
         </div>
       )}
+
+      <EmendasBlock parlamentarId={parlamentarId} />
     </div>
   );
 }
