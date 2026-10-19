@@ -3,6 +3,11 @@ name: Sync Câmara dos Deputados
 permissions:
   contents: read
 
+# Evita que um run agendado e um manual disputem o mesmo banco/API ao mesmo tempo.
+concurrency:
+  group: sync-camara
+  cancel-in-progress: false
+
 on:
   schedule:
     # Diário às 03:00 UTC (00:00 BRT)
@@ -51,38 +56,33 @@ on:
         required: false
         type: string
 
+env:
+  # Timeouts estendidos: o Neon free tier suspende o compute parado e a
+  # primeira conexão (cold start) estoura o pool_timeout padrão (P1002).
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}&connect_timeout=30&pool_timeout=60
+  CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
+  # Sem NODE_ENV=production: com ele, `npm ci` omite devDependencies
+  # (ts-node/typescript) e o `npx ts-node` baixa cópia avulsa que quebra.
+
 jobs:
-  sync-camara:
-    name: Sync Câmara
+  # Referência (partidos + deputados) precisa existir antes das demais fases.
+  base:
+    name: Base (partidos + parlamentares)
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    # Fase de proposições: ~3 req/proposição (detalhe + autores + tramitações)
-    # para 513 deputados — um ano pode passar de 2h.
-    timeout-minutes: 360
-
-    env:
-      # Timeouts estendidos: o Neon free tier suspende o compute parado e a
-      # primeira conexão (cold start) estoura o pool_timeout padrão (P1002).
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}&connect_timeout=30&pool_timeout=60
-      CAMARA_API_BASE: ${{ vars.CAMARA_API_BASE }}
-      # Sem NODE_ENV=production: com ele, `npm ci` omite devDependencies
-      # (ts-node/typescript) e o `npx ts-node` baixa cópia avulsa que quebra.
-
+    timeout-minutes: 60
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Generate Prisma Client
         run: npx prisma generate
-
       - name: Run migrations
         # Retry: primeira conexão após idle do Neon pode dar P1002 (cold start).
         run: |
@@ -92,12 +92,7 @@ jobs:
             [ "$tentativa" = 5 ] && exit 1
             sleep 30
           done
-
-      # Agendado (sem inputs): cobre 3 anos (MVP) em loop para garantir
-      # que 2024/2025/2026 estejam sempre completos. Cada fase roda separada
-      # para evitar rate-limit entre discursos/proposições no mesmo processo.
       - name: Sync base (partidos + parlamentares)
-        if: github.event_name == 'schedule'
         # Retry: a API da Câmara devolve 504 transitório; sem retry, uma
         # indisponibilidade momentânea derruba o job inteiro.
         run: |
@@ -108,43 +103,94 @@ jobs:
             sleep 60
           done
 
-      # `--bulk` troca 1 request por votação (e 3 por proposição) pelos
-      # arquivos JSON oficiais publicados por ano. Sem isso, a fase de
-      # proposições leva ~30h e nunca termina dentro do teto de 6h do runner.
-      - name: Sync votações (3 anos)
-        if: github.event_name == 'schedule'
+  # Cada fase roda em um job próprio (matrix): teto de 6h individual, então
+  # uma fase lenta ou que falha não impede as outras de rodar. `--bulk` troca
+  # 1 request por item pelos arquivos JSON oficiais publicados por ano.
+  fases:
+    name: Fase ${{ matrix.nome }}
+    needs: base
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: votações
+            args: --apenas-votacoes --bulk
+          - nome: discursos
+            args: --apenas-discursos
+          - nome: proposições
+            args: --apenas-proposicoes --bulk
+          - nome: frequência
+            args: --apenas-frequencia
+    env:
+      # Args vêm de constantes do próprio YAML (nunca de input do usuário),
+      # então não há interpolação de valor não confiável no `run`.
+      FASE_ARGS: ${{ matrix.args }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Run migrations
+        run: |
+          for tentativa in 1 2 3 4 5; do
+            npx prisma migrate deploy && break
+            echo "migrate falhou (tentativa $tentativa/5) — retry em 30s..."
+            [ "$tentativa" = 5 ] && exit 1
+            sleep 30
+          done
+      - name: Sync ${{ matrix.nome }} (3 anos)
+        # Retry por ano: 5xx/reset transitório da fonte não pode derrubar a
+        # fase — os upserts são idempotentes, então repetir é seguro.
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "🗳️  Sync votações $ano (bulk)"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-votacoes --bulk --ano=$ano
+            echo "▶️  ${{ matrix.nome }} $ano"
+            for tentativa in 1 2 3; do
+              # shellcheck disable=SC2086
+              npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts $FASE_ARGS --ano=$ano && break
+              echo "fase ${{ matrix.nome }} $ano falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
           done
 
-      - name: Sync discursos (3 anos)
-        if: github.event_name == 'schedule'
+  # Despesas usa um script dedicado (CEAP), por isso não entra na matrix acima.
+  despesas:
+    name: Fase despesas (CEAP)
+    needs: base
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Run migrations
         run: |
-          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "🎤 Sync discursos $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-discursos --ano=$ano
+          for tentativa in 1 2 3 4 5; do
+            npx prisma migrate deploy && break
+            echo "migrate falhou (tentativa $tentativa/5) — retry em 30s..."
+            [ "$tentativa" = 5 ] && exit 1
+            sleep 30
           done
-
-      - name: Sync proposições (3 anos)
-        if: github.event_name == 'schedule'
-        run: |
-          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "📋 Sync proposições $ano (bulk)"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-proposicoes --bulk --ano=$ano
-          done
-
-      - name: Sync frequência (3 anos)
-        if: github.event_name == 'schedule'
-        run: |
-          for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
-            echo "📅 Sync frequência $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-camara.ts --apenas-frequencia --ano=$ano
-          done
-
       - name: Sync despesas CEAP (3 anos)
-        if: github.event_name == 'schedule'
         run: |
           for tentativa in 1 2 3; do
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-despesas-camara.ts --apenas-despesas && break
@@ -153,17 +199,33 @@ jobs:
             sleep 60
           done
 
+  # Guardrails e retenção só depois de todas as fases tentarem rodar.
+  guardrails:
+    name: Guardrails
+    needs: [fases, despesas]
+    if: always() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
       - name: Guardrail — nominais sem votos
-        if: github.event_name == 'schedule'
         run: |
           node -e "
           const { PrismaClient } = require('@prisma/client');
           const p = new PrismaClient();
           p.\$queryRaw\`SELECT COUNT(*)::int as cnt FROM votacoes v LEFT JOIN votos vo ON vo.votacao_id = v.id WHERE v.casa='CAMARA' AND v.descricao ILIKE '%Sim:%' GROUP BY v.id HAVING COUNT(vo.id)=0\`.then(r=>{ const c=r.length; console.log('Nominais órfãs:',c); if(c>15){console.error('❌ Muitas nominais sem votos — sync incompleto'); process.exit(1)} else console.log('✅ Guardrail OK'); p.\$disconnect() })
           "
-
       - name: Guardrail — proposições e tramitações da Câmara
-        if: github.event_name == 'schedule'
         run: |
           node -e "
           const { PrismaClient } = require('@prisma/client');
@@ -184,12 +246,60 @@ jobs:
           })().catch(e => { console.error(e); process.exit(1); });
           "
 
-      # Execução manual: respeita os inputs escolhidos (uma única invocação).
-      # Monta os args em bash comparando com "true": inputs booleanos vindos
-      # da API chegam como string "false" (truthy em ${{ }}), o que ligava
-      # todas as fases sem querer.
+  retencao:
+    name: Coleta de lixo (retenção 3 anos)
+    needs: guardrails
+    if: always() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Run migrations
+        run: npx prisma migrate deploy
+      # Remove registros fora da janela de 3 anos (ver src/lib/gc.ts).
+      - name: Coleta de lixo
+        run: npm run gc:apply
+
+  # Execução manual: respeita os inputs escolhidos (uma única invocação).
+  # Monta os args em bash comparando com "true": inputs booleanos vindos
+  # da API chegam como string "false" (truthy em ${{ }}), o que ligava
+  # todas as fases sem querer.
+  manual:
+    name: Sync Câmara (manual)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Run migrations
+        run: |
+          for tentativa in 1 2 3 4 5; do
+            npx prisma migrate deploy && break
+            echo "migrate falhou (tentativa $tentativa/5) — retry em 30s..."
+            [ "$tentativa" = 5 ] && exit 1
+            sleep 30
+          done
       - name: Sync Câmara (manual)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas != 'true'
         env:
           INPUT_ANO: ${{ github.event.inputs.ano }}
           INPUT_PARLAMENTARES: ${{ github.event.inputs.apenas-parlamentares }}
@@ -221,29 +331,35 @@ jobs:
               sleep 60
             done
 
+  despesas-manual:
+    name: Sync despesas CEAP (manual)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      - name: Run migrations
+        run: npx prisma migrate deploy
       - name: Sync despesas CEAP (manual)
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.apenas-despesas == 'true'
         env:
           INPUT_ANO: ${{ github.event.inputs.ano }}
         run: |
           ARGS=""
           [ -n "$INPUT_ANO" ] && ARGS="--ano=$INPUT_ANO"
           for tentativa in 1 2 3; do
+            # shellcheck disable=SC2086
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-despesas-camara.ts --apenas-despesas $ARGS && break
             echo "sync despesas falhou (tentativa $tentativa/3) — retry em 60s..."
             [ "$tentativa" = 3 ] && exit 1
             sleep 60
           done
-
-      - name: Coleta de lixo (retenção — janela de 3 anos)
-        if: github.event_name == 'schedule'
-        # Remove registros fora da janela de 3 anos (ver src/lib/gc.ts).
-        # Idempotente: roda também no Senado sem efeito colateral.
-        run: npm run gc:apply
-
-      - name: Log completion
-        if: always()
-        run: |
-          echo "✅ Sync Câmara concluído em $(date)"
-          echo "Workflow: ${{ github.workflow }}"
-          echo "Run: ${{ github.run_id }}"

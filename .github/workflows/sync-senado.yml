@@ -3,6 +3,11 @@ name: Sync Senado Federal
 permissions:
   contents: read
 
+# Evita que um run agendado e um manual disputem o mesmo banco/API ao mesmo tempo.
+concurrency:
+  group: sync-senado
+  cancel-in-progress: false
+
 on:
   schedule:
     # Diário às 04:00 UTC (01:00 BRT) - após Câmara
@@ -61,10 +66,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -100,10 +107,17 @@ jobs:
 
       - name: Sync votações (3 anos)
         if: github.event_name == 'schedule'
+        # Retry por ano: 503/reset transitório da fonte não pode derrubar a
+        # fase — os upserts são idempotentes, então repetir é seguro.
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "🗳️  Sync votações $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-votacoes --ano=$ano
+            for tentativa in 1 2 3; do
+              npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-votacoes --ano="$ano" && break
+              echo "sync votações $ano falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
           done
 
       - name: Sync discursos (3 anos)
@@ -111,7 +125,12 @@ jobs:
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "🎤 Sync discursos $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-discursos --ano=$ano
+            for tentativa in 1 2 3; do
+              npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-discursos --ano="$ano" && break
+              echo "sync discursos $ano falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
           done
 
       - name: Sync proposições (3 anos)
@@ -119,7 +138,12 @@ jobs:
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "📋 Sync proposições $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-proposicoes --ano=$ano
+            for tentativa in 1 2 3; do
+              npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-proposicoes --ano="$ano" && break
+              echo "sync proposições $ano falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
           done
 
       - name: Sync frequência (3 anos)
@@ -127,7 +151,12 @@ jobs:
         run: |
           for ano in $(npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/anos-janela.ts); do
             echo "📅 Sync frequência $ano"
-            npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-frequencia --ano=$ano
+            for tentativa in 1 2 3; do
+              npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-senado.ts --apenas-frequencia --ano="$ano" && break
+              echo "sync frequência $ano falhou (tentativa $tentativa/3) — retry em 60s..."
+              [ "$tentativa" = 3 ] && exit 1
+              sleep 60
+            done
           done
 
       - name: Sync despesas CEAPS (3 anos)
@@ -202,6 +231,7 @@ jobs:
           ARGS=""
           [ -n "$INPUT_ANO" ] && ARGS="--ano=$INPUT_ANO"
           for tentativa in 1 2 3; do
+            # shellcheck disable=SC2086
             npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/sync-despesas-senado.ts --apenas-despesas $ARGS && break
             echo "sync despesas falhou (tentativa $tentativa/3) — retry em 60s..."
             [ "$tentativa" = 3 ] && exit 1
