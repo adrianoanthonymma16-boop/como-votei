@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma, TipoDiscurso } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { listaQueryCampos } from '@/lib/lista-query';
+import { calcularPaginacao } from '@/lib/parlamentar-query';
 
 export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
-  cursor: z.string().optional(),
-  page: z.coerce.number().int().min(1).optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  ...listaQueryCampos,
   ano: z.coerce.number().optional(),
   tipo: z.string().optional(),
   tema: z.string().optional(),
@@ -42,7 +43,7 @@ export async function GET(
     );
   }
 
-  const where: Record<string, unknown> = {
+  const where: Prisma.DiscursoWhereInput = {
     parlamentarId: id,
   };
 
@@ -54,7 +55,7 @@ export async function GET(
   }
 
   if (tipo) {
-    where.tipo = tipo;
+    where.tipo = tipo as TipoDiscurso;
   }
 
   if (tema) {
@@ -62,9 +63,8 @@ export async function GET(
   }
 
   if (page) {
-    const total = await prisma.discurso.count({ where } as any);
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const paginaSegura = Math.min(page, totalPages);
+    const total = await prisma.discurso.count({ where });
+    const { page: paginaSegura, totalPages } = calcularPaginacao(total, page, limit);
     const discursos = await prisma.discurso.findMany({
       where,
       skip: (paginaSegura - 1) * limit,

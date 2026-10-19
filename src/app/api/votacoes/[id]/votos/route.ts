@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { calcularPaginacao } from '@/lib/parlamentar-query';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +39,7 @@ export async function GET(
     return NextResponse.json({ error: 'Votação não encontrada' }, { status: 404 });
   }
 
-  const where: Record<string, unknown> = { votacaoId: id };
+  const where: Prisma.VotoWhereInput = { votacaoId: id };
 
   if (voto) where.tipo = voto;
 
@@ -52,9 +54,9 @@ export async function GET(
   }
 
   const [total, votos] = await Promise.all([
-    prisma.voto.count({ where: where as any }),
+    prisma.voto.count({ where }),
     prisma.voto.findMany({
-      where: where as any,
+      where,
       orderBy: [{ parlamentar: { nome: 'asc' } }],
       skip: (page - 1) * limit,
       take: limit,
@@ -74,7 +76,7 @@ export async function GET(
     }),
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const { totalPages } = calcularPaginacao(total, page, limit);
 
   // Agregação por tipo para chips de filtro
   const porTipoRaw = await prisma.voto.groupBy({

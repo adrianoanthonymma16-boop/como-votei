@@ -3,7 +3,7 @@
  * Converte dados da API oficial para tipos normalizados
  */
 
-import { senadoClient } from './http-client';
+import { senadoClient, USER_AGENT } from './http-client';
 import { createHash } from 'crypto';
 import { extrairTemaPrincipal } from '../temas';
 import type {
@@ -17,8 +17,14 @@ import type {
   SyncStats,
 } from './types';
 
-const SENADO_LEGIS_BASE = 'https://legis.senado.leg.br/dadosabertos';
-const SENADO_ADM_BASE = 'https://adm.senado.gov.br/adm-dadosabertos/api/v1';
+// Bases configuráveis por env (mesmo padrão do adapter da Câmara), com default
+// para as APIs oficiais.
+const SENADO_LEGIS_BASE =
+  process.env.SENADO_LEGIS_BASE || 'https://legis.senado.leg.br/dadosabertos';
+const SENADO_ADM_BASE =
+  process.env.SENADO_ADM_BASE || 'https://adm.senado.gov.br/adm-dadosabertos/api/v1';
+// Site público do Senado (não a API): usado para montar urlOriginal verificável.
+const SENADO_SITE = process.env.SENADO_SITE || 'https://www25.senado.leg.br';
 
 // Helper para construir URLs com query parameters
 function buildUrl(base: string, params: Record<string, string | number | undefined>): string {
@@ -525,7 +531,7 @@ export class SenadoAdapter {
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'ComoVotei/1.0 (Transparência Legislativa; +https://comovotei.vercel.app)',
+            'User-Agent': USER_AGENT,
             Accept: 'application/json',
           },
           signal: AbortSignal.timeout(30_000),
@@ -642,7 +648,7 @@ export class SenadoAdapter {
             autorPrincipal,
             status: mapStatusProposicaoSenado(sit.descricao, sit.tramitando),
             dataApresentacao: toDate(m.Data) || new Date(`${ano}-01-01`),
-            urlOriginal: `https://www25.senado.leg.br/web/atividade/materias/-/materia/${codigo}`,
+            urlOriginal: `${SENADO_SITE}/web/atividade/materias/-/materia/${codigo}`,
             tema: extrairTemaPrincipal(ementa),
             tramitacoes: movs,
           });

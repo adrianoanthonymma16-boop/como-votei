@@ -6,13 +6,11 @@ import { prisma } from '@/lib/prisma';
  * rota de dashboard e pela rota /anos.
  */
 export async function anosComDados(parlamentarId: string): Promise<number[]> {
-  const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
-    `SELECT DISTINCT a.ano FROM (
-      SELECT EXTRACT(YEAR FROM v.data)::int AS ano FROM "votacoes" v JOIN "votos" x ON x."votacao_id" = v.id WHERE x."parlamentar_id" = $1
-      UNION SELECT EXTRACT(YEAR FROM d.data)::int FROM "discursos" d WHERE d."parlamentar_id" = $1
-      UNION SELECT p."ano" FROM "proposicoes" p WHERE p."parlamentar_id" = $1
-    ) a ORDER BY ano DESC`,
-    parlamentarId
-  );
+  const rows = await prisma.$queryRaw<{ ano: number }[]>`
+    SELECT DISTINCT a.ano FROM (
+      SELECT EXTRACT(YEAR FROM v.data)::int AS ano FROM "votacoes" v JOIN "votos" x ON x."votacao_id" = v.id WHERE x."parlamentar_id" = ${parlamentarId}
+      UNION SELECT EXTRACT(YEAR FROM d.data)::int FROM "discursos" d WHERE d."parlamentar_id" = ${parlamentarId}
+      UNION SELECT p."ano" FROM "proposicoes" p WHERE p."parlamentar_id" = ${parlamentarId}
+    ) a ORDER BY ano DESC`;
   return rows.map((r) => r.ano);
 }

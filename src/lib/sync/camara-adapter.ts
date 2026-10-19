@@ -3,7 +3,7 @@
  * Converte dados da API oficial para tipos normalizados
  */
 
-import { camaraClient } from './http-client';
+import { camaraClient, USER_AGENT } from './http-client';
 import { createHash } from 'crypto';
 import { extrairTemaPrincipal } from '../temas';
 import type {
@@ -21,6 +21,9 @@ import type {
 } from './types';
 
 const CAMARA_API_BASE = process.env.CAMARA_API_BASE || 'https://dadosabertos.camara.leg.br/api/v2';
+// Site público da Câmara (não a API): usado para montar urlOriginal verificável
+// pelo cidadão. Configurável por env para facilitar testes/espelhos.
+const CAMARA_SITE = process.env.CAMARA_SITE || 'https://www.camara.leg.br';
 const ITENS_POR_PAGINA = 100;
 
 interface CamaraDeputado {
@@ -421,7 +424,7 @@ export class CamaraAdapter {
           data: toDate(d.dataHoraInicio)!,
           hora: d.dataHoraInicio ? d.dataHoraInicio.substring(11, 16) : undefined,
           resumo: textoCompleto.substring(0, 1000),
-          urlOriginal: d.urlTexto || `https://www.camara.leg.br/deputados/${deputadoIdExterno}/discursos/${d.id || ''}`,
+          urlOriginal: d.urlTexto || `${CAMARA_SITE}/deputados/${deputadoIdExterno}/discursos/${d.id || ''}`,
           tema: extrairTemaPrincipal(textoCompleto),
           duracaoSegundos: undefined, // Não disponível na API
         });
@@ -525,7 +528,7 @@ export class CamaraAdapter {
         autorPrincipal: principais.get(p.id) ?? false,
         status: mapStatusProposicao(situacoes.get(p.id)),
         dataApresentacao: toDate(p.dataApresentacao)!,
-        urlOriginal: `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
+        urlOriginal: `${CAMARA_SITE}/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
         tema: extrairTemaPrincipal(p.ementa),
         tramitacoes: tramitacoes.get(p.id) || [],
       };
@@ -544,9 +547,9 @@ export class CamaraAdapter {
     // A API da Câmara não expõe frequência direta
     // Fazer scraping da página de presença (conforme 5_seuPolitico)
     try {
-      const url = `https://www.camara.leg.br/deputados/${deputadoIdExterno}/presenca-plenario/${ano}`;
+      const url = `${CAMARA_SITE}/deputados/${deputadoIdExterno}/presenca-plenario/${ano}`;
       const response = await fetch(url, {
-        headers: { 'User-Agent': 'ComoVotei/1.0' },
+        headers: { 'User-Agent': USER_AGENT },
         signal: AbortSignal.timeout(30_000),
       });
       

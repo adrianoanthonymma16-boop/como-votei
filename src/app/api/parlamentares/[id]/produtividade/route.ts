@@ -86,7 +86,7 @@ export async function GET(
   ]);
 
   const grupos = contadoresDeGrupos(
-    (propGroups as any[]).map((g) => ({
+    propGroups.map((g) => ({
       tipo: g.tipo,
       autorPrincipal: g.autorPrincipal,
       status: g.status,

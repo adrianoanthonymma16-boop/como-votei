@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { calcularPaginacao } from '@/lib/parlamentar-query';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   const { q, casa, ano, resultado, tema, page, limit } = parsed.data;
 
-  const where: Record<string, unknown> = {};
+  const where: Prisma.VotacaoWhereInput = {};
 
   if (casa) where.casa = casa;
 
@@ -57,9 +59,9 @@ export async function GET(request: NextRequest) {
   }
 
   const [total, votacoes] = await Promise.all([
-    prisma.votacao.count({ where: where as any }),
+    prisma.votacao.count({ where }),
     prisma.votacao.findMany({
-      where: where as any,
+      where,
       orderBy: { data: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const { totalPages } = calcularPaginacao(total, page, limit);
 
   return NextResponse.json({
     data: votacoes,

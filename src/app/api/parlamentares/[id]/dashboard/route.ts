@@ -8,7 +8,7 @@ import {
   type AlinhamentoResult,
 } from '@/lib/dashboard';
 import { anosComDados } from '@/lib/parlamentar-anos';
-import { anoCorrente } from '@/lib/ano-padrao';
+import { anoCorrente, janelaAnos } from '@/lib/ano-padrao';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,22 +18,34 @@ const querySchema = z.object({
   tipoDiscurso: z.enum(['ORDEM_DIA', 'PLENARIO', 'COMISSAO', 'LIDERANCA', 'OUTRO']).array().optional(),
 });
 
+/**
+ * Anos com dados em QUALQUER casa (votações, discursos, proposições), dentro
+ * da janela de retenção (3 anos) — não faz sentido considerar anos purgados
+ * pelo GC. Usa query parametrizada com o piso da janela.
+ */
 async function anosComDadosGlobais(): Promise<number[]> {
-  const rows = await prisma.$queryRawUnsafe<{ ano: number }[]>(
-    `SELECT a.ano FROM (
+  const piso = Math.min(...janelaAnos());
+  const rows = await prisma.$queryRaw<{ ano: number }[]>`
+    SELECT a.ano FROM (
       SELECT EXTRACT(YEAR FROM "data")::int AS ano FROM "votacoes"
       UNION SELECT EXTRACT(YEAR FROM "data")::int FROM "discursos"
       UNION SELECT "ano" FROM "proposicoes"
-    ) a WHERE a.ano >= 2023 GROUP BY 1 ORDER BY 1 DESC`
-  );
+    ) a WHERE a.ano >= ${piso}::int GROUP BY 1 ORDER BY 1 DESC`;
   return rows.map((r) => Math.round(Number(r.ano)));
 }
 
-let ANOS_GLOBAL: number[] = [];
-try {
-  ANOS_GLOBAL = await anosComDadosGlobais();
-} catch {
-  // fallback: vai depender dos anos do parlamentar
+// Cache lazy do processo (substitui o top-level await, que rodava no load do
+// módulo e nunca era invalidado). Só memoriza em caso de sucesso; falha do
+// banco não envenena o cache.
+let anosGlobalCache: number[] | null = null;
+async function anosGlobais(): Promise<number[]> {
+  if (anosGlobalCache) return anosGlobalCache;
+  try {
+    anosGlobalCache = await anosComDadosGlobais();
+  } catch {
+    return [];
+  }
+  return anosGlobalCache;
 }
 
 export async function GET(
@@ -86,20 +98,21 @@ export async function GET(
   // nunca o ano corrente vazio.
   // `anos` inclui anos de frequência oficial mesmo sem atividade
   // (ex.: 2025 tem frequência sincronizada mas votações ainda não).
-  const [anosAtividade, anosFrequencia] = await Promise.all([
+  const [anosAtividade, anosFrequencia, anosGlobal] = await Promise.all([
     anosComDados(id),
     prisma.frequencia.findMany({
       where: { parlamentarId: id },
       select: { ano: true },
       orderBy: { ano: 'desc' },
     }),
+    anosGlobais(),
   ]);
   const anos = Array.from(
     new Set([...anosAtividade, ...anosFrequencia.map((f) => f.ano)])
   ).sort((a, b) => b - a);
   const ano =
     parsed.data.ano ??
-    (ANOS_GLOBAL.includes(anoCorrente()) ? anoCorrente() : anos[0] ?? anoCorrente());
+    (anosGlobal.includes(anoCorrente()) ? anoCorrente() : anos[0] ?? anoCorrente());
   const temDados = anos.length > 0;
 
   const dataInicio = new Date(ano, 0, 1);

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma, StatusProposicao } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { filtroStatusAprovada } from '@/lib/produtividade';
+import { listaQueryCampos } from '@/lib/lista-query';
+import { calcularPaginacao } from '@/lib/parlamentar-query';
 
 export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
-  cursor: z.string().optional(),
-  page: z.coerce.number().int().min(1).optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  ...listaQueryCampos,
   ano: z.coerce.number().optional(),
   status: z.string().optional(),
   // aprovada=true -> status IN (SANCIONADA, APROVADA_CAMARA, APROVADA_SENADO)
@@ -46,7 +47,7 @@ export async function GET(
     );
   }
 
-  const where: Record<string, unknown> = {
+  const where: Prisma.ProposicaoWhereInput = {
     parlamentarId: id,
   };
 
@@ -55,12 +56,12 @@ export async function GET(
   }
 
   if (status) {
-    where.status = status;
+    where.status = status as StatusProposicao;
   }
 
   const filtroAprovada = filtroStatusAprovada(aprovada);
   if (filtroAprovada) {
-    where.status = filtroAprovada;
+    where.status = filtroAprovada as Prisma.EnumStatusProposicaoFilter;
   }
 
   if (tema) {
@@ -68,9 +69,8 @@ export async function GET(
   }
 
   if (page) {
-    const total = await prisma.proposicao.count({ where } as any);
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const paginaSegura = Math.min(page, totalPages);
+    const total = await prisma.proposicao.count({ where });
+    const { page: paginaSegura, totalPages } = calcularPaginacao(total, page, limit);
     const proposicoes = await prisma.proposicao.findMany({
       where,
       skip: (paginaSegura - 1) * limit,
@@ -134,7 +134,9 @@ export async function GET(
     where,
     take: limit + 1,
     cursor: cursor ? { id: cursor } : undefined,
-    orderBy: { dataApresentacao: 'desc' },
+    // Mesma ordenação do modo paginado: ano da proposição e, dentro dele,
+    // data de apresentação (a fonte renumera proposições antigas).
+    orderBy: [{ ano: 'desc' }, { dataApresentacao: 'desc' }],
     include: {
       tramitacoes: {
         orderBy: { data: 'desc' },

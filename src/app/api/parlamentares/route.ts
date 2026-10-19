@@ -123,15 +123,15 @@ export async function GET(request: NextRequest) {
     const map = (rows: { parlamentarId: string; _count: { _all: number } }[]) =>
       new Map(rows.map((r) => [r.parlamentarId, r._count._all]));
 
-    const mFalta = map(faltas as any);
-    const mVoto = map(votosSimNao as any);
-    const mDisc = map(discursos as any);
+    const mFalta = map(faltas);
+    const mVoto = map(votosSimNao);
+    const mDisc = map(discursos);
 
     const linhasPorParlamentar = new Map<
       string,
       { tipo: string; autorPrincipal: boolean; status: string; qtd: number }[]
     >();
-    for (const g of propGroups as any[]) {
+    for (const g of propGroups) {
       const lista = linhasPorParlamentar.get(g.parlamentarId) || [];
       lista.push({
         tipo: g.tipo,
@@ -174,16 +174,19 @@ export async function GET(request: NextRequest) {
 
     // preservar ordem do ranking e anexar produtividade para exibição opcional no cliente
     const porId = new Map(parlamentares.map((p) => [p.id, p]));
-    const ordenados = paginaIds
-      .map((id) => porId.get(id))
-      .filter(Boolean)
-      .map((p: any) => ({
-        ...p,
-        produtividade: {
-          pontuacao: pontuacaoById.get(p.id) ?? 0,
-          ...contadoresById.get(p.id),
+    const ordenados = paginaIds.flatMap((id) => {
+      const p = porId.get(id);
+      if (!p) return [];
+      return [
+        {
+          ...p,
+          produtividade: {
+            pontuacao: pontuacaoById.get(id) ?? 0,
+            ...contadoresById.get(id),
+          },
         },
-      }));
+      ];
+    });
 
     return NextResponse.json({
       data: ordenados,

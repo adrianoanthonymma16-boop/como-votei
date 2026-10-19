@@ -8,6 +8,12 @@ export interface RateLimitConfig {
   burstLimit?: number;
 }
 
+/** URL pública do app, usada no User-Agent — configurável por env. */
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://comovotei.vercel.app';
+
+/** User-Agent único dos clientes (identifica o projeto perante as APIs oficiais). */
+export const USER_AGENT = `ComoVotei/1.0 (Transparência Legislativa; +${APP_URL})`;
+
 export interface RequestOptions {
   method?: 'GET' | 'POST';
   headers?: Record<string, string>;
@@ -91,7 +97,7 @@ export class HttpClient {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const defaultHeaders: Record<string, string> = {
-      'User-Agent': 'ComoVotei/1.0 (Transparência Legislativa; +https://comovotei.vercel.app)',
+      'User-Agent': USER_AGENT,
       'Accept': 'application/json',
       ...headers,
     };

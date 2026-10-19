@@ -16,7 +16,7 @@
  *   npm run backfill:status -- --ano=2024 --dry-run
  *   npm run backfill:status -- --ano=2024 --tipos=PL,PLP,PEC --limit=500
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 import { mapStatusProposicao } from '../src/lib/sync/camara-adapter';
 import { mapStatusProposicaoSenado } from '../src/lib/sync/senado-adapter';
 import { NormalizerFactory } from '../src/lib/sync/normalizer-factory';
@@ -34,7 +34,7 @@ interface Options {
   casa?: 'CAMARA' | 'SENADO';
 }
 
-async function backfillCamara(where: any, total: number, options: Options) {
+async function backfillCamara(where: Prisma.ProposicaoWhereInput, total: number, options: Options) {
   console.log(`\n📦 ${total} proposições APRESENTADA para revisar${options.ano ? ` (ano ${options.ano})` : ''}`);
 
   if (total === 0 || options.dryRun) {
@@ -69,7 +69,7 @@ async function backfillCamara(where: any, total: number, options: Options) {
             const descricao = data?.dados?.statusProposicao?.descricaoSituacao as string | undefined;
             const novo = mapStatusProposicao(descricao);
             if (novo !== 'APRESENTADA') {
-              await prisma.proposicao.update({ where: { id: p.id }, data: { status: novo as any } });
+              await prisma.proposicao.update({ where: { id: p.id }, data: { status: novo } });
               atualizadas++;
             }
           } catch {
@@ -87,7 +87,7 @@ async function backfillCamara(where: any, total: number, options: Options) {
   await prisma.$disconnect();
 }
 
-async function backfillSenado(where: any, total: number, options: Options) {
+async function backfillSenado(where: Prisma.ProposicaoWhereInput, total: number, options: Options) {
   const senado = NormalizerFactory.getSenado();
   console.log(`\n📦 ${total} matérias APRESENTADA para revisar${options.ano ? ` (ano ${options.ano})` : ''}`);
   console.log('   Fonte: /materia/situacaoatual/{codigo}');
@@ -123,7 +123,7 @@ async function backfillSenado(where: any, total: number, options: Options) {
             const sit = await senado.fetchSituacaoMateria(codigo);
             const novo = mapStatusProposicaoSenado(sit.descricao, sit.tramitando);
             if (novo !== 'APRESENTADA') {
-              await prisma.proposicao.update({ where: { id: p.id }, data: { status: novo as any } });
+              await prisma.proposicao.update({ where: { id: p.id }, data: { status: novo } });
               atualizadas++;
             }
           } catch {
@@ -143,7 +143,7 @@ async function backfillSenado(where: any, total: number, options: Options) {
 
 async function backfill(options: Options) {
   const casa = options.casa || 'CAMARA';
-  const where: any = { casa, status: 'APRESENTADA' };
+  const where: Prisma.ProposicaoWhereInput = { casa, status: 'APRESENTADA' };
   if (options.ano) where.ano = options.ano;
   if (options.tipos?.length) where.tipo = { in: options.tipos };
 

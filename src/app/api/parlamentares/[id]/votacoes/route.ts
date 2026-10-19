@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { listaQueryCampos } from '@/lib/lista-query';
+import { calcularPaginacao } from '@/lib/parlamentar-query';
 
 export const dynamic = 'force-dynamic';
 
 const querySchema = z.object({
-  cursor: z.string().optional(),
-  page: z.coerce.number().int().min(1).optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  ...listaQueryCampos,
   ano: z.coerce.number().optional(),
   tema: z.string().optional(),
 });
@@ -42,31 +43,29 @@ export async function GET(
     );
   }
 
-  const where: Record<string, unknown> = {
+  const where: Prisma.VotoWhereInput = {
     parlamentarId: id,
   };
+  const votacaoWhere: Prisma.VotacaoWhereInput = {};
 
   if (ano) {
-    where.votacao = {
-      ...(where.votacao as Record<string, unknown> || {}),
-      data: {
-        gte: new Date(`${ano}-01-01`),
-        lte: new Date(`${ano}-12-31`),
-      },
+    votacaoWhere.data = {
+      gte: new Date(`${ano}-01-01`),
+      lte: new Date(`${ano}-12-31`),
     };
   }
 
   if (tema) {
-    where.votacao = {
-      ...(where.votacao as Record<string, unknown> || {}),
-      tema: { contains: tema, mode: 'insensitive' },
-    };
+    votacaoWhere.tema = { contains: tema, mode: 'insensitive' };
+  }
+
+  if (ano || tema) {
+    where.votacao = votacaoWhere;
   }
 
   if (page) {
-    const total = await prisma.voto.count({ where } as any);
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const paginaSegura = Math.min(page, totalPages);
+    const total = await prisma.voto.count({ where });
+    const { page: paginaSegura, totalPages } = calcularPaginacao(total, page, limit);
     const votos = await prisma.voto.findMany({
       where,
       skip: (paginaSegura - 1) * limit,
