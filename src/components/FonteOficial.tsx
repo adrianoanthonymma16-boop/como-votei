@@ -39,7 +39,7 @@ export function FonteOficial({ casa, children }: FonteOficialProps) {
           href={fonte.portal}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-accent hover:text-accent/80 hover:underline font-medium transition-colors"
+          className="-my-2 inline-flex items-center gap-1 py-2 text-accent hover:text-accent/80 hover:underline font-medium transition-colors"
         >
           Portal {casa === 'CAMARA' ? 'da Câmara' : 'do Senado'}
           <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -50,7 +50,7 @@ export function FonteOficial({ casa, children }: FonteOficialProps) {
           href={fonte.api}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-accent hover:text-accent/80 hover:underline font-medium transition-colors"
+          className="-my-2 inline-flex items-center gap-1 py-2 text-accent hover:text-accent/80 hover:underline font-medium transition-colors"
         >
           API de dados abertos
           <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

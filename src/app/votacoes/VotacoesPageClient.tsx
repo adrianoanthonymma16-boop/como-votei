@@ -183,7 +183,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
           <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400">Quem votou como</h5>
           <div className="relative w-full sm:w-64">
-            <svg className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -191,7 +191,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
               onChange={(e) => setBuscaParlamentar(e.target.value)}
               placeholder="Buscar parlamentar"
               aria-label="Buscar parlamentar"
-              className="h-8 w-full rounded-lg border border-slate-700 bg-slate-800 pl-8 pr-3 text-base sm:text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 pl-8 pr-3 text-base sm:text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
         </div>
@@ -199,7 +199,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setFiltroVoto(null)}
-            className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${!filtroVoto ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+            className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${!filtroVoto ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
           >
             Todos {total > 0 && `· ${total}`}
           </button>
@@ -207,7 +207,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
             <button
               key={p.tipo}
               onClick={() => setFiltroVoto(filtroVoto === p.tipo ? null : p.tipo)}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${filtroVoto === p.tipo ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+              className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${filtroVoto === p.tipo ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
             >
               {p.tipo} · {p.total}
             </button>
@@ -220,7 +220,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg bg-slate-800" />)
         ) : votos.length === 0 ? (
           buscaParlamentar || filtroVoto ? (
-            <p className="py-8 text-center text-sm text-slate-500">Nenhum voto encontrado com esse filtro.</p>
+            <p className="py-8 text-center text-sm text-slate-400">Nenhum voto encontrado com esse filtro.</p>
           ) : isNominal ? (
             <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 px-4 py-6 text-center">
               <p className="text-sm font-medium text-amber-300">Votação nominal sem votos no banco — sincronização pendente</p>
@@ -229,7 +229,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
           ) : (
             <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-6 text-center">
               <p className="text-sm font-medium text-slate-400">Votos individuais não disponíveis</p>
-              <p className="mt-1 text-xs text-slate-500">A fonte oficial da Câmara não publicou os votos nominais desta votação. O placar está na descrição acima.</p>
+              <p className="mt-1 text-xs text-slate-400">A fonte oficial da Câmara não publicou os votos nominais desta votação. O placar está na descrição acima.</p>
             </div>
           )
         ) : (
@@ -342,21 +342,21 @@ export function VotacoesPageClient() {
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-3.5 sm:p-4 mb-6">
           {/* Linha 1: busca */}
           <div className="relative">
-            <svg className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar por PL, PEC, número ou palavra-chave…"
+              placeholder="Buscar por PL, PEC ou palavra-chave"
               aria-label="Buscar votação por número ou palavra-chave"
-              className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-10 pr-3 text-base sm:text-sm text-white placeholder:text-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-10 pr-3 text-base sm:text-sm text-white placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
 
           {/* Linha 2: chips Casa + Resultado */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 shrink-0">Casa</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 shrink-0">Casa</span>
             {[
               { label: 'Todos', value: '' },
               { label: 'Câmara', value: 'CAMARA' },
@@ -365,13 +365,13 @@ export function VotacoesPageClient() {
               <button
                 key={opt.value || 'todos-casa'}
                 onClick={() => setCasa(opt.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${casa === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${casa === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
               >
                 {opt.label}
               </button>
             ))}
             <span className="hidden sm:inline h-4 w-px bg-slate-800 mx-1" aria-hidden="true" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 shrink-0">Resultado</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 shrink-0">Resultado</span>
             {[
               { label: 'Todos', value: '' },
               { label: 'Aprovada', value: 'APROVADA' },
@@ -380,7 +380,7 @@ export function VotacoesPageClient() {
               <button
                 key={opt.value || 'todos-res'}
                 onClick={() => setResultado(opt.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${resultado === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${resultado === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
               >
                 {opt.label}
               </button>
@@ -389,12 +389,12 @@ export function VotacoesPageClient() {
 
           {/* Linha 3: selects Ano + Tema + limpar */}
           <div className="mt-3 flex flex-col sm:flex-row gap-2 sm:items-center">
-            <div className="flex gap-2 flex-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
               <select
                 value={ano}
                 onChange={(e) => setAno(e.target.value)}
                 aria-label="Filtrar por ano"
-                className="h-9 flex-1 sm:flex-none sm:w-32 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base sm:text-sm text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="h-10 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 sm:h-9 sm:w-32 sm:flex-none sm:text-sm"
               >
                 <option value="">Todos os anos</option>
                 {ANOS.map((a) => <option key={a} value={String(a)}>{a}</option>)}
@@ -403,7 +403,7 @@ export function VotacoesPageClient() {
                 value={tema}
                 onChange={(e) => setTema(e.target.value)}
                 aria-label="Filtrar por tema"
-                className="h-9 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base sm:text-sm text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 capitalize"
+                className="h-10 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 sm:h-9 sm:flex-1 sm:text-sm capitalize"
               >
                 <option value="">Todos os temas</option>
                 {TEMAS.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
@@ -412,7 +412,7 @@ export function VotacoesPageClient() {
             {temFiltro && (
               <button
                 onClick={limparFiltros}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors sm:shrink-0"
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-700 px-3 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors sm:shrink-0"
               >
                 <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 Limpar filtros
@@ -421,7 +421,7 @@ export function VotacoesPageClient() {
           </div>
 
           {total > 0 && !isLoading && (
-            <p className="mt-3 text-xs text-slate-500">{total.toLocaleString('pt-BR')} votações encontradas</p>
+            <p className="mt-3 text-xs text-slate-400">{total.toLocaleString('pt-BR')} votações encontradas</p>
           )}
         </div>
 
@@ -438,7 +438,7 @@ export function VotacoesPageClient() {
         ) : votacoes.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-800 py-14 text-center">
             <p className="text-sm font-medium text-slate-300">Nenhuma votação encontrada</p>
-            <p className="mt-1 text-sm text-slate-500">Ajuste os filtros ou a busca e tente novamente.</p>
+            <p className="mt-1 text-sm text-slate-400">Ajuste os filtros ou a busca e tente novamente.</p>
           </div>
         ) : (
           <ol className="space-y-3" aria-label="Votações">
@@ -467,7 +467,7 @@ export function VotacoesPageClient() {
 
                     <span className="flex-1 min-w-0">
                       <span className="flex flex-wrap items-center gap-1.5 sm:hidden mb-1.5">
-                        <span className="text-xs text-slate-500">{formatDate(v.data)}</span>
+                        <span className="text-xs text-slate-400">{formatDate(v.data)}</span>
                         <CasaBadge casa={v.casa} />
                       </span>
                       {info.tipo && (
@@ -487,7 +487,7 @@ export function VotacoesPageClient() {
                           </span>
                         ))}
                         {v._count.votos > 0 && (
-                          <span className="text-xs text-slate-500">{v._count.votos} votos</span>
+                          <span className="text-xs text-slate-400">{v._count.votos} votos</span>
                         )}
                       </span>
                       {/* Mobile: temas + votos count inline */}
@@ -510,10 +510,10 @@ export function VotacoesPageClient() {
                       {getResultadoBadge(v.resultado)}
                     </span>
 
-                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-500'}`} aria-hidden="true">
+                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-400'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
-                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-500'}`} aria-hidden="true">
+                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-400'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
                   </button>
@@ -530,13 +530,13 @@ export function VotacoesPageClient() {
                           )}
                           <dl className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                             <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2">
-                              <dt className="text-xs uppercase tracking-wider text-slate-500">Data</dt><dd className="font-medium text-slate-200 mt-0.5">{formatDate(v.data)}</dd>
+                              <dt className="text-xs uppercase tracking-wider text-slate-400">Data</dt><dd className="font-medium text-slate-200 mt-0.5">{formatDate(v.data)}</dd>
                             </div>
                             <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2">
-                              <dt className="text-xs uppercase tracking-wider text-slate-500">Casa</dt><dd className="font-medium text-slate-200 mt-0.5">{v.casa === 'CAMARA' ? 'Câmara' : 'Senado'}</dd>
+                              <dt className="text-xs uppercase tracking-wider text-slate-400">Casa</dt><dd className="font-medium text-slate-200 mt-0.5">{v.casa === 'CAMARA' ? 'Câmara' : 'Senado'}</dd>
                             </div>
                             <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2 col-span-2 sm:col-span-1">
-                              <dt className="text-xs uppercase tracking-wider text-slate-500">Resultado</dt><dd className="font-medium text-slate-200 mt-0.5">{v.resultado || '—'}</dd>
+                              <dt className="text-xs uppercase tracking-wider text-slate-400">Resultado</dt><dd className="font-medium text-slate-200 mt-0.5">{v.resultado || '—'}</dd>
                             </div>
                           </dl>
                         </div>
@@ -551,12 +551,12 @@ export function VotacoesPageClient() {
         )}
 
         <div className="mt-2 flex justify-center">
-          <div className="[&>nav]:py-2 [&_button]:border-slate-700 [&_button]:bg-slate-900 [&_button]:text-slate-300 [&_button:hover]:bg-slate-800 [&_p]:text-slate-500">
+          <div className="[&>nav]:py-2 [&_button]:border-slate-700 [&_button]:bg-slate-900 [&_button]:text-slate-300 [&_button:hover]:bg-slate-800 [&_p]:text-slate-400">
             <PaginacaoNumerica page={page} totalPages={totalPages} total={total} onChange={(p) => { loadData(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
           </div>
         </div>
 
-        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-400">
           <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
           Dados oficiais da Câmara e do Senado · Sincronização diária
         </p>

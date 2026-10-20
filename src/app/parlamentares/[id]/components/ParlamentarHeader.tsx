@@ -75,13 +75,13 @@ export function ParlamentarHeader({
       <nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
         <ol className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground flex-wrap">
           <li>
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link href="/" className="-my-2 inline-block py-2 hover:text-foreground transition-colors">
               Início
             </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <Link href="/parlamentares" className="hover:text-foreground transition-colors">
+            <Link href="/parlamentares" className="-my-2 inline-block py-2 hover:text-foreground transition-colors">
               Parlamentares
             </Link>
           </li>
@@ -150,10 +150,10 @@ export function ParlamentarHeader({
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <Link
           href={`/parlamentares/${parlamentar.id}/votacoes`}
-          className={`stat-card group text-center sm:text-left ${coresSecao.votacoes}`}
+          className={`stat-card group px-3 sm:px-5 text-center sm:text-left ${coresSecao.votacoes}`}
         >
           <p className="text-xs sm:text-sm text-muted-foreground mb-1">Votações</p>
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground transition-colors">
@@ -162,7 +162,7 @@ export function ParlamentarHeader({
         </Link>
         <Link
           href={`/parlamentares/${parlamentar.id}/discursos`}
-          className={`stat-card group text-center sm:text-left ${coresSecao.discursos}`}
+          className={`stat-card group px-3 sm:px-5 text-center sm:text-left ${coresSecao.discursos}`}
         >
           <p className="text-xs sm:text-sm text-muted-foreground mb-1">Discursos</p>
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground transition-colors">
@@ -171,7 +171,7 @@ export function ParlamentarHeader({
         </Link>
         <Link
           href={`/parlamentares/${parlamentar.id}/proposicoes`}
-          className={`stat-card group text-center sm:text-left ${coresSecao.proposicoes}`}
+          className={`stat-card group px-3 sm:px-5 text-center sm:text-left ${coresSecao.proposicoes}`}
         >
           <p className="text-xs sm:text-sm text-muted-foreground mb-1">Proposições</p>
           <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground transition-colors">
@@ -183,19 +183,25 @@ export function ParlamentarHeader({
 
       {/* Navegação entre seções */}
       <nav className="mb-6" aria-label="Navegação entre seções">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide border-b border-border">
-          {secoes.map((secao) => (
-            <Link
-              key={secao.id}
-              href={`/parlamentares/${parlamentar.id}/${secao.id}`}
-              aria-current={activeTab === secao.id ? 'page' : undefined}
-              className={`tab-trigger whitespace-nowrap shrink-0 ${
-                activeTab === secao.id ? 'tab-trigger-active' : 'tab-trigger-inactive'
-              }`}
-            >
-              {secao.label}
-            </Link>
-          ))}
+        <div className="relative">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap scrollbar-hide border-b border-border">
+            {secoes.map((secao) => (
+              <Link
+                key={secao.id}
+                href={`/parlamentares/${parlamentar.id}/${secao.id}`}
+                aria-current={activeTab === secao.id ? 'page' : undefined}
+                className={`tab-trigger whitespace-nowrap shrink-0 py-2.5 sm:py-2 ${
+                  activeTab === secao.id ? 'tab-trigger-active' : 'tab-trigger-inactive'
+                }`}
+              >
+                {secao.label}
+              </Link>
+            ))}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent sm:hidden"
+            aria-hidden="true"
+          />
         </div>
       </nav>
 

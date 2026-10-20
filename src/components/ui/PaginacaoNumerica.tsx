@@ -24,7 +24,7 @@ export function PaginacaoNumerica({ page, totalPages, onChange, total, label = '
   };
 
   const baseBtn =
-    'inline-flex items-center justify-center min-size-9 px-3 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center min-h-10 min-w-10 px-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
     <nav aria-label="Paginação de resultados" className="flex flex-col items-center gap-3 py-6">

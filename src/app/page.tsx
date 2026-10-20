@@ -68,7 +68,7 @@ export default function HomePage() {
                 Contagens reais sincronizadas das APIs oficiais — atualizadas diariamente.
               </p>
             </div>
-            <Link href="/parlamentares" className="text-accent hover:text-accent/80 text-sm font-medium transition-colors">
+            <Link href="/parlamentares" className="-my-2 inline-block py-2 text-accent hover:text-accent/80 text-sm font-medium transition-colors">
               Ver todos os parlamentares
             </Link>
           </div>
@@ -103,7 +103,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/parlamentares?sort=produtivos"
-              className="hidden sm:inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
+              className="hidden sm:inline-flex -my-2 items-center gap-1 py-2 text-accent hover:text-accent/80 font-medium text-sm transition-colors"
             >
               Ver ranking completo
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -118,7 +118,7 @@ export default function HomePage() {
           <div className="mt-4 sm:hidden">
             <Link
               href="/parlamentares?sort=produtivos"
-              className="inline-flex text-accent hover:text-accent/80 font-medium text-sm items-center gap-1 transition-colors"
+              className="inline-flex -my-2 items-center gap-1 py-2 text-accent hover:text-accent/80 font-medium text-sm transition-colors"
             >
               Ver ranking completo
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

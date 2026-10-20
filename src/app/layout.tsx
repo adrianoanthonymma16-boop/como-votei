@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Logo } from '@/components/Logo';
+import { DesktopNav, MobileNav } from '@/components/MainNav';
 import Link from 'next/link';
 import './globals.css';
 
@@ -75,32 +76,12 @@ export default function RootLayout({
               <Link href="/" className="flex items-center gap-2" aria-label="Como Votei — Início">
                 <Logo />
               </Link>
-              <nav className="hidden sm:flex items-center gap-6 text-sm">
-                <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Parlamentares
-                </Link>
-                <Link href="/votacoes" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Votações
-                </Link>
-                <Link href="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Sobre
-                </Link>
-              </nav>
+              <DesktopNav />
               <div className="flex items-center gap-2">
                 <ThemeToggle />
               </div>
             </div>
-            <nav className="flex sm:hidden items-center gap-4 border-t px-4 py-2 text-sm overflow-x-auto">
-              <Link href="/parlamentares" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
-                Parlamentares
-              </Link>
-              <Link href="/votacoes" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
-                Votações
-              </Link>
-              <Link href="/sobre" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
-                Sobre
-              </Link>
-            </nav>
+            <MobileNav />
           </header>
           <main className="min-h-[calc(100dvh-3.5rem)]">
             {children}

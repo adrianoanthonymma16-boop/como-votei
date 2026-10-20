@@ -163,7 +163,7 @@ export function AvisoBanner() {
                 onClick={fechar}
                 disabled={fechando}
                 aria-label="Fechar manifesto"
-                className={`shrink-0 flex size-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-400 transition-[background-color,color,transform] hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-90 ${cascata(0)}`}
+                className={`shrink-0 flex size-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-400 transition-[background-color,color,transform] hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 active:scale-90 ${cascata(0)}`}
               >
                 <CloseIcon className="size-4" />
               </button>

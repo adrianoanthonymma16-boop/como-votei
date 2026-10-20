@@ -52,7 +52,7 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
   const atual = dados?.porAno.find((r) => r.ano === ano) ?? null;
 
   return (
-    <div className="stat-card text-center sm:text-left" aria-live="polite">
+    <div className="stat-card col-span-3 md:col-span-1 px-4 sm:px-5 text-center sm:text-left" aria-live="polite">
       <div className="flex items-center justify-between gap-2 mb-1">
         <p className="text-xs sm:text-sm text-muted-foreground">Presença em plenário</p>
         {dados && dados.anos.length > 0 && (
@@ -62,7 +62,7 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
               value={ano ?? ''}
               onChange={(e) => setAno(Number(e.target.value))}
               aria-label="Filtrar presença por ano"
-              className="rounded-md border border-border bg-background px-1.5 py-0.5 text-base sm:text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-9 rounded-md border border-border bg-background px-2 text-base sm:text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {dados.anos.map((a) => (
                 <option key={a} value={a}>
@@ -121,21 +121,21 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
               <span className="inline-block size-2 rounded-full bg-green-500" aria-hidden="true" />
               <dt className="sr-only">Presenças</dt>
               <dd>
-                <strong className="font-semibold text-foreground">{atual.presencas}</strong> pres.
+                Presenças <strong className="font-semibold text-foreground">{atual.presencas}</strong>
               </dd>
             </div>
             <div className="flex items-center gap-1">
               <span className="inline-block size-2 rounded-full bg-yellow-500" aria-hidden="true" />
               <dt className="sr-only">Faltas justificadas</dt>
               <dd>
-                <strong className="font-semibold text-foreground">{atual.faltasJustificadas}</strong> just.
+                Justificadas <strong className="font-semibold text-foreground">{atual.faltasJustificadas}</strong>
               </dd>
             </div>
             <div className="flex items-center gap-1">
               <span className="inline-block size-2 rounded-full bg-red-500" aria-hidden="true" />
               <dt className="sr-only">Faltas injustificadas</dt>
               <dd>
-                <strong className="font-semibold text-foreground">{atual.faltasInjustificadas}</strong> injust.
+                Injustificadas <strong className="font-semibold text-foreground">{atual.faltasInjustificadas}</strong>
               </dd>
             </div>
           </dl>

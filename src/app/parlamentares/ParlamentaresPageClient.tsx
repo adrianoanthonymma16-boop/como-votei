@@ -10,7 +10,7 @@ import { anoCorrente } from '@/lib/ano-padrao';
 import { Select, SelectOption } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { PageBreadcrumb } from '@/components/PageBreadcrumb';
-import { formatNumber } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { DEFAULT_PER_PAGE } from '@/lib/parlamentar-query';
 import type { ProdutividadeResumo } from '@/components/ParlamentarCard';
 
@@ -63,6 +63,7 @@ export function ParlamentaresPageClient() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
   const queryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const primeiroRenderRef = useRef(true);
@@ -203,74 +204,108 @@ export function ParlamentaresPageClient() {
         </p>
       </div>
 
-      <div className="bg-card rounded-xl border border-border p-4 sm:p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="lg:col-span-1">
-            <label htmlFor="search" className="text-xs font-medium text-muted-foreground mb-1 block">Buscar por nome</label>
-            <Input
-              id="search"
-              type="search"
-              placeholder="Ex.: Maria, deputado, 204549"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="casa-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Casa legislativa</label>
-            <Select id="casa-filter" value={casa} onChange={(e) => alterarFiltro('casa', e.target.value)}>
-              <SelectOption value="">Todas as casas</SelectOption>
-              <SelectOption value="CAMARA">Câmara dos Deputados</SelectOption>
-              <SelectOption value="SENADO">Senado Federal</SelectOption>
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="partido-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Partido</label>
-            <Select id="partido-filter" value={partidoId} onChange={(e) => alterarFiltro('partidoId', e.target.value)}>
-              <SelectOption value="">Todos os partidos</SelectOption>
-              {partidos.map((p) => (
-                <SelectOption key={p.id} value={p.id}>{p.sigla} - {p.nome}</SelectOption>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="uf-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Estado (UF)</label>
-            <Select id="uf-filter" value={ufId} onChange={(e) => alterarFiltro('ufId', e.target.value)}>
-              <SelectOption value="">Todos os estados</SelectOption>
-              {ufs.map((u) => (
-                <SelectOption key={u.id} value={u.id}>{u.sigla} - {u.nome}</SelectOption>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="sort" className="text-xs font-medium text-muted-foreground mb-1 block">Ordenar por</label>
-            <Select id="sort" value={sort} onChange={(e) => alterarSort(e.target.value)}>
-              {SORTS.map((s) => (
-                <SelectOption key={s.value || 'nome'} value={s.value}>{s.label}</SelectOption>
-              ))}
-            </Select>
-          </div>
-        </div>
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => setFiltrosAbertos((aberto) => !aberto)}
+          aria-expanded={filtrosAbertos}
+          aria-controls="filtros-parlamentares"
+          className="mb-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:hidden"
+        >
+          <span className="inline-flex items-center gap-2">
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M7 12h10M10 18h4" />
+            </svg>
+            Filtros
+            {filtrosAtivos.length > 0 && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs text-accent-foreground">
+                {filtrosAtivos.length}
+              </span>
+            )}
+          </span>
+          <svg
+            className={cn('size-4 transition-transform', filtrosAbertos && 'rotate-180')}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        {filtrosAtivos.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mt-4">
-            {filtrosAtivos.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                onClick={f.limpar}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {f.label}
-                <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            ))}
-            <Button variant="ghost" size="sm" onClick={() => router.push('/parlamentares')}>
-              Limpar filtros
-            </Button>
+        <div
+          id="filtros-parlamentares"
+          className={cn('bg-card rounded-xl border border-border p-4 sm:p-6', !filtrosAbertos && 'hidden sm:block')}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="lg:col-span-1">
+              <label htmlFor="search" className="text-xs font-medium text-muted-foreground mb-1 block">Buscar por nome</label>
+              <Input
+                id="search"
+                type="search"
+                placeholder="Ex.: Maria, João Silva"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="casa-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Casa legislativa</label>
+              <Select id="casa-filter" value={casa} onChange={(e) => alterarFiltro('casa', e.target.value)}>
+                <SelectOption value="">Todas as casas</SelectOption>
+                <SelectOption value="CAMARA">Câmara dos Deputados</SelectOption>
+                <SelectOption value="SENADO">Senado Federal</SelectOption>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="partido-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Partido</label>
+              <Select id="partido-filter" value={partidoId} onChange={(e) => alterarFiltro('partidoId', e.target.value)}>
+                <SelectOption value="">Todos os partidos</SelectOption>
+                {partidos.map((p) => (
+                  <SelectOption key={p.id} value={p.id}>{p.sigla} - {p.nome}</SelectOption>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="uf-filter" className="text-xs font-medium text-muted-foreground mb-1 block">Estado (UF)</label>
+              <Select id="uf-filter" value={ufId} onChange={(e) => alterarFiltro('ufId', e.target.value)}>
+                <SelectOption value="">Todos os estados</SelectOption>
+                {ufs.map((u) => (
+                  <SelectOption key={u.id} value={u.id}>{u.sigla} - {u.nome}</SelectOption>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="sort" className="text-xs font-medium text-muted-foreground mb-1 block">Ordenar por</label>
+              <Select id="sort" value={sort} onChange={(e) => alterarSort(e.target.value)}>
+                {SORTS.map((s) => (
+                  <SelectOption key={s.value || 'nome'} value={s.value}>{s.label}</SelectOption>
+                ))}
+              </Select>
+            </div>
           </div>
-        )}
+
+          {filtrosAtivos.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              {filtrosAtivos.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={f.limpar}
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {f.label}
+                  <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ))}
+              <Button variant="ghost" size="sm" onClick={() => router.push('/parlamentares')}>
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <ParlamentaresList parlamentares={parlamentares} isLoading={isLoading} total={total} />

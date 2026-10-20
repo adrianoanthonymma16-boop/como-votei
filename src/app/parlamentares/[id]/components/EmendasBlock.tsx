@@ -280,7 +280,15 @@ export function EmendasBlock({ parlamentarId }: EmendasBlockProps) {
             </div>
           ) : (
             <div aria-busy={isLoading}>
-              <div className="overflow-x-auto rounded-md border">
+              <p className="mb-2 text-xs text-muted-foreground sm:hidden">
+                Deslize a tabela para o lado para ver todas as colunas.
+              </p>
+              <div
+                className="overflow-x-auto rounded-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                role="region"
+                aria-label="Tabela de emendas"
+                tabIndex={0}
+              >
                 <table className="w-full">
                   <thead>
                     <tr>

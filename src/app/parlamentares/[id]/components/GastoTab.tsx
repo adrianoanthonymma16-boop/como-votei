@@ -181,7 +181,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
             />
           </div>
           {temFiltro && (
-            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3">
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3 min-h-10">
               Limpar filtros
             </Button>
           )}
@@ -211,14 +211,22 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
         <div className="p-6 text-center text-muted-foreground">
           <p>Nenhuma despesa encontrada{temFiltro ? ' com os filtros atuais' : ' neste parlamentar'}.</p>
           {temFiltro && (
-            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3">
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="mt-3 min-h-10">
               Limpar filtros
             </Button>
           )}
         </div>
       ) : (
         <div aria-busy={isLoading}>
-          <div className="overflow-x-auto rounded-md border">
+          <p className="mb-2 text-xs text-muted-foreground sm:hidden">
+            Deslize a tabela para o lado para ver todas as colunas.
+          </p>
+          <div
+            className="overflow-x-auto rounded-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            role="region"
+            aria-label="Tabela de despesas"
+            tabIndex={0}
+          >
             <table className="w-full">
               <thead>
                 <tr>
@@ -269,7 +277,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
                             aria-label={`Ver comprovante de ${d.categoria || 'despesa'} na fonte oficial (abre em nova aba)`}
                             title="Ver comprovante na fonte oficial"
                             className={cn(
-                              'inline-flex items-center justify-center rounded-lg p-2 font-medium text-foreground transition-colors',
+                              'inline-flex size-10 items-center justify-center rounded-lg font-medium text-foreground transition-colors',
                               'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background'
                             )}
                           >

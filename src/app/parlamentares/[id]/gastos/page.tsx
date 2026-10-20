@@ -33,6 +33,9 @@ export default async function GastosPage({ params }: PageProps) {
     include: {
       partido: true,
       uf: true,
+      _count: {
+        select: { votos: true, discursos: true, proposicoes: true },
+      },
     },
   });
 

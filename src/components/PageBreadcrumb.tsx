@@ -11,7 +11,7 @@ export function PageBreadcrumb({ current }: PageBreadcrumbProps) {
     <nav className="mb-6" aria-label="Trilha de navegação">
       <ol className="flex items-center gap-2 text-sm text-muted-foreground">
         <li>
-          <Link href="/" className="hover:text-foreground transition-colors">
+          <Link href="/" className="-my-2 inline-block py-2 hover:text-foreground transition-colors">
             Início
           </Link>
         </li>
