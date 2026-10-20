@@ -28,7 +28,7 @@ export function DesktopNav() {
             href={link.href}
             aria-current={ativo ? 'page' : undefined}
             className={cn(
-              'transition-colors hover:text-foreground',
+              'inline-flex min-h-11 items-center rounded-md px-1 transition-colors hover:text-foreground',
               ativo ? 'text-foreground font-medium' : 'text-muted-foreground'
             )}
           >

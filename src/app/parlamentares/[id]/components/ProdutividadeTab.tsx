@@ -174,7 +174,7 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
 
       {/* Detalhamento por tipo */}
       <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-lg font-semibold text-foreground">Por tipo de proposição</h3>
+        <h2 className="text-lg font-semibold text-foreground">Por tipo de proposição</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Apresentadas e aprovadas de autoria própria, com o peso que cada uma vale na pontuação.
         </p>

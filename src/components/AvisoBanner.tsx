@@ -43,6 +43,8 @@ function CloseIcon({ className }: { className?: string }) {
 
 type Estado = 'aberto' | 'fechando' | 'fechado';
 
+const CHAVE_DISPENSA = 'comovotei:manifesto-dispensado';
+
 /**
  * Manifesto pelo voto consciente com saída coreografada: o conteúdo se recolhe
  * em cascata, a linha âmbar "fecha o zíper" e o bloco colapsa — restando uma
@@ -52,7 +54,13 @@ export function AvisoBanner() {
   const [estado, setEstado] = useState<Estado>('aberto');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Lê a dispensa só no cliente, depois da hidratação.
   useEffect(() => {
+    try {
+      if (window.localStorage.getItem(CHAVE_DISPENSA) === '1') setEstado('fechado');
+    } catch {
+      /* localStorage indisponível (modo privado) — mantém o banner visível */
+    }
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -64,11 +72,21 @@ export function AvisoBanner() {
     // setTimeout (não transitionend): funciona também com reduced-motion,
     // onde as transições são zeradas pelo CSS global.
     timer.current = setTimeout(() => setEstado('fechado'), 480);
+    try {
+      window.localStorage.setItem(CHAVE_DISPENSA, '1');
+    } catch {
+      /* ignora falha de persistência */
+    }
   };
 
   const reabrir = () => {
     if (timer.current) clearTimeout(timer.current);
     setEstado('aberto');
+    try {
+      window.localStorage.removeItem(CHAVE_DISPENSA);
+    } catch {
+      /* ignora falha de persistência */
+    }
   };
 
   if (estado === 'fechado') {
@@ -133,8 +151,8 @@ export function AvisoBanner() {
                   Voto não é torcida. <span className="text-amber-300">É poder.</span>
                 </h2>
                 <p className={`mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-300 ${cascata(180)}`}>
-                  Pare de terceirizar a culpa: estude como cada candidato vota, o que propõe e o que
-                  defende. Quem vota no escuro, entrega o país no escuro — vote com responsabilidade.
+                  Estude como cada candidato vota, o que propõe e o que defende. Quem vota no escuro
+                  entrega o país no escuro — vote com responsabilidade.
                 </p>
                 <div className={`mt-5 flex flex-wrap items-center gap-3 ${cascata(240)}`}>
                   <Link
@@ -148,7 +166,7 @@ export function AvisoBanner() {
                     </svg>
                   </Link>
                   <Link
-                    href="/sobre"
+                    href="/sobre#metodologia"
                     tabIndex={fechando ? -1 : undefined}
                     className="inline-flex items-center rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                   >

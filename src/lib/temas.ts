@@ -227,7 +227,7 @@ const REGRAS: TemaRegra[] = [
     threshold: 0.12,
   },
   {
-    nome: 'politica institucional',
+    nome: 'política institucional',
     keywords: [
       'política', 'politica', 'partido', 'partidos', 'eleições', 'eleicoes',
       'candidato', 'candidata', 'eleitor', 'eleitoral', 'campaign',
@@ -335,6 +335,7 @@ export function temaCor(tema: string): string {
     'tecnologia': 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800',
     'cultura': 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:border-fuchsia-800',
     'direitos civis': 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800',
+    'política institucional': 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
     'politica institucional': 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
     'desenvolvimento regional': 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
   };

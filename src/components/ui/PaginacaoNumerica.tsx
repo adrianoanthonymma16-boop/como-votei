@@ -8,13 +8,22 @@ interface PaginacaoNumericaProps {
   onChange: (page: number) => void;
   total?: number;
   label?: string;
+  /** Nome acessível do landmark quando houver mais de uma paginação na página. */
+  ariaLabel?: string;
 }
 
 /**
  * Paginação numérica (anterior/próxima + números).
  * Usa windowing: mostra no máximo ~7 números ao redor da página atual.
  */
-export function PaginacaoNumerica({ page, totalPages, onChange, total, label = 'Resultados' }: PaginacaoNumericaProps) {
+export function PaginacaoNumerica({
+  page,
+  totalPages,
+  onChange,
+  total,
+  label = 'Resultados',
+  ariaLabel = 'Paginação de resultados',
+}: PaginacaoNumericaProps) {
   if (totalPages <= 1) return null;
 
   const paginas = windowedPages(page, totalPages);
@@ -27,7 +36,7 @@ export function PaginacaoNumerica({ page, totalPages, onChange, total, label = '
     'inline-flex items-center justify-center min-h-10 min-w-10 px-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
-    <nav aria-label="Paginação de resultados" className="flex flex-col items-center gap-3 py-6">
+    <nav aria-label={ariaLabel} className="flex flex-col items-center gap-3 py-6">
       {typeof total === 'number' && (
         <p className="text-sm text-muted-foreground">
           {label}: <span className="font-semibold text-foreground">{total.toLocaleString('pt-BR')}</span> · Página{' '}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { cn, formatDate, formatCurrency, truncate, useDebounce } from '@/lib/utils';
+import { formatCurrency, truncate, useDebounce } from '@/lib/utils';
 import { ANOS_JANELA } from '@/lib/despesas';
 import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { FiltroAno } from '@/components/FiltroAno';
@@ -9,16 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Button } from '@/components/ui/Button';
 import { EmendasBlock } from './EmendasBlock';
-
-interface Despesa {
-  idExterno: string;
-  data: string | null;
-  categoria: string;
-  fornecedor: string;
-  valor: string;
-  urlDocumento: string | null;
-  nomeParlamentarRaw: string;
-}
+import { TabelaDespesas, type Despesa } from './TabelaDespesas';
 
 interface DespesaMeta {
   pagina: number;
@@ -117,12 +108,12 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div>
-          <h3 className="font-semibold mb-1">Resumo Financeiro</h3>
+          <h2 className="font-semibold mb-1">Resumo Financeiro</h2>
           <p className="mb-3 text-xs text-muted-foreground">
             {fonteLabel}
             {temFiltro ? ' · período filtrado' : ` · últimos ${ANOS_JANELA.length} anos`}
           </p>
-          <div className="grid grid-cols-3 gap-2 text-sm">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
             <div>
               <span className="block text-muted-foreground">Total gasto</span>
               <span className="font-bold">{formatCurrency(meta?.totalGasto ?? 0)}</span>
@@ -139,7 +130,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
         </div>
 
         <div>
-          <h3 className="font-semibold mb-3">Filtros</h3>
+          <h2 className="font-semibold mb-3">Filtros</h2>
           <FiltroAno
             ano={filtroAno === undefined ? '' : String(filtroAno)}
             anos={Array.from(ANOS_JANELA)}
@@ -218,96 +209,7 @@ export function GastoTab({ parlamentarId, casa }: GastoTabProps) {
         </div>
       ) : (
         <div aria-busy={isLoading}>
-          <p className="mb-2 text-xs text-muted-foreground sm:hidden">
-            Deslize a tabela para o lado para ver todas as colunas.
-          </p>
-          <div
-            className="overflow-x-auto rounded-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            role="region"
-            aria-label="Tabela de despesas"
-            tabIndex={0}
-          >
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Data
-                  </th>
-                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Categoria
-                  </th>
-                  <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Fornecedor
-                  </th>
-                  <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Valor
-                  </th>
-                  <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Comprovante
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {despesas.map((d) => {
-                  const negativo = Number(d.valor) < 0;
-                  return (
-                    <tr key={d.idExterno} className="border-b last:border-none hover:bg-accent/5">
-                      <td className="p-3 align-middle text-sm whitespace-nowrap">
-                        {d.data ? formatDate(d.data) : '—'}
-                      </td>
-                      <td className="p-3 align-middle text-sm">
-                        {d.categoria || '—'}
-                      </td>
-                      <td className="p-3 align-middle text-sm">
-                        {d.fornecedor || '—'}
-                      </td>
-                      <td
-                        className={`p-3 align-middle text-right text-sm whitespace-nowrap tabular-nums ${
-                          negativo ? 'text-destructive' : ''
-                        }`}
-                      >
-                        {formatCurrency(Number(d.valor))}
-                      </td>
-                      <td className="p-3 align-middle text-right">
-                        {d.urlDocumento ? (
-                          <a
-                            href={d.urlDocumento}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Ver comprovante de ${d.categoria || 'despesa'} na fonte oficial (abre em nova aba)`}
-                            title="Ver comprovante na fonte oficial"
-                            className={cn(
-                              'inline-flex size-10 items-center justify-center rounded-lg font-medium text-foreground transition-colors',
-                              'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background'
-                            )}
-                          >
-                            <svg
-                              className="size-4"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                              <path d="M15 3h6v6" />
-                              <path d="M10 14 21 3" />
-                            </svg>
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground" aria-label="Sem comprovante disponível">
-                            —
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TabelaDespesas despesas={despesas} isLoading={isLoading} />
 
           <div className="mt-4">
             <PaginacaoNumerica

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
+import { PartidoBadge } from '@/components/PartidoBadge';
 import { getInitials } from '@/lib/utils';
 import { fotoRemotaValida } from '@/lib/imagens';
 import { resumoProdutividade, type ContagemPorGrupo } from '@/lib/produtividade';
@@ -39,7 +40,11 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
     <div className="parlamentar-card group w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         {/* Foto / Avatar */}
-        <div className="relative flex-shrink-0 size-16 sm:w-20 sm:h-20">
+        <Link
+          href={`/parlamentares/${parlamentar.id}`}
+          className="relative flex-shrink-0 size-16 sm:w-20 sm:h-20 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-label={`Ver perfil de ${parlamentar.nome}`}
+        >
           {fotoValida ? (
             <Image
               src={fotoValida}
@@ -62,23 +67,27 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
           }`}>
             {parlamentar.casa === 'CAMARA' ? 'CD' : 'SF'}
           </span>
-        </div>
+        </Link>
 
         {/* Info principal */}
         <div className="flex-1 min-w-0">
           {/* Nome e badges */}
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h3 className="font-semibold text-foreground text-base sm:text-lg group-hover:text-accent transition-colors truncate">
-              {parlamentar.nome}
+            <h3 className="font-semibold text-foreground text-base sm:text-lg transition-colors truncate">
+              <Link
+                href={`/parlamentares/${parlamentar.id}`}
+                className="inline-flex min-h-6 items-center rounded-sm transition-colors group-hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {parlamentar.nome}
+              </Link>
             </h3>
             {parlamentar.partido && (
-              <Badge 
-                variant="outline" 
-                className="text-xs shrink-0"
-                style={{ borderColor: parlamentar.partido.cor || undefined, color: parlamentar.partido.cor || undefined }}
-              >
-                {parlamentar.partido.sigla}
-              </Badge>
+              <PartidoBadge
+                sigla={parlamentar.partido.sigla}
+                cor={parlamentar.partido.cor}
+                nome={parlamentar.partido.nome}
+                className="text-xs"
+              />
             )}
             {parlamentar.uf && (
               <Badge variant="secondary" className="text-xs shrink-0">
@@ -111,12 +120,14 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
                 {typeof parlamentar.produtividade.votosSimNao === 'number' &&
                   ` · ${parlamentar.produtividade.votosSimNao} votos SIM/NÃO`}
                 {typeof parlamentar.produtividade.discursos === 'number' &&
-                  ` · ${parlamentar.produtividade.discursos} discursos`}
+                  ` · ${parlamentar.produtividade.discursos} ${
+                    parlamentar.produtividade.discursos === 1 ? 'discurso' : 'discursos'
+                  }`}
               </span>
             </p>
           )}
 
-          {/* Action buttons - 4 funcionalidades */}
+          {/* Atalhos para as abas do perfil */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href={`/parlamentares/${parlamentar.id}/votacoes`}
@@ -135,7 +146,7 @@ export function ParlamentarCard({ parlamentar }: ParlamentarCardProps) {
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span className="action-label">Projetos</span>
+              <span className="action-label">Proposições</span>
             </Link>
             
             <Link

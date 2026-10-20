@@ -308,6 +308,7 @@ export function ParlamentaresPageClient() {
         </div>
       </div>
 
+      <h2 className="sr-only">Lista de parlamentares</h2>
       <ParlamentaresList parlamentares={parlamentares} isLoading={isLoading} total={total} />
 
       <PaginacaoNumerica
@@ -315,7 +316,8 @@ export function ParlamentaresPageClient() {
         totalPages={totalPages}
         total={total}
         onChange={irParaPagina}
-        label={`${formatNumber(total)} parlamentar${total !== 1 ? 'es' : ''}`}
+        label="Parlamentares"
+        ariaLabel="Paginação da lista de parlamentares"
       />
     </div>
   );

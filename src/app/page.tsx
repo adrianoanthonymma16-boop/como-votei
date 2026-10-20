@@ -20,9 +20,6 @@ const SearchForm = dynamic(() => import('@/components/SearchForm').then((mod) =>
 export default function HomePage() {
   return (
     <div className="min-h-dvh">
-      {/* Aviso anti-polarização */}
-      <AvisoBanner />
-
       {/* Hero */}
       <section className="relative overflow-hidden bg-primary-950 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-primary-900" aria-hidden="true" />
@@ -58,6 +55,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Busca */}
+      <section className="py-10 sm:py-14 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Encontre seu parlamentar</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Busque por nome, partido, estado ou casa legislativa.
+            </p>
+          </div>
+          <SearchForm />
+        </div>
+      </section>
+
       {/* Números reais */}
       <section className="py-10 sm:py-14 bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -76,18 +86,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Busca */}
-      <section className="py-10 sm:py-14 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Encontre seu parlamentar</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Busque por nome, partido, estado ou casa legislativa.
-            </p>
-          </div>
-          <SearchForm />
-        </div>
-      </section>
+      {/* Aviso anti-polarização */}
+      <AvisoBanner />
 
       {/* Parlamentares Mais Produtivos */}
       <section className="py-10 sm:py-14 bg-card">

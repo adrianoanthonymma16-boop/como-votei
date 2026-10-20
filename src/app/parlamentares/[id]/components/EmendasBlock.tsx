@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { cn, formatCurrency, truncate } from '@/lib/utils';
+import { formatCurrency, truncate } from '@/lib/utils';
 import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { Button } from '@/components/ui/Button';
+import { TabelaEmendas, type Emenda } from './TabelaEmendas';
 
 /**
  * Bloco de emendas parlamentares na aba Gastos.
@@ -15,23 +16,6 @@ import { Button } from '@/components/ui/Button';
  * com total separado da cota. O que aparece em destaque é o valor **pago**
  * (dinheiro efetivamente desembolsado até hoje); empenhado vem ao lado.
  */
-
-interface Emenda {
-  codigoEmenda: string;
-  ano: number;
-  tipo: string;
-  numeroEmenda: string | null;
-  funcao: string | null;
-  subfuncao: string | null;
-  localidadeRaw: string | null;
-  uf: string | null;
-  municipio: string | null;
-  localidadeTipo: string | null;
-  valorPago: number;
-  valorEmpenhado: number;
-  valorLiquidado: number;
-  urlFonte: string;
-}
 
 interface Grupo {
   chave: string;
@@ -64,7 +48,7 @@ function BarraRanking({ grupos, rotulo }: { grupos: Grupo[]; rotulo: string }) {
   const maior = Math.max(...grupos.map((g) => g.pago));
   return (
     <div>
-      <h4 className="mb-2 text-sm font-semibold">{rotulo}</h4>
+      <h3 className="mb-2 text-sm font-semibold">{rotulo}</h3>
       <ul className="space-y-2">
         {grupos.slice(0, 6).map((g) => (
           <li key={g.chave}>
@@ -85,12 +69,6 @@ function BarraRanking({ grupos, rotulo }: { grupos: Grupo[]; rotulo: string }) {
       </ul>
     </div>
   );
-}
-
-function rotuloLocalidade(e: Emenda): string {
-  if (e.localidadeRaw) return e.localidadeRaw;
-  if (e.uf) return e.uf;
-  return '—';
 }
 
 export function EmendasBlock({ parlamentarId }: EmendasBlockProps) {
@@ -164,7 +142,7 @@ export function EmendasBlock({ parlamentarId }: EmendasBlockProps) {
   return (
     <section className="space-y-6 border-t pt-6">
       <div>
-        <h3 className="font-semibold mb-1">Emendas parlamentares</h3>
+        <h2 className="font-semibold mb-1">Emendas parlamentares</h2>
         <p className="text-xs text-muted-foreground">
           Recursos que o parlamentar destinou ao orçamento via emendas · Portal da Transparência.
           Valores independentes da cota acima.
@@ -211,7 +189,7 @@ export function EmendasBlock({ parlamentarId }: EmendasBlockProps) {
                   }}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
                 <div>
                   <span className="block text-muted-foreground">Pago</span>
                   <span className="text-lg font-bold tabular-nums">
@@ -280,95 +258,7 @@ export function EmendasBlock({ parlamentarId }: EmendasBlockProps) {
             </div>
           ) : (
             <div aria-busy={isLoading}>
-              <p className="mb-2 text-xs text-muted-foreground sm:hidden">
-                Deslize a tabela para o lado para ver todas as colunas.
-              </p>
-              <div
-                className="overflow-x-auto rounded-md border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                role="region"
-                aria-label="Tabela de emendas"
-                tabIndex={0}
-              >
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Emenda
-                      </th>
-                      <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Função
-                      </th>
-                      <th scope="col" className="p-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Localidade
-                      </th>
-                      <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Pago
-                      </th>
-                      <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Empenhado
-                      </th>
-                      <th scope="col" className="p-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Fonte
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {emendas.map((e) => (
-                      <tr key={e.codigoEmenda} className="border-b last:border-none hover:bg-accent/5">
-                        <td className="p-3 align-middle text-sm">
-                          <span className="font-medium tabular-nums">
-                            {e.numeroEmenda ? `nº ${e.numeroEmenda}` : e.codigoEmenda}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">
-                            {e.ano} · {truncate(e.tipo, 44)}
-                          </span>
-                        </td>
-                        <td className="p-3 align-middle text-sm">{e.funcao || '—'}</td>
-                        <td className="p-3 align-middle text-sm">
-                          {rotuloLocalidade(e)}
-                          {e.municipio && e.uf && (
-                            <span className="block text-xs text-muted-foreground">{e.uf}</span>
-                          )}
-                        </td>
-                        <td className="p-3 align-middle text-right text-sm whitespace-nowrap tabular-nums font-semibold">
-                          {formatCurrency(e.valorPago)}
-                        </td>
-                        <td className="p-3 align-middle text-right text-sm whitespace-nowrap tabular-nums text-muted-foreground">
-                          {formatCurrency(e.valorEmpenhado)}
-                        </td>
-                        <td className="p-3 align-middle text-right">
-                          <a
-                            href={e.urlFonte}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Ver emenda ${e.numeroEmenda ?? e.codigoEmenda} no Portal da Transparência (abre em nova aba)`}
-                            title="Ver no Portal da Transparência"
-                            className={cn(
-                              'inline-flex items-center justify-center rounded-lg p-2 font-medium text-foreground transition-colors',
-                              'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background'
-                            )}
-                          >
-                            <svg
-                              className="size-4"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                              <path d="M15 3h6v6" />
-                              <path d="M10 14 21 3" />
-                            </svg>
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TabelaEmendas emendas={emendas} isLoading={isLoading} />
 
               <div className="mt-4">
                 <PaginacaoNumerica

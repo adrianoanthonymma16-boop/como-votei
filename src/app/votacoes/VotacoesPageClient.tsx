@@ -44,7 +44,7 @@ const TEMAS = [
   'tecnologia',
   'cultura',
   'direitos civis',
-  'politica institucional',
+  'política institucional',
   'desenvolvimento regional',
 ] as const;
 
@@ -91,20 +91,20 @@ function getResultadoBadge(resultado?: string | null) {
   const up = resultado.toUpperCase();
   if (up.includes('APROVAD')) {
     return (
-      <span className="inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-xs font-bold tracking-wider text-emerald-400">
+      <span className="inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-xs font-bold tracking-wider text-emerald-700 dark:text-emerald-300">
         APROVADA
       </span>
     );
   }
   if (up.includes('REJEITAD')) {
     return (
-      <span className="inline-flex items-center rounded-md bg-red-500/15 border border-red-500/30 px-2 py-0.5 text-xs font-bold tracking-wider text-red-400">
+      <span className="inline-flex items-center rounded-md bg-red-500/15 border border-red-500/30 px-2 py-0.5 text-xs font-bold tracking-wider text-red-700 dark:text-red-300">
         REJEITADA
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-md bg-slate-700 border border-slate-600 px-2 py-0.5 text-xs font-bold tracking-wider text-slate-300">
+    <span className="inline-flex items-center rounded-md bg-muted border border-border px-2 py-0.5 text-xs font-bold tracking-wider text-card-foreground">
       {resultado.toUpperCase()}
     </span>
   );
@@ -116,8 +116,8 @@ function CasaBadge({ casa }: { casa: string }) {
     <span
       className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-semibold tracking-wide ${
         isCamara
-          ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
-          : 'bg-violet-500/10 border-violet-500/30 text-violet-300'
+          ? 'bg-sky-500/10 border-ring/30 text-sky-700 dark:text-sky-300'
+          : 'bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300'
       }`}
     >
       {isCamara ? 'CÂMARA' : 'SENADO'}
@@ -164,26 +164,26 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
 
   const getVotoBadge = (tipo: string) => {
     const map: Record<string, { label: string; cls: string }> = {
-      SIM: { label: 'Sim', cls: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' },
-      NAO: { label: 'Não', cls: 'bg-red-500/15 border-red-500/30 text-red-400' },
+      SIM: { label: 'Sim', cls: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300' },
+      NAO: { label: 'Não', cls: 'bg-red-500/15 border-red-500/30 text-red-700 dark:text-red-300' },
       ABSTENCAO: { label: 'Abstenção', cls: 'bg-amber-500/15 border-amber-500/30 text-amber-300' },
       VOTOU: { label: 'Votou (sigilo)', cls: 'bg-teal-500/15 border-teal-500/30 text-teal-300' },
       OBSTRUCAO: { label: 'Obstrução', cls: 'bg-orange-500/15 border-orange-500/30 text-orange-300' },
-      AUSENTE: { label: 'Ausente', cls: 'bg-slate-700 border-slate-600 text-slate-300' },
-      LICENCA: { label: 'Licença', cls: 'bg-slate-700 border-slate-600 text-slate-300' },
-      MISSAO: { label: 'Missão', cls: 'bg-slate-700 border-slate-600 text-slate-300' },
+      AUSENTE: { label: 'Ausente', cls: 'bg-muted border-border text-card-foreground' },
+      LICENCA: { label: 'Licença', cls: 'bg-muted border-border text-card-foreground' },
+      MISSAO: { label: 'Missão', cls: 'bg-muted border-border text-card-foreground' },
     };
-    const c = map[tipo] || { label: tipo, cls: 'bg-slate-700 border-slate-600 text-slate-300' };
+    const c = map[tipo] || { label: tipo, cls: 'bg-muted border-border text-card-foreground' };
     return <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${c.cls}`}>{c.label}</span>;
   };
 
   return (
-    <div className="mt-4 border-t border-slate-800 pt-4">
+    <div className="mt-4 border-t border-border pt-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-          <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400">Quem votou como</h5>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Quem votou como</h3>
           <div className="relative w-full sm:w-64">
-            <svg className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -191,7 +191,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
               onChange={(e) => setBuscaParlamentar(e.target.value)}
               placeholder="Buscar parlamentar"
               aria-label="Buscar parlamentar"
-              className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 pl-8 pr-3 text-base sm:text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="h-9 w-full rounded-lg border border-border bg-muted pl-8 pr-3 text-base sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
         </div>
@@ -199,7 +199,8 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setFiltroVoto(null)}
-            className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${!filtroVoto ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+            aria-pressed={!filtroVoto}
+            className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${!filtroVoto ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:bg-muted'}`}
           >
             Todos {total > 0 && `· ${total}`}
           </button>
@@ -207,7 +208,8 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
             <button
               key={p.tipo}
               onClick={() => setFiltroVoto(filtroVoto === p.tipo ? null : p.tipo)}
-              className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${filtroVoto === p.tipo ? 'bg-white text-slate-900 border-white' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+              aria-pressed={filtroVoto === p.tipo}
+              className={`inline-flex min-h-10 items-center rounded-full px-2.5 text-xs font-medium border transition-colors ${filtroVoto === p.tipo ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:bg-muted'}`}
             >
               {p.tipo} · {p.total}
             </button>
@@ -217,19 +219,19 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
 
       <div className="mt-3 space-y-1.5">
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg bg-slate-800" />)
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg bg-muted" />)
         ) : votos.length === 0 ? (
           buscaParlamentar || filtroVoto ? (
-            <p className="py-8 text-center text-sm text-slate-400">Nenhum voto encontrado com esse filtro.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum voto encontrado com esse filtro.</p>
           ) : isNominal ? (
             <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 px-4 py-6 text-center">
               <p className="text-sm font-medium text-amber-300">Votação nominal sem votos no banco — sincronização pendente</p>
               <p className="mt-1 text-xs text-amber-200/70">Esta votação tem placar na descrição mas os votos individuais ainda não foram importados. Tente novamente em alguns minutos.</p>
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-800 bg-slate-900 px-4 py-6 text-center">
-              <p className="text-sm font-medium text-slate-400">Votos individuais não disponíveis</p>
-              <p className="mt-1 text-xs text-slate-400">A fonte oficial da Câmara não publicou os votos nominais desta votação. O placar está na descrição acima.</p>
+            <div className="rounded-lg border border-border bg-card px-4 py-6 text-center">
+              <p className="text-sm font-medium text-muted-foreground">Votos individuais não disponíveis</p>
+              <p className="mt-1 text-xs text-muted-foreground">A fonte oficial da Câmara não publicou os votos nominais desta votação. O placar está na descrição acima.</p>
             </div>
           )
         ) : (
@@ -237,18 +239,18 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
             <Link
               key={`${v.parlamentar.id}-${v.tipo}`}
               href={`/parlamentares/${v.parlamentar.id}/votacoes`}
-              className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-2.5 transition-colors hover:border-slate-700 hover:bg-slate-800"
+              className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2.5 transition-colors hover:border-border hover:bg-muted"
             >
-              <div className="size-8 shrink-0 overflow-hidden rounded-full bg-slate-700">
+              <div className="size-8 shrink-0 overflow-hidden rounded-full bg-muted">
                 {fotoRemotaValida(v.parlamentar.fotoUrl) ? (
                   <Image src={v.parlamentar.fotoUrl} alt={v.parlamentar.nome} width={32} height={32} className="size-8 object-cover" />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-400">{v.parlamentar.nome.slice(0,2).toUpperCase()}</span>
+                  <span className="flex h-full w-full items-center justify-center text-xs font-bold text-muted-foreground">{v.parlamentar.nome.slice(0,2).toUpperCase()}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-100">{v.parlamentar.nome}</p>
-                <p className="text-xs text-slate-400">{v.parlamentar.partido.sigla} · {v.parlamentar.uf.sigla}</p>
+                <p className="truncate text-sm font-medium text-foreground">{v.parlamentar.nome}</p>
+                <p className="text-xs text-muted-foreground">{v.parlamentar.partido.sigla} · {v.parlamentar.uf.sigla}</p>
               </div>
               {getVotoBadge(v.tipo)}
             </Link>
@@ -258,7 +260,7 @@ function VotosDaVotacao({ votacaoId, isNominal }: { votacaoId: string; isNominal
 
       {totalPages > 1 && (
         <div className="mt-3 flex justify-center">
-          <PaginacaoNumerica page={page} totalPages={totalPages} total={total} onChange={(p) => load(p, filtroVoto, debouncedBusca)} />
+          <PaginacaoNumerica page={page} totalPages={totalPages} total={total} ariaLabel="Paginação dos votos desta votação" onChange={(p) => load(p, filtroVoto, debouncedBusca)} />
         </div>
       )}
     </div>
@@ -327,22 +329,22 @@ export function VotacoesPageClient() {
   const temFiltro = !!(debouncedQ || casa || ano || resultado || tema);
 
   return (
-    <div className="dark [color-scheme:dark] min-h-dvh bg-slate-950">
+    <div className="min-h-dvh bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Cabeçalho */}
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">Votações</h1>
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-400 max-w-2xl">
-            Todas as votações nominais da Câmara e do Senado. Pesquise por PL, filtre por Casa, ano, resultado e tema.
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Votações</h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground max-w-2xl">
+            Votações nominais da Câmara e do Senado. Pesquise por PL e filtre por Casa, ano, resultado e tema.
             Toque em uma votação para ver quem votou como.
           </p>
         </div>
 
         {/* Filtros — mobile-first */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-3.5 sm:p-4 mb-6">
+        <div className="rounded-xl border border-border bg-card p-3.5 sm:p-4 mb-6">
           {/* Linha 1: busca */}
           <div className="relative">
-            <svg className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -350,13 +352,13 @@ export function VotacoesPageClient() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar por PL, PEC ou palavra-chave"
               aria-label="Buscar votação por número ou palavra-chave"
-              className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-10 pr-3 text-base sm:text-sm text-white placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="h-10 w-full rounded-lg border border-border bg-muted pl-10 pr-3 text-base sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
           {/* Linha 2: chips Casa + Resultado */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 shrink-0">Casa</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Casa</span>
             {[
               { label: 'Todos', value: '' },
               { label: 'Câmara', value: 'CAMARA' },
@@ -365,13 +367,14 @@ export function VotacoesPageClient() {
               <button
                 key={opt.value || 'todos-casa'}
                 onClick={() => setCasa(opt.value)}
-                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${casa === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                aria-pressed={casa === opt.value}
+                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${casa === opt.value ? 'bg-foreground text-background border-foreground shadow-sm' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
               >
                 {opt.label}
               </button>
             ))}
-            <span className="hidden sm:inline h-4 w-px bg-slate-800 mx-1" aria-hidden="true" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 shrink-0">Resultado</span>
+            <span className="hidden sm:inline h-4 w-px bg-muted mx-1" aria-hidden="true" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Resultado</span>
             {[
               { label: 'Todos', value: '' },
               { label: 'Aprovada', value: 'APROVADA' },
@@ -380,7 +383,8 @@ export function VotacoesPageClient() {
               <button
                 key={opt.value || 'todos-res'}
                 onClick={() => setResultado(opt.value)}
-                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${resultado === opt.value ? 'bg-white text-slate-900 border-white shadow-sm' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                aria-pressed={resultado === opt.value}
+                className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-medium border transition-colors ${resultado === opt.value ? 'bg-foreground text-background border-foreground shadow-sm' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'}`}
               >
                 {opt.label}
               </button>
@@ -394,7 +398,7 @@ export function VotacoesPageClient() {
                 value={ano}
                 onChange={(e) => setAno(e.target.value)}
                 aria-label="Filtrar por ano"
-                className="h-10 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 sm:h-9 sm:w-32 sm:flex-none sm:text-sm"
+                className="h-10 w-full min-w-0 rounded-lg border border-border bg-muted px-3 text-base text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:h-9 sm:w-32 sm:flex-none sm:text-sm"
               >
                 <option value="">Todos os anos</option>
                 {ANOS.map((a) => <option key={a} value={String(a)}>{a}</option>)}
@@ -403,16 +407,20 @@ export function VotacoesPageClient() {
                 value={tema}
                 onChange={(e) => setTema(e.target.value)}
                 aria-label="Filtrar por tema"
-                className="h-10 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-800 px-3 text-base text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 sm:h-9 sm:flex-1 sm:text-sm capitalize"
+                className="h-10 w-full min-w-0 rounded-lg border border-border bg-muted px-3 text-base text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:h-9 sm:flex-1 sm:text-sm"
               >
                 <option value="">Todos os temas</option>
-                {TEMAS.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
+                {TEMAS.map((t) => (
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
               </select>
             </div>
             {temFiltro && (
               <button
                 onClick={limparFiltros}
-                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-slate-700 px-3 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors sm:shrink-0"
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors sm:shrink-0"
               >
                 <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 Limpar filtros
@@ -421,24 +429,26 @@ export function VotacoesPageClient() {
           </div>
 
           {total > 0 && !isLoading && (
-            <p className="mt-3 text-xs text-slate-400">{total.toLocaleString('pt-BR')} votações encontradas</p>
+            <p className="mt-3 text-xs text-muted-foreground">{total.toLocaleString('pt-BR')} votações encontradas</p>
           )}
         </div>
 
+        <h2 className="sr-only">Lista de votações</h2>
+
         {/* Lista */}
         {error ? (
-          <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-8 text-center">
-            <p className="text-sm text-red-300">{error}</p>
-            <button onClick={() => loadData(page)} className="mt-3 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800">Tentar novamente</button>
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+            <button onClick={() => loadData(page)} className="mt-3 rounded-lg border border-border px-4 py-2 text-sm text-card-foreground hover:bg-muted">Tentar novamente</button>
           </div>
         ) : isLoading && votacoes.length === 0 ? (
           <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-slate-800" />)}
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-muted" />)}
           </div>
         ) : votacoes.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-800 py-14 text-center">
-            <p className="text-sm font-medium text-slate-300">Nenhuma votação encontrada</p>
-            <p className="mt-1 text-sm text-slate-400">Ajuste os filtros ou a busca e tente novamente.</p>
+          <div className="rounded-xl border border-dashed border-border py-14 text-center">
+            <p className="text-sm font-medium text-card-foreground">Nenhuma votação encontrada</p>
+            <p className="mt-1 text-sm text-muted-foreground">Ajuste os filtros ou a busca e tente novamente.</p>
           </div>
         ) : (
           <ol className="space-y-3" aria-label="Votações">
@@ -451,32 +461,32 @@ export function VotacoesPageClient() {
                 <li
                   key={v.id}
                   style={{ animationDelay: `${idx * 40}ms` }}
-                  className="animate-fade-in overflow-hidden rounded-xl border border-slate-800 bg-slate-900"
+                  className="animate-fade-in overflow-hidden rounded-xl border border-border bg-card"
                 >
                   <button
                     type="button"
                     onClick={() => alternar(v.id)}
                     aria-expanded={aberta}
                     aria-controls={`votacao-${v.id}`}
-                    className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-inset"
+                    className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                   >
                     {/* Data — mobile: top, desktop: coluna */}
-                    <span className="hidden sm:block w-24 shrink-0 text-xs font-medium text-slate-400 whitespace-nowrap mt-0.5">
+                    <span className="hidden sm:block w-24 shrink-0 text-xs font-medium text-muted-foreground whitespace-nowrap mt-0.5">
                       {formatDate(v.data)}
                     </span>
 
                     <span className="flex-1 min-w-0">
                       <span className="flex flex-wrap items-center gap-1.5 sm:hidden mb-1.5">
-                        <span className="text-xs text-slate-400">{formatDate(v.data)}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(v.data)}</span>
                         <CasaBadge casa={v.casa} />
                       </span>
                       {info.tipo && (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 mb-1">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-accent mb-1">
                           <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                           {info.texto || info.tipo} {info.numero && `nº ${info.numero}`}
                         </span>
                       )}
-                      <span className="block text-sm font-medium leading-snug text-slate-100">
+                      <span className="block text-sm font-medium leading-snug text-foreground">
                         {resumo}
                       </span>
                       <span className="mt-1.5 hidden sm:inline-flex items-center gap-1.5 flex-wrap">
@@ -487,7 +497,7 @@ export function VotacoesPageClient() {
                           </span>
                         ))}
                         {v._count.votos > 0 && (
-                          <span className="text-xs text-slate-400">{v._count.votos} votos</span>
+                          <span className="text-xs text-muted-foreground">{v._count.votos} votos</span>
                         )}
                       </span>
                       {/* Mobile: temas + votos count inline */}
@@ -510,10 +520,10 @@ export function VotacoesPageClient() {
                       {getResultadoBadge(v.resultado)}
                     </span>
 
-                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-400'}`} aria-hidden="true">
+                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
-                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-700 text-slate-400'}`} aria-hidden="true">
+                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
                   </button>
@@ -521,22 +531,22 @@ export function VotacoesPageClient() {
                   {/* Expand — grid-rows retrátil */}
                   <div className={`grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${aberta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                     <div className="min-h-0 overflow-hidden">
-                      <div id={`votacao-${v.id}`} className="border-t border-slate-800 bg-slate-900 px-4 py-5">
-                        <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">O que foi votado</h4>
-                          <p className="text-sm leading-relaxed text-slate-200">{v.ementa || v.descricao}</p>
+                      <div id={`votacao-${v.id}`} className="border-t border-border bg-card px-4 py-5">
+                        <div className="rounded-lg border border-border bg-muted/50 p-4">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">O que foi votado</h3>
+                          <p className="text-sm leading-relaxed text-foreground">{v.ementa || v.descricao}</p>
                           {v.descricao && v.descricao !== v.ementa && v.descricao.length > 12 && (
-                            <p className="mt-2 text-xs leading-relaxed text-slate-400">{v.descricao}</p>
+                            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{v.descricao}</p>
                           )}
                           <dl className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                            <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2">
-                              <dt className="text-xs uppercase tracking-wider text-slate-400">Data</dt><dd className="font-medium text-slate-200 mt-0.5">{formatDate(v.data)}</dd>
+                            <div className="rounded-md bg-card border border-border px-3 py-2">
+                              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Data</dt><dd className="font-medium text-foreground mt-0.5">{formatDate(v.data)}</dd>
                             </div>
-                            <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2">
-                              <dt className="text-xs uppercase tracking-wider text-slate-400">Casa</dt><dd className="font-medium text-slate-200 mt-0.5">{v.casa === 'CAMARA' ? 'Câmara' : 'Senado'}</dd>
+                            <div className="rounded-md bg-card border border-border px-3 py-2">
+                              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Casa</dt><dd className="font-medium text-foreground mt-0.5">{v.casa === 'CAMARA' ? 'Câmara' : 'Senado'}</dd>
                             </div>
-                            <div className="rounded-md bg-slate-900 border border-slate-800 px-3 py-2 col-span-2 sm:col-span-1">
-                              <dt className="text-xs uppercase tracking-wider text-slate-400">Resultado</dt><dd className="font-medium text-slate-200 mt-0.5">{v.resultado || '—'}</dd>
+                            <div className="rounded-md bg-card border border-border px-3 py-2 col-span-2 sm:col-span-1">
+                              <dt className="text-xs uppercase tracking-wider text-muted-foreground">Resultado</dt><dd className="font-medium text-foreground mt-0.5">{v.resultado || '—'}</dd>
                             </div>
                           </dl>
                         </div>
@@ -551,12 +561,12 @@ export function VotacoesPageClient() {
         )}
 
         <div className="mt-2 flex justify-center">
-          <div className="[&>nav]:py-2 [&_button]:border-slate-700 [&_button]:bg-slate-900 [&_button]:text-slate-300 [&_button:hover]:bg-slate-800 [&_p]:text-slate-400">
-            <PaginacaoNumerica page={page} totalPages={totalPages} total={total} onChange={(p) => { loadData(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+          <div>
+            <PaginacaoNumerica page={page} totalPages={totalPages} total={total} ariaLabel="Paginação da lista de votações" onChange={(p) => { loadData(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
           </div>
         </div>
 
-        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
           Dados oficiais da Câmara e do Senado · Sincronização diária
         </p>

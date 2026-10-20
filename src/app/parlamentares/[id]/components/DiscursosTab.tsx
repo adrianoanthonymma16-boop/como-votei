@@ -46,7 +46,7 @@ export function DiscursosTab({ parlamentarId, casa }: DiscursosTabProps) {
   // Os anos com dados definem o ano padrão (prioriza o corrente) antes de carregar a lista.
   useEffect(() => {
     let ativo = true;
-    fetch(`/api/parlamentares/${parlamentarId}/anos`, { cache: 'no-store' })
+    fetch(`/api/parlamentares/${parlamentarId}/anos?fonte=discursos`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!ativo) return;

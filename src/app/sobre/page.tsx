@@ -163,7 +163,7 @@ export default function SobrePage() {
       </section>
 
       {/* Fontes oficiais */}
-      <section className="py-16 sm:py-20 bg-card border-y border-border">
+      <section id="metodologia" className="scroll-mt-20 py-16 sm:py-20 bg-card border-y border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold">Fontes de dados oficiais</h2>

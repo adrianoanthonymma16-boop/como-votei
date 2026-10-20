@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
+import { PartidoBadge } from '@/components/PartidoBadge';
 import { PresencaCard } from '@/components/PresencaCard';
 import { NotaPeriodo } from '@/components/NotaPeriodo';
 
@@ -115,16 +116,12 @@ export function ParlamentarHeader({
                 {parlamentar.nome}
               </h1>
               {parlamentar.partido && (
-                <Badge
-                  variant="outline"
-                  className="text-xs sm:text-sm shrink-0"
-                  style={{
-                    borderColor: parlamentar.partido.cor || undefined,
-                    color: parlamentar.partido.cor || undefined,
-                  }}
-                >
-                  {parlamentar.partido.sigla}
-                </Badge>
+                <PartidoBadge
+                  sigla={parlamentar.partido.sigla}
+                  cor={parlamentar.partido.cor}
+                  nome={parlamentar.partido.nome}
+                  className="text-xs sm:text-sm"
+                />
               )}
               {parlamentar.uf && (
                 <Badge variant="secondary" className="text-xs sm:text-sm shrink-0">

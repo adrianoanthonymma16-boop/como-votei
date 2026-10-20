@@ -232,7 +232,7 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
                 <span className="text-muted-foreground">Total de sessões: </span>
                 <span className="font-medium">{frequencia.totalSessoes}</span>
                 <span className="text-muted-foreground ml-4">Taxa de presença: </span>
-                <span className="font-medium text-green-700">{frequencia.taxaPresenca?.toFixed(1)}%</span>
+                <span className="font-medium text-green-700 dark:text-green-400">{frequencia.taxaPresenca?.toFixed(1)}%</span>
               </div>
             </>
           )}
@@ -287,9 +287,9 @@ function StatCard({
   subtitle?: string;
 }) {
   const trendColors = {
-    positive: 'text-green-600',
-    neutral: 'text-yellow-600',
-    negative: 'text-red-600',
+    positive: 'text-green-700 dark:text-green-400',
+    neutral: 'text-yellow-700 dark:text-yellow-400',
+    negative: 'text-red-700 dark:text-red-400',
   };
 
   const icones = {

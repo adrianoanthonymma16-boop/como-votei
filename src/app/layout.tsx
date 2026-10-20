@@ -71,6 +71,12 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${atkinson.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh bg-background text-foreground font-sans antialiased">
         <ThemeProvider>
+          <a
+            href="#conteudo"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-accent-foreground"
+          >
+            Pular para o conteúdo
+          </a>
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="max-w-7xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
               <Link href="/" className="flex items-center gap-2" aria-label="Como Votei — Início">
@@ -83,7 +89,7 @@ export default function RootLayout({
             </div>
             <MobileNav />
           </header>
-          <main className="min-h-[calc(100dvh-3.5rem)]">
+          <main id="conteudo" tabIndex={-1} className="min-h-[calc(100dvh-3.5rem)] focus:outline-none">
             {children}
           </main>
         </ThemeProvider>
