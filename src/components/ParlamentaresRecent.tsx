@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { ParlamentarCard } from '@/components/ParlamentarCard';
+import { useApiResource } from '@/lib/use-api-resource';
 import { ParlamentarCardSkeleton } from '@/components/ParlamentarCardSkeleton';
 import type { Parlamentar } from '@prisma/client';
 
@@ -10,30 +10,10 @@ interface ParlamentaresRecentProps {
 }
 
 export function ParlamentaresRecent({ limit = 10 }: ParlamentaresRecentProps) {
-  const [parlamentares, setParlamentares] = useState<Parlamentar[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    async function fetchData() {
-      try {
-        // Sempre busca a versão mais recente na base (sem cache).
-        const response = await fetch(`/api/parlamentares?sort=recent&limit=${limit}`, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Erro ao carregar');
-        const data = await response.json();
-        if (ativo) setParlamentares(data.data);
-      } catch (err) {
-        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    }
-    fetchData();
-    return () => {
-      ativo = false;
-    };
-  }, [limit]);
+  const { data, isLoading, error } = useApiResource<{ data: Parlamentar[] }>(
+    `/api/parlamentares?sort=recent&limit=${limit}`
+  );
+  const parlamentares = data?.data ?? [];
 
   if (error) {
     return (

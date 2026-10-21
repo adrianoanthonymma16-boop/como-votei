@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FonteOficial } from '@/components/FonteOficial';
 import { FiltroAno } from '@/components/FiltroAno';
+import { useAnosDisponiveis, useApiResource } from '@/lib/use-api-resource';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import {
   FATOR_COAUTORIA_POR_GRUPO,
   PESO_APRESENTACAO,
@@ -40,63 +40,14 @@ interface ProdutividadeTabProps {
 const ORDEM_GRUPOS: GrupoTipoProposicao[] = ['PEC', 'PLP', 'PL', 'PDL_PRC', 'REQ', 'INC', 'OUTRO'];
 
 export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps) {
-  const [data, setData] = useState<ProdutividadeData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [ano, setAno] = useState('');
-  const [anos, setAnos] = useState<number[]>([]);
-  const [anosProntos, setAnosProntos] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+  const { anos, ano, setAno, pronto } = useAnosDisponiveis(parlamentarId);
 
-  // Os anos com dados definem o ano padrão (prioriza o corrente) antes de carregar.
-  useEffect(() => {
-    let ativo = true;
-    fetch(`/api/parlamentares/${parlamentarId}/anos`, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!ativo) return;
-        const lista: number[] = Array.isArray(d?.anos) ? d.anos : [];
-        setAnos(lista);
-        const padrao = escolherAnoPadrao(lista);
-        if (padrao !== undefined) setAno(String(padrao));
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (ativo) setAnosProntos(true);
-      });
-    return () => {
-      ativo = false;
-    };
-  }, [parlamentarId]);
+  const url = useMemo(
+    () => `/api/parlamentares/${parlamentarId}/produtividade${ano ? `?ano=${ano}` : ''}`,
+    [parlamentarId, ano]
+  );
 
-  useEffect(() => {
-    if (!anosProntos) return;
-    const controller = new AbortController();
-    let ativo = true;
-
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const url = `/api/parlamentares/${parlamentarId}/produtividade${ano ? `?ano=${ano}` : ''}`;
-        const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
-        if (!response.ok) throw new Error('Erro ao carregar produtividade');
-        const result = await response.json();
-        if (!ativo) return;
-        setData(result);
-      } catch (err) {
-        if ((err as Error).name === 'AbortError' || !ativo) return;
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    })();
-
-    return () => {
-      ativo = false;
-      controller.abort();
-    };
-  }, [parlamentarId, ano, anosProntos, reloadKey]);
+  const { data, isLoading, error, reload } = useApiResource<ProdutividadeData>(pronto ? url : null);
 
   const handleAno = (novoAno: string) => {
     setAno(novoAno);
@@ -106,7 +57,7 @@ export function ProdutividadeTab({ parlamentarId, casa }: ProdutividadeTabProps)
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+        <Button variant="outline" size="sm" onClick={() => reload}>
           Tentar novamente
         </Button>
       </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatNumber } from '@/lib/utils';
+import { useApiResource } from '@/lib/use-api-resource';
 
 type IconName = 'pessoas' | 'votacao' | 'discurso' | 'proposicao';
 
@@ -58,30 +59,8 @@ interface StatsData {
 type CardId = 'parlamentares' | 'votacoes' | 'discursos' | 'proposicoes';
 
 export function StatsCards() {
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: stats, isLoading, error } = useApiResource<StatsData>('/api/stats/visao-geral');
   const [aberto, setAberto] = useState<CardId | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    async function fetchStats() {
-      try {
-        const response = await fetch('/api/stats/visao-geral', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Falha ao carregar estatísticas');
-        const data = await response.json();
-        if (ativo) setStats(data);
-      } catch (err) {
-        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    }
-    fetchStats();
-    return () => {
-      ativo = false;
-    };
-  }, []);
 
   if (isLoading) {
     return (

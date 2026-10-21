@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useApiResource } from '@/lib/use-api-resource';
 
 interface FrequenciaAno {
   ano: number;
@@ -23,32 +24,11 @@ function pct(value: number, total: number): number {
 }
 
 export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
-  const [dados, setDados] = useState<FrequenciaResponse | null>(null);
-  const [ano, setAno] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let ativo = true;
-    async function carregar() {
-      try {
-        const response = await fetch(`/api/parlamentares/${parlamentarId}/frequencia`, {
-          cache: 'no-store',
-        });
-        if (!response.ok) return;
-        const data: FrequenciaResponse = await response.json();
-        if (!ativo) return;
-        setDados(data);
-        setAno(data.anos[0] ?? null);
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    }
-    carregar();
-    return () => {
-      ativo = false;
-    };
-  }, [parlamentarId]);
-
+  const { data: dados, isLoading } = useApiResource<FrequenciaResponse>(
+    `/api/parlamentares/${parlamentarId}/frequencia`
+  );
+  const [anoEscolhido, setAnoEscolhido] = useState<number | null>(null);
+  const ano = anoEscolhido ?? dados?.anos[0] ?? null;
   const atual = dados?.porAno.find((r) => r.ano === ano) ?? null;
 
   return (
@@ -60,7 +40,7 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
             <span className="sr-only">Filtrar presença por ano</span>
             <select
               value={ano ?? ''}
-              onChange={(e) => setAno(Number(e.target.value))}
+              onChange={(e) => setAnoEscolhido(Number(e.target.value))}
               aria-label="Filtrar presença por ano"
               className="h-9 rounded-md border border-border bg-background px-2 text-base sm:text-xs text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >

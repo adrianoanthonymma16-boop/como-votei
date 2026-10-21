@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { ParlamentarCard, type ProdutividadeResumo } from '@/components/ParlamentarCard';
 import { ParlamentarCardSkeleton } from '@/components/ParlamentarCardSkeleton';
 import { Badge } from '@/components/ui/Badge';
 import { resumoProdutividade } from '@/lib/produtividade';
 import { anoCorrente } from '@/lib/ano-padrao';
+import { useApiResource } from '@/lib/use-api-resource';
 import type { Parlamentar } from '@prisma/client';
 
 interface ParlamentarComProdutividade extends Parlamentar {
@@ -44,32 +44,10 @@ const RANK_STYLE: Record<number, string> = {
 };
 
 export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
-  const [parlamentares, setParlamentares] = useState<ParlamentarComProdutividade[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    async function fetchData() {
-      try {
-        const ano = anoCorrente();
-        const response = await fetch(`/api/parlamentares?sort=produtivos&limit=${limit}&ano=${ano}`, {
-          cache: 'no-store',
-        });
-        if (!response.ok) throw new Error('Erro ao carregar parlamentares mais produtivos');
-        const data = await response.json();
-        if (ativo) setParlamentares(data.data.slice(0, limit));
-      } catch (err) {
-        if (ativo) setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    }
-    fetchData();
-    return () => {
-      ativo = false;
-    };
-  }, [limit]);
+  const { data, isLoading, error } = useApiResource<{ data: ParlamentarComProdutividade[] }>(
+    `/api/parlamentares?sort=produtivos&limit=${limit}&ano=${anoCorrente()}`
+  );
+  const parlamentares = data?.data.slice(0, limit) ?? [];
 
   if (error) {
     return (

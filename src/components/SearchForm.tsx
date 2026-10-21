@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select, SelectOption } from '@/components/ui/Select';
+import { useApiResource } from '@/lib/use-api-resource';
 
 interface PartidoItem {
   id: string;
@@ -25,21 +26,10 @@ export function SearchForm() {
   const [casa, setCasa] = useState('');
   const [partidoId, setPartidoId] = useState('');
   const [ufId, setUfId] = useState('');
-  const [partidos, setPartidos] = useState<PartidoItem[]>([]);
-  const [ufs, setUfs] = useState<UfItem[]>([]);
-
-  useEffect(() => {
-    let ativo = true;
-    async function carregar() {
-      const [resP, resU] = await Promise.all([fetch('/api/partidos'), fetch('/api/ufs')]);
-      if (ativo && resP.ok) setPartidos((await resP.json()).data ?? []);
-      if (ativo && resU.ok) setUfs((await resU.json()).data ?? []);
-    }
-    carregar().catch(() => undefined);
-    return () => {
-      ativo = false;
-    };
-  }, []);
+  const { data: partidosData } = useApiResource<{ data: PartidoItem[] }>('/api/partidos');
+  const { data: ufsData } = useApiResource<{ data: UfItem[] }>('/api/ufs');
+  const partidos = partidosData?.data ?? [];
+  const ufs = ufsData?.data ?? [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

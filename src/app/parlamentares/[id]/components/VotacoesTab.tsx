@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
 import { FonteOficial } from '@/components/FonteOficial';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, cn } from '@/lib/utils';
-import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { temaCor, classificarTemas, descreverTipoProposicao } from '@/lib/temas';
 import { FiltroAno } from '@/components/FiltroAno';
+import { useAnosDisponiveis, useApiResource } from '@/lib/use-api-resource';
 
 interface Votacao {
   id: string;
@@ -65,78 +65,30 @@ function gerarResumo(ementa?: string, descricao?: string): string {
 }
 
 export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
-  const [votacoes, setVotacoes] = useState<Votacao[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
-  const [ano, setAno] = useState('');
-  const [anos, setAnos] = useState<number[]>([]);
-  const [anosProntos, setAnosProntos] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+  const { anos, ano, setAno, pronto } = useAnosDisponiveis(parlamentarId, 'votos');
 
-  // Os anos com dados definem o ano padrão (prioriza o corrente) antes de carregar a lista.
-  useEffect(() => {
-    let ativo = true;
-    fetch(`/api/parlamentares/${parlamentarId}/anos?fonte=votos`, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!ativo) return;
-        const lista: number[] = Array.isArray(d?.anos) ? d.anos : [];
-        setAnos(lista);
-        const padrao = escolherAnoPadrao(lista);
-        if (padrao !== undefined) setAno(String(padrao));
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (ativo) setAnosProntos(true);
-      });
-    return () => {
-      ativo = false;
-    };
-  }, [parlamentarId]);
+  const listaUrl = useMemo(() => {
+    if (!pronto) return null;
+    const params = new URLSearchParams({ page: String(page), limit: String(PER_PAGE) });
+    if (ano) params.set('ano', ano);
+    return `/api/parlamentares/${parlamentarId}/votacoes?${params.toString()}`;
+  }, [parlamentarId, ano, page, pronto]);
 
-  useEffect(() => {
-    if (!anosProntos) return;
-    const controller = new AbortController();
-    let ativo = true;
+  const { data, isLoading, error, reload } = useApiResource<{
+    data: Votacao[];
+    total?: number;
+    totalPages?: number;
+    page?: number;
+  }>(listaUrl, { enabled: pronto });
 
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const params = new URLSearchParams({
-          page: String(page),
-          limit: String(PER_PAGE),
-        });
-        if (ano) params.set('ano', ano);
-        const response = await fetch(`/api/parlamentares/${parlamentarId}/votacoes?${params.toString()}`, {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error('Erro ao carregar votações');
-        const data = await response.json();
-        if (!ativo) return;
-        setVotacoes(data.data);
-        setTotal(data.total ?? data.data.length);
-        setTotalPages(data.totalPages ?? 1);
-        // A API clampa páginas órfãs — sincroniza a UI.
-        if (typeof data.page === 'number' && data.page !== page) setPage(data.page);
-      } catch (err) {
-        if ((err as Error).name === 'AbortError' || !ativo) return;
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    })();
-
-    return () => {
-      ativo = false;
-      controller.abort();
-    };
-  }, [parlamentarId, ano, page, anosProntos, reloadKey]);
+  const votacoes = data?.data ?? [];
+  const total = data?.total ?? votacoes.length;
+  const totalPages = data?.totalPages ?? 1;
+  const carregando = !pronto || isLoading;
+  // A API clampa páginas órfãs — exibe a página efetivamente servida.
+  const paginaAtual = data?.page ?? page;
 
   const handleAno = (novoAno: string) => {
     setAno(novoAno);
@@ -204,7 +156,7 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>
+        <Button variant="outline" size="sm" onClick={() => reload}>Tentar novamente</Button>
       </div>
     );
   }
@@ -219,13 +171,13 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
         <FiltroAno ano={ano} anos={anos} onChange={handleAno} />
       </div>
 
-      {ano && !isLoading && (
+      {ano && !carregando && (
         <p className="text-xs text-muted-foreground" aria-live="polite">
           {total} votação(ões) em {ano}
         </p>
       )}
 
-      {votacoes.length === 0 && !isLoading ? (
+      {votacoes.length === 0 && !carregando ? (
         <div className="rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
           Nenhuma votação encontrada para este parlamentar.
         </div>
@@ -381,7 +333,7 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
         </ol>
       )}
 
-      {isLoading && votacoes.length === 0 && (
+      {carregando && votacoes.length === 0 && (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
@@ -389,7 +341,7 @@ export function VotacoesTab({ parlamentarId, nome, casa }: VotacoesTabProps) {
         </div>
       )}
 
-      <PaginacaoNumerica page={page} totalPages={totalPages} total={total} onChange={handlePageChange} />
+      <PaginacaoNumerica page={paginaAtual} totalPages={totalPages} total={total} onChange={handlePageChange} />
 
       <FonteOficial casa={casa} />
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ParlamentaresList } from '@/components/ParlamentaresList';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PageBreadcrumb } from '@/components/PageBreadcrumb';
 import { cn, formatNumber } from '@/lib/utils';
 import { DEFAULT_PER_PAGE } from '@/lib/parlamentar-query';
+import { useApiResource } from '@/lib/use-api-resource';
 import type { ProdutividadeResumo } from '@/components/ParlamentarCard';
 
 type ParlamentarCompleto = import('@prisma/client').Parlamentar & {
@@ -46,8 +47,10 @@ export function ParlamentaresPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [partidos, setPartidos] = useState<PartidoItem[]>([]);
-  const [ufs, setUfs] = useState<UfItem[]>([]);
+  const { data: partidosData } = useApiResource<{ data: PartidoItem[] }>('/api/partidos');
+  const { data: ufsData } = useApiResource<{ data: UfItem[] }>('/api/ufs');
+  const partidos = partidosData?.data ?? [];
+  const ufs = ufsData?.data ?? [];
 
   const [query, setQuery] = useState(() => searchParams.get('search') ?? '');
   const [casa, setCasa] = useState(() => searchParams.get('casa') ?? '');
@@ -59,14 +62,7 @@ export function ParlamentaresPageClient() {
     return Number.isInteger(p) && p >= 1 ? p : 1;
   });
 
-  const [parlamentares, setParlamentares] = useState<ParlamentarCompleto[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-
-  const queryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const primeiroRenderRef = useRef(true);
 
   // Busca dispara apenas quando a digitação pausa.
   const buscar = useCallback(
@@ -84,36 +80,30 @@ export function ParlamentaresPageClient() {
     [casa, partidoId, ufId, sort, router]
   );
 
-  // Carrega os dados a partir da URL (única fonte de verdade).
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function load() {
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('limit', String(DEFAULT_PER_PAGE));
-        // Produtividade é por ano corrente — sempre envia ano explícito
-        if (params.get('sort') === 'produtivos' && !params.get('ano')) {
-          params.set('ano', String(anoCorrente()));
-        }
-        const res = await fetch(`/api/parlamentares?${params.toString()}`, { signal: controller.signal });
-        if (!res.ok) throw new Error('Falha ao carregar parlamentares');
-        const data = await res.json();
-        setParlamentares(data.data);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-        setPage(data.page);
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') console.error(err);
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
-      }
+  // A URL é a única fonte de verdade da lista.
+  const listaUrl = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('limit', String(DEFAULT_PER_PAGE));
+    // Produtividade é por ano corrente — sempre envia ano explícito
+    if (params.get('sort') === 'produtivos' && !params.get('ano')) {
+      params.set('ano', String(anoCorrente()));
     }
-
-    load();
-    return () => controller.abort();
+    return `/api/parlamentares?${params.toString()}`;
   }, [searchParams]);
+
+  const { data: lista, isLoading } = useApiResource<{
+    data: ParlamentarCompleto[];
+    total: number;
+    totalPages: number;
+    page: number;
+  }>(listaUrl);
+
+  const parlamentares = lista?.data ?? [];
+  const total = lista?.total ?? 0;
+  const totalPages = lista?.totalPages ?? 1;
+
+  // A API clampa páginas órfãs — exibe a página efetivamente servida.
+  const paginaAtual = lista?.page ?? page;
 
   // Sincroniza controles quando a URL muda por navegação (botão voltar, etc.).
   useEffect(() => {
@@ -128,33 +118,12 @@ export function ParlamentaresPageClient() {
 
   // Debounce do campo de busca: quando a digitação pausa, navega.
   useEffect(() => {
-    if (primeiroRenderRef.current) {
-      primeiroRenderRef.current = false;
-      return;
-    }
-    if (queryDebounceRef.current) clearTimeout(queryDebounceRef.current);
-    queryDebounceRef.current = setTimeout(() => {
-      buscar(1, query);
-    }, 350);
-    return () => {
-      if (queryDebounceRef.current) clearTimeout(queryDebounceRef.current);
-    };
+    const queryDaUrl = searchParams.get('search') ?? '';
+    if (query === queryDaUrl) return;
+    const timer = setTimeout(() => buscar(1, query), 350);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  // Carrega listas auxiliares (partidos e UFs) uma única vez.
-  useEffect(() => {
-    let ativo = true;
-    async function carregarAux() {
-      const [resP, resU] = await Promise.all([fetch('/api/partidos'), fetch('/api/ufs')]);
-      if (ativo && resP.ok) setPartidos((await resP.json()).data ?? []);
-      if (ativo && resU.ok) setUfs((await resU.json()).data ?? []);
-    }
-    carregarAux().catch(() => undefined);
-    return () => {
-      ativo = false;
-    };
-  }, []);
+  }, [query, searchParams]);
 
   const irParaPagina = (p: number) => {
     if (p === page) return;
@@ -312,7 +281,7 @@ export function ParlamentaresPageClient() {
       <ParlamentaresList parlamentares={parlamentares} isLoading={isLoading} total={total} />
 
       <PaginacaoNumerica
-        page={page}
+        page={paginaAtual}
         totalPages={totalPages}
         total={total}
         onChange={irParaPagina}

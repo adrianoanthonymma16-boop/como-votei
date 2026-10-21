@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PaginacaoNumerica } from '@/components/ui/PaginacaoNumerica';
@@ -8,8 +8,8 @@ import { FonteOficial } from '@/components/FonteOficial';
 import { FiltroAno } from '@/components/FiltroAno';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate } from '@/lib/utils';
-import { escolherAnoPadrao } from '@/lib/ano-padrao';
 import { descreverTipoProposicao } from '@/lib/temas';
+import { useAnosDisponiveis, useApiResource } from '@/lib/use-api-resource';
 
 interface Proposicao {
   id: string;
@@ -44,90 +44,37 @@ const CORES_TIPO: Record<string, string> = {
 const PER_PAGE = 10;
 
 export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
-  const [proposicoes, setProposicoes] = useState<Proposicao[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   // '' = todas | 'true' = aprovadas (SANCIONADA/APROVADA_*) | 'false' = não aprovadas
   const [aprovada, setAprovada] = useState('');
   const [tema, setTema] = useState('');
-  const [ano, setAno] = useState('');
-  const [anos, setAnos] = useState<number[]>([]);
-  const [anosProntos, setAnosProntos] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [temas, setTemas] = useState<Array<{ tema: string; total: number }>>([]);
+  const { anos, ano, setAno, pronto } = useAnosDisponiveis(parlamentarId, 'proposicoes');
 
-  // Os anos com dados definem o ano padrão (prioriza o corrente) antes de carregar a lista.
-  useEffect(() => {
-    let ativo = true;
-    fetch(`/api/parlamentares/${parlamentarId}/anos?fonte=proposicoes`, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!ativo) return;
-        const lista: number[] = Array.isArray(d?.anos) ? d.anos : [];
-        setAnos(lista);
-        const padrao = escolherAnoPadrao(lista);
-        if (padrao !== undefined) setAno(String(padrao));
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (ativo) setAnosProntos(true);
-      });
-    return () => {
-      ativo = false;
-    };
-  }, [parlamentarId]);
+  const listaUrl = useMemo(() => {
+    if (!pronto) return null;
+    const params = new URLSearchParams({ page: String(page), limit: String(PER_PAGE) });
+    if (aprovada) params.set('aprovada', aprovada);
+    if (tema) params.set('tema', tema);
+    if (ano) params.set('ano', ano);
+    return `/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`;
+  }, [parlamentarId, aprovada, tema, ano, page, pronto]);
 
-  useEffect(() => {
-    if (!anosProntos) return;
-    const controller = new AbortController();
-    let ativo = true;
+  const { data, isLoading, error, reload } = useApiResource<{
+    data: Proposicao[];
+    total?: number;
+    totalPages?: number;
+    page?: number;
+    temas?: Array<{ tema: string; total: number }>;
+  }>(listaUrl, { enabled: pronto });
 
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const params = new URLSearchParams({
-          page: String(page),
-          limit: String(PER_PAGE),
-        });
-        if (aprovada) params.set('aprovada', aprovada);
-        if (tema) params.set('tema', tema);
-        if (ano) params.set('ano', ano);
-        const response = await fetch(`/api/parlamentares/${parlamentarId}/proposicoes?${params.toString()}`, {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error('Erro ao carregar proposições');
-        const data = await response.json();
-        if (!ativo) return;
-        setProposicoes(data.data);
-        setTotal(data.total ?? data.data.length);
-        setTotalPages(data.totalPages ?? 1);
-        if (Array.isArray(data.temas)) setTemas(data.temas);
-        // A API clampa páginas órfãs — sincroniza a UI.
-        if (typeof data.page === 'number' && data.page !== page) setPage(data.page);
-      } catch (err) {
-        if ((err as Error).name === 'AbortError' || !ativo) return;
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        if (ativo) setIsLoading(false);
-      }
-    })();
-
-    return () => {
-      ativo = false;
-      controller.abort();
-    };
-  }, [parlamentarId, aprovada, tema, ano, page, anosProntos, reloadKey]);
-
-  const handlePageChange = (p: number) => {
-    setPage(p);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const proposicoes = data?.data ?? [];
+  const temas = data?.temas ?? [];
+  const total = data?.total ?? proposicoes.length;
+  const totalPages = data?.totalPages ?? 1;
+  const carregando = !pronto || isLoading;
+  // A API clampa páginas órfãs — exibe a página efetivamente servida.
+  const paginaAtual = data?.page ?? page;
 
   const handleFiltro = (novaAprovada: string, novoTema: string, novoAno: string) => {
     setAprovada(novaAprovada);
@@ -138,6 +85,11 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
   };
 
   const filtrosAtivos = aprovada !== '' || tema !== '' || ano !== '';
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const alternar = (id: string) =>
     setAbertas((prev) => {
@@ -179,7 +131,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
     return (
       <div className="text-center py-8">
         <p className="text-destructive mb-4">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => setReloadKey((k) => k + 1)}>Tentar novamente</Button>
+        <Button variant="outline" size="sm" onClick={() => reload}>Tentar novamente</Button>
       </div>
     );
   }
@@ -233,7 +185,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         )}
       </div>
 
-      {filtrosAtivos && !isLoading && (
+      {filtrosAtivos && !carregando && (
         <p className="text-xs text-muted-foreground" aria-live="polite">
           {total} proposição(ões) encontrada(s)
           {ano && ` · ano ${ano}`}
@@ -243,7 +195,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         </p>
       )}
 
-      {proposicoes.length === 0 && !isLoading ? (
+      {proposicoes.length === 0 && !carregando ? (
         <div className="rounded-xl border border-dashed border-border py-14 text-center text-muted-foreground">
           Nenhuma proposição encontrada para este parlamentar.
         </div>
@@ -342,7 +294,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         </ol>
       )}
 
-      {isLoading && proposicoes.length === 0 && (
+      {carregando && proposicoes.length === 0 && (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
@@ -350,7 +302,7 @@ export function ProposicoesTab({ parlamentarId, casa }: ProposicoesTabProps) {
         </div>
       )}
 
-      <PaginacaoNumerica page={page} totalPages={totalPages} total={total} onChange={handlePageChange} />
+      <PaginacaoNumerica page={paginaAtual} totalPages={totalPages} total={total} onChange={handlePageChange} />
 
       <FonteOficial casa={casa} />
     </div>
