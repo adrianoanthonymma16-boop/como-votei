@@ -12,7 +12,6 @@ export function LogoMark({ className }: { className?: string }) {
     <svg
       viewBox="0 0 48 48"
       className={className}
-      role="img"
       aria-hidden="true"
       focusable="false"
     >

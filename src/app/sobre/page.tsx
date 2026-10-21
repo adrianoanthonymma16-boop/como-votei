@@ -129,7 +129,7 @@ export default function SobrePage() {
               <Link
                 key={m.titulo}
                 href="/parlamentares"
-                className={`group rounded-2xl border bg-card p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:shadow-lg ${m.cor} ${m.hover}`}
+                className={`group rounded-2xl border bg-card p-6 transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:shadow-lg ${m.cor} ${m.hover}`}
               >
                 <span className={`inline-flex size-12 items-center justify-center rounded-xl bg-muted ${m.texto}`}>
                   {m.icone}
@@ -179,7 +179,7 @@ export default function SobrePage() {
               href="https://dadosabertos.camara.leg.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg"
+              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-lg"
             >
               <div className="flex items-center gap-3">
                 <span className="inline-flex size-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
@@ -200,7 +200,7 @@ export default function SobrePage() {
               href="https://legis.senado.leg.br/dadosabertos"
               target="_blank"
               rel="noopener noreferrer"
-              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-green-400 hover:shadow-lg"
+              className="group rounded-2xl border border-border bg-background p-6 transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:border-green-400 hover:shadow-lg"
             >
               <div className="flex items-center gap-3">
                 <span className="inline-flex size-11 items-center justify-center rounded-xl bg-green-100 text-green-700 dark:bg-green-900/60 dark:text-green-300">

@@ -224,9 +224,9 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
           ) : (
             <>
               <div className="space-y-4">
-                <FrequencyBar label="Presenças" value={frequencia.presencas} total={frequencia.totalSessoes} color="bg-green-500" />
-                <FrequencyBar label="Faltas Justificadas" value={frequencia.faltasJustificadas} total={frequencia.totalSessoes} color="bg-yellow-500" />
-                <FrequencyBar label="Faltas Injustificadas" value={frequencia.faltasInjustificadas} total={frequencia.totalSessoes} color="bg-red-500" />
+                <FrequencyBar label="Presenças" value={frequencia.presencas} total={frequencia.totalSessoes} color="bg-green-600 dark:bg-green-500" />
+                <FrequencyBar label="Faltas Justificadas" value={frequencia.faltasJustificadas} total={frequencia.totalSessoes} color="bg-amber-600 dark:bg-amber-500" />
+                <FrequencyBar label="Faltas Injustificadas" value={frequencia.faltasInjustificadas} total={frequencia.totalSessoes} color="bg-red-600 dark:bg-red-500" />
               </div>
               <div className="mt-4 p-4 bg-muted/50 rounded-lg text-sm">
                 <span className="text-muted-foreground">Total de sessões: </span>
@@ -246,14 +246,19 @@ export function DashboardTab({ parlamentarId }: DashboardTabProps) {
               <div className="text-4xl font-bold text-foreground mb-2">
                 {alinhamento.percentualAlinhamento?.toFixed(1) || 0}%
               </div>
-              <div className="w-48 h-8 bg-muted rounded-full overflow-hidden mx-auto">
-                <div
-                  className="h-full origin-left rounded-full transition-transform duration-500"
-                  style={{
-                    transform: `scaleX(${(alinhamento.percentualAlinhamento || 0) / 100})`,
-                    backgroundColor: (alinhamento.percentualAlinhamento || 0) >= 80 ? '#16A34A' : (alinhamento.percentualAlinhamento || 0) >= 60 ? '#CA8A04' : '#DC2626'
-                  }}
-                />
+              <div className="w-48 h-8 bg-muted rounded-full overflow-hidden mx-auto" aria-hidden="true">
+                <div className="h-full origin-left rounded-full transition-transform duration-500" style={{ transform: `scaleX(${(alinhamento.percentualAlinhamento || 0) / 100})` }}>
+                  <div
+                    className={cn(
+                      'h-full rounded-full',
+                      (alinhamento.percentualAlinhamento || 0) >= 80
+                        ? 'bg-green-600 dark:bg-green-500'
+                        : (alinhamento.percentualAlinhamento || 0) >= 60
+                          ? 'bg-amber-600 dark:bg-amber-500'
+                          : 'bg-red-600 dark:bg-red-500'
+                    )}
+                  />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 {alinhamento.votosAlinhados} de {alinhamento.totalVotacoes} votações alinhadas
@@ -338,8 +343,8 @@ function ActivityChart({ data }: { data: Array<{ mes: string; votações: number
   const maxValue = Math.max(...data.map(d => d.votações + d.discursos + d.proposicoes), 1);
 
   return (
-    <div>
-      <div className="h-64 flex items-end gap-2">
+    <figure>
+      <div className="h-64 flex items-end gap-2" aria-hidden="true">
         {data.map((d) => {
           const total = d.votações + d.discursos + d.proposicoes;
           return (
@@ -349,17 +354,17 @@ function ActivityChart({ data }: { data: Array<{ mes: string; votações: number
                 style={{ height: `${(total / maxValue) * 200}px`, minHeight: '4px' }}
               >
                 <div
-                  className="bg-blue-500 rounded-t"
+                  className="bg-blue-600 dark:bg-blue-500 rounded-t"
                   style={{ width: `${(d.votações / (total || 1)) * 100}%`, minWidth: '4px' }}
                   title={`Votações: ${d.votações}`}
                 />
                 <div
-                  className="bg-green-500 rounded-t"
+                  className="bg-green-600 dark:bg-green-500 rounded-t"
                   style={{ width: `${(d.discursos / (total || 1)) * 100}%`, minWidth: '4px' }}
                   title={`Discursos: ${d.discursos}`}
                 />
                 <div
-                  className="bg-purple-500 rounded-t"
+                  className="bg-purple-600 dark:bg-purple-500 rounded-t"
                   style={{ width: `${(d.proposicoes / (total || 1)) * 100}%`, minWidth: '4px' }}
                   title={`Proposições: ${d.proposicoes}`}
                 />
@@ -369,12 +374,38 @@ function ActivityChart({ data }: { data: Array<{ mes: string; votações: number
           );
         })}
       </div>
-      <div className="flex gap-4 mt-4 justify-center text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><span className="size-3 bg-blue-500 rounded" aria-hidden="true" /> Votações</span>
-        <span className="flex items-center gap-1"><span className="size-3 bg-green-500 rounded" aria-hidden="true" /> Discursos</span>
-        <span className="flex items-center gap-1"><span className="size-3 bg-purple-500 rounded" aria-hidden="true" /> Proposições</span>
+      <div className="flex gap-4 mt-4 justify-center text-xs text-muted-foreground" aria-hidden="true">
+        <span className="flex items-center gap-1"><span className="size-3 bg-blue-600 dark:bg-blue-500 rounded" /> Votações</span>
+        <span className="flex items-center gap-1"><span className="size-3 bg-green-600 dark:bg-green-500 rounded" /> Discursos</span>
+        <span className="flex items-center gap-1"><span className="size-3 bg-purple-600 dark:bg-purple-500 rounded" /> Proposições</span>
       </div>
-    </div>
+      <figcaption className="sr-only">
+        Atividade mensal, em barras empilhadas por tipo. A altura de cada mês é proporcional ao total do mês mais movimentado do período.
+      </figcaption>
+      <table className="sr-only">
+        <caption>Atividade mensal por tipo</caption>
+        <thead>
+          <tr>
+            <th scope="col">Mês</th>
+            <th scope="col">Votações</th>
+            <th scope="col">Discursos</th>
+            <th scope="col">Proposições</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((d) => (
+            <tr key={d.mes}>
+              <th scope="row">{d.mes}</th>
+              <td>{d.votações}</td>
+              <td>{d.discursos}</td>
+              <td>{d.proposicoes}</td>
+              <td>{d.votações + d.discursos + d.proposicoes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
   );
 }
 
@@ -391,16 +422,16 @@ function TemasList({ temas }: { temas: Array<{ tema: string; total: number; vota
             <span className="text-sm font-medium text-foreground truncate pr-2">{t.tema}</span>
             <span className="text-sm font-bold text-foreground">{t.total}</span>
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-muted rounded-full overflow-hidden" aria-hidden="true">
             <div
               className="h-full origin-left bg-accent rounded-full transition-transform duration-300"
               style={{ transform: `scaleX(${t.total / (temas[0]?.total || 1)})` }}
             />
           </div>
           <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-blue-500" aria-hidden="true" /> {t.votações} votações</span>
-            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-purple-500" aria-hidden="true" /> {t.discursos} discursos</span>
-            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-green-500" aria-hidden="true" /> {t.proposicoes} proposições</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-blue-600 dark:bg-blue-500" aria-hidden="true" /> {t.votações} votações</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-purple-600 dark:bg-purple-500" aria-hidden="true" /> {t.discursos} discursos</span>
+            <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-green-600 dark:bg-green-500" aria-hidden="true" /> {t.proposicoes} proposições</span>
           </div>
         </div>
       ))}
@@ -417,7 +448,7 @@ function FrequencyBar({ label, value, total, color }: { label: string; value: nu
         <span className="text-foreground">{label}</span>
         <span className="font-medium text-foreground">{value} ({percentage.toFixed(1)}%)</span>
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
+      <div className="h-2 bg-muted rounded-full overflow-hidden" aria-hidden="true">
         <div
           className={cn('h-full origin-left rounded-full transition-transform duration-500', color)}
           style={{ transform: `scaleX(${percentage / 100})` }}

@@ -520,10 +520,10 @@ export function VotacoesPageClient() {
                       {getResultadoBadge(v.resultado)}
                     </span>
 
-                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
+                    <span className={`ml-1 hidden sm:inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-[transform,border-color,background-color,color] duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
-                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-all duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
+                    <span className={`sm:hidden inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-[transform,border-color,background-color,color] duration-200 ${aberta ? 'rotate-180 border-ring bg-accent/10 text-accent' : 'border-border text-muted-foreground'}`} aria-hidden="true">
                       <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </span>
                   </button>

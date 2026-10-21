@@ -167,10 +167,10 @@ function StatDetalhe({ id, stats }: { id: CardId; stats: StatsData }) {
     { nome: 'Senado Federal', sigla: 'SF', valor: item.porCasa.SENADO },
   ];
   const cores: Record<CardId, string> = {
-    parlamentares: 'bg-blue-500',
-    votacoes: 'bg-blue-500',
-    discursos: 'bg-purple-500',
-    proposicoes: 'bg-green-500',
+    parlamentares: 'bg-blue-600 dark:bg-blue-500',
+    votacoes: 'bg-blue-600 dark:bg-blue-500',
+    discursos: 'bg-purple-600 dark:bg-purple-500',
+    proposicoes: 'bg-green-600 dark:bg-green-500',
   };
 
   return (
@@ -198,7 +198,7 @@ function StatDetalhe({ id, stats }: { id: CardId; stats: StatsData }) {
                     {formatNumber(c.valor)} <span className="font-normal text-muted-foreground">({pct}%)</span>
                   </span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden" aria-hidden="true">
                   <div className={`h-full rounded-full ${cores[id]}`} style={{ width: `${pct}%` }} />
                 </div>
               </div>

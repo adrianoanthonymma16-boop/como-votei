@@ -105,34 +105,34 @@ export function PresencaCard({ parlamentarId }: { parlamentarId: string }) {
             role="img"
             aria-label={`${atual.presencas} presenças, ${atual.faltasJustificadas} faltas justificadas e ${atual.faltasInjustificadas} faltas injustificadas em ${atual.totalSessoes} sessões de ${atual.ano}`}
           >
-            <div className="bg-green-500 h-full" style={{ width: `${pct(atual.presencas, atual.totalSessoes)}%` }} />
+            <div className="bg-green-600 dark:bg-green-500 h-full" style={{ width: `${pct(atual.presencas, atual.totalSessoes)}%` }} />
             <div
-              className="bg-yellow-500 h-full"
+              className="bg-amber-600 dark:bg-amber-500 h-full"
               style={{ width: `${pct(atual.faltasJustificadas, atual.totalSessoes)}%` }}
             />
             <div
-              className="bg-red-500 h-full"
+              className="bg-red-600 dark:bg-red-500 h-full"
               style={{ width: `${pct(atual.faltasInjustificadas, atual.totalSessoes)}%` }}
             />
           </div>
 
           <dl className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <span className="inline-block size-2 rounded-full bg-green-500" aria-hidden="true" />
+              <span className="inline-block size-2 rounded-full bg-green-600 dark:bg-green-500" aria-hidden="true" />
               <dt className="sr-only">Presenças</dt>
               <dd>
                 Presenças <strong className="font-semibold text-foreground">{atual.presencas}</strong>
               </dd>
             </div>
             <div className="flex items-center gap-1">
-              <span className="inline-block size-2 rounded-full bg-yellow-500" aria-hidden="true" />
+              <span className="inline-block size-2 rounded-full bg-amber-600 dark:bg-amber-500" aria-hidden="true" />
               <dt className="sr-only">Faltas justificadas</dt>
               <dd>
                 Justificadas <strong className="font-semibold text-foreground">{atual.faltasJustificadas}</strong>
               </dd>
             </div>
             <div className="flex items-center gap-1">
-              <span className="inline-block size-2 rounded-full bg-red-500" aria-hidden="true" />
+              <span className="inline-block size-2 rounded-full bg-red-600 dark:bg-red-500" aria-hidden="true" />
               <dt className="sr-only">Faltas injustificadas</dt>
               <dd>
                 Injustificadas <strong className="font-semibold text-foreground">{atual.faltasInjustificadas}</strong>

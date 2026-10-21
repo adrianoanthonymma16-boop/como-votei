@@ -140,7 +140,7 @@ export function ParlamentaresAtivos({ limit = 5 }: { limit?: number }) {
                 <span className="text-xs font-medium text-muted-foreground">#{idx + 1} mais produtivo</span>
               </div>
 
-              <div className={`rounded-xl transition-shadow duration-200 ${isTop ? 'ring-1 ring-amber-300/50 shadow-md' : ''}`}>
+              <div className={`rounded-xl ${isTop ? 'ring-1 ring-amber-300/50 shadow-md' : ''}`}>
                 <ParlamentarCard parlamentar={parlamentar} />
               </div>
 
