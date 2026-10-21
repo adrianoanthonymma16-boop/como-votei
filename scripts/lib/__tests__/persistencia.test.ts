@@ -6,6 +6,7 @@ import {
   upsertDiscurso,
   upsertFrequencia,
   upsertProposicao,
+  upsertProposicoesEmLote,
 } from '../persistencia';
 import type {
   ParlamentarNormalizado,
@@ -14,6 +15,7 @@ import type {
   DiscursoNormalizado,
   FrequenciaNormalizada,
   ProposicaoComTramitacoes,
+  TramitacaoNormalizada,
 } from '../../../src/lib/sync/types';
 
 function makeDb(overrides: Record<string, unknown> = {}): PrismaClient {
@@ -23,8 +25,9 @@ function makeDb(overrides: Record<string, unknown> = {}): PrismaClient {
     voto: { upsert: jest.fn() },
     discurso: { upsert: jest.fn() },
     frequencia: { upsert: jest.fn() },
-    proposicao: { upsert: jest.fn() },
+    proposicao: { upsert: jest.fn(), findMany: jest.fn() },
     tramitacao: { deleteMany: jest.fn(), createMany: jest.fn() },
+    $executeRawUnsafe: jest.fn().mockResolvedValue(0),
     $transaction: jest.fn(async (ops: unknown[]) => ops),
     ...overrides,
   };
@@ -184,5 +187,93 @@ describe('upsertProposicao', () => {
       data: expect.arrayContaining([expect.objectContaining({ proposicaoId: 'prop1', situacao: 'Y' })]),
     });
     expect(db.$transaction).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('upsertProposicoesEmLote', () => {
+  const proposicao = (
+    idExterno: string,
+    tramitacoes: TramitacaoNormalizada[] = []
+  ): ProposicaoComTramitacoes => ({
+    idExterno,
+    parlamentarIdExterno: '',
+    casa: 'CAMARA',
+    tipo: 'PL',
+    numero: 1,
+    ano: 2026,
+    ementa: 'e',
+    autorPrincipal: true,
+    status: 'EM_TRAMITACAO',
+    dataApresentacao: new Date('2026-02-01'),
+    urlOriginal: 'http://x',
+    tramitacoes,
+  });
+
+  it('grava as proposições num único INSERT, sem transação quando não há tramitação', async () => {
+    const db = makeDb();
+    (db.proposicao.findMany as jest.Mock).mockResolvedValue([
+      { id: 'p-existente', idExterno: '1' },
+    ]);
+
+    await expect(
+      upsertProposicoesEmLote(db, [
+        { parlamentarId: 'dep1', proposicao: proposicao('1') },
+        { parlamentarId: 'dep1', proposicao: proposicao('2') },
+      ])
+    ).resolves.toEqual({ proposicoes: 2, tramitacoes: 0 });
+
+    expect(db.$executeRawUnsafe).toHaveBeenCalledTimes(1);
+    const [sql, ...params] = (db.$executeRawUnsafe as jest.Mock).mock.calls[0];
+    expect(sql).toContain('ON CONFLICT (id_externo) DO UPDATE');
+    // 2 linhas x 13 colunas.
+    expect(params).toHaveLength(26);
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('repõe as tramitações do lote numa única transação', async () => {
+    const db = makeDb();
+    (db.proposicao.findMany as jest.Mock).mockResolvedValue([{ id: 'p1', idExterno: '1' }]);
+
+    const result = await upsertProposicoesEmLote(db, [
+      {
+        parlamentarId: 'dep1',
+        proposicao: proposicao('1', [
+          { proposicaoIdExterno: '1', data: new Date('2026-02-02'), descricao: 'x', situacao: 'Y' },
+        ]),
+      },
+      {
+        parlamentarId: 'dep1',
+        proposicao: proposicao('2', [
+          { proposicaoIdExterno: '2', data: new Date('2026-02-03'), descricao: 'z', situacao: 'W' },
+        ]),
+      },
+    ]);
+
+    expect(result).toEqual({ proposicoes: 2, tramitacoes: 2 });
+    expect(db.tramitacao.deleteMany).toHaveBeenCalledWith({
+      where: { proposicaoId: { in: ['p1', expect.any(String)] } },
+    });
+    expect(db.tramitacao.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({ proposicaoId: 'p1', situacao: 'Y' }),
+        expect.objectContaining({ situacao: 'W' }),
+      ]),
+    });
+    expect(db.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('deduplica idExterno repetido no mesmo lote', async () => {
+    const db = makeDb();
+    (db.proposicao.findMany as jest.Mock).mockResolvedValue([]);
+
+    await expect(
+      upsertProposicoesEmLote(db, [
+        { parlamentarId: 'dep1', proposicao: proposicao('1') },
+        { parlamentarId: 'dep1', proposicao: proposicao('1') },
+      ])
+    ).resolves.toEqual({ proposicoes: 1, tramitacoes: 0 });
+
+    const [, ...params] = (db.$executeRawUnsafe as jest.Mock).mock.calls[0];
+    expect(params).toHaveLength(13);
   });
 });

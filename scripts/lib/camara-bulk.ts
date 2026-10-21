@@ -24,7 +24,6 @@ import { Readable } from 'stream';
 import { chain } from 'stream-chain';
 import type { PrismaClient } from '@prisma/client';
 import type {
-  ProposicaoComTramitacoes,
   TramitacaoNormalizada,
   VotacaoNormalizada,
   VotoNormalizado,
@@ -32,7 +31,7 @@ import type {
 import { mapStatusProposicao } from '../../src/lib/sync/camara-adapter';
 import { extrairTemaPrincipal } from '../../src/lib/temas';
 import { USER_AGENT } from '../../src/lib/sync/http-client';
-import { upsertProposicao, upsertVotacao } from './persistencia';
+import { type ProposicaoDoLote, upsertProposicoesEmLote, upsertVotacao } from './persistencia';
 
 const CAMARA_SITE = process.env.CAMARA_SITE || 'https://www.camara.leg.br';
 const BULK_BASE = process.env.CAMARA_BULK_BASE || 'https://dadosabertos.camara.leg.br/arquivos';
@@ -69,6 +68,15 @@ export function urlBulk(conjunto: string, ano: number): string {
 }
 
 /**
+ * Tempo máximo sem receber bytes antes de abortar o download.
+ *
+ * O `fetch` do Node não tem timeout: uma conexão travada no meio de um arquivo
+ * de 165 MB segurava a fase até o limite de 6h do job. O watchdog é renovado a
+ * cada chunk, então só dispara quando a fonte realmente para de responder.
+ */
+const TIMEOUT_OCIOSO_MS = 5 * 60 * 1000;
+
+/**
  * Itera os itens do array `dados` de um JSON remoto em streaming.
  *
  * A resposta é consumida como stream (não `response.json()`), então o arquivo
@@ -76,22 +84,44 @@ export function urlBulk(conjunto: string, ano: number): string {
  * completa.
  */
 export async function* iterarBulk<T>(url: string): AsyncGenerator<T> {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-  });
-  if (!response.ok) {
-    throw new Error(`Falha ao baixar ${url}: HTTP ${response.status}`);
-  }
-  if (!response.body) {
-    throw new Error(`Resposta sem corpo para ${url}`);
-  }
+  const controller = new AbortController();
+  let timer: NodeJS.Timeout | undefined;
+  const renovarWatchdog = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(
+      () =>
+        controller.abort(
+          new Error(`Download parado por ${TIMEOUT_OCIOSO_MS / 60000} min: ${url}`)
+        ),
+      TIMEOUT_OCIOSO_MS
+    );
+    // Não segura o processo aberto por causa do watchdog.
+    timer.unref?.();
+  };
+  renovarWatchdog();
 
-  // `Readable.fromWeb` converte o WHATWG ReadableStream do fetch para Node.
-  const origem = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
-  const pipeline = chain([origem, parser(), pick({ filter: 'dados' }), streamArray()]);
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Falha ao baixar ${url}: HTTP ${response.status}`);
+    }
+    if (!response.body) {
+      throw new Error(`Resposta sem corpo para ${url}`);
+    }
 
-  for await (const chunk of pipeline) {
-    yield (chunk as { value: T }).value;
+    // `Readable.fromWeb` converte o WHATWG ReadableStream do fetch para Node.
+    const origem = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]);
+    const pipeline = chain([origem, parser(), pick({ filter: 'dados' }), streamArray()]);
+
+    for await (const chunk of pipeline) {
+      renovarWatchdog();
+      yield (chunk as { value: T }).value;
+    }
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -259,19 +289,16 @@ export async function syncProposicoesBulk(
     tramsPorProposicao.set(id, lista);
   }
 
-  // 4. Persistência (helpers compartilhados com o sync via API).
-  let gravadas = 0;
-  let tramitacoes = 0;
-  const TAMANHO_LOTE = 200;
-  const entradas = [...props.entries()];
+  // 4. Persistência em lote (o upsert por linha levava horas por ano).
+  const itens: ProposicaoDoLote[] = [];
+  for (const [idProposicao, p] of props) {
+    const { parlamentarId, principal } = autoria.get(idProposicao)!;
+    const dataApresentacao = p.dataApresentacao ? new Date(p.dataApresentacao) : undefined;
+    if (!dataApresentacao || Number.isNaN(dataApresentacao.getTime())) continue;
 
-  for (let i = 0; i < entradas.length; i += TAMANHO_LOTE) {
-    for (const [idProposicao, p] of entradas.slice(i, i + TAMANHO_LOTE)) {
-      const { parlamentarId, principal } = autoria.get(idProposicao)!;
-      const dataApresentacao = p.dataApresentacao ? new Date(p.dataApresentacao) : undefined;
-      if (!dataApresentacao || Number.isNaN(dataApresentacao.getTime())) continue;
-
-      const normalizada: ProposicaoComTramitacoes = {
+    itens.push({
+      parlamentarId,
+      proposicao: {
         idExterno: String(p.id),
         parlamentarIdExterno: '',
         casa: 'CAMARA',
@@ -285,13 +312,13 @@ export async function syncProposicoesBulk(
         urlOriginal: `${CAMARA_SITE}/proposicoesWeb/fichadetramitacao?idProposicao=${p.id}`,
         tema: extrairTemaPrincipal(p.ementa || ''),
         tramitacoes: tramsPorProposicao.get(idProposicao) ?? [],
-      };
-
-      tramitacoes += await upsertProposicao(db, parlamentarId, normalizada);
-      gravadas++;
-    }
-    log(`  progresso: ${Math.min(i + TAMANHO_LOTE, entradas.length)}/${entradas.length}`);
+      },
+    });
   }
+
+  log(`  persistindo ${itens.length} proposições em lote...`);
+  const { proposicoes: gravadas, tramitacoes } = await upsertProposicoesEmLote(db, itens);
+  log(`  persistidas ${gravadas} proposições (${tramitacoes} tramitações)`);
 
   return { proposicoes: gravadas, tramitacoes, ignoradasSemAno };
   } finally {
