@@ -25,8 +25,11 @@ test.describe('Emendas na aba Gastos', () => {
     await expect(tabela.or(semDados)).toBeVisible();
 
     if (await tabela.isVisible()) {
-      // Cada emenda tem link para a fonte verificável, em nova aba.
-      const linkFonte = tabela.locator('a[href*="portaldatransparencia.gov.br/emendas"]').first();
+      // A tabela tem variantes mobile e desktop; só uma está visível no
+      // viewport do teste (a outra vive num container com display:none).
+      const linkFonte = tabela
+        .locator('a[href*="portaldatransparencia.gov.br/emendas"]:visible')
+        .first();
       await expect(linkFonte).toBeVisible();
       await expect(linkFonte).toHaveAttribute('rel', 'noopener noreferrer');
       await expect(linkFonte).toHaveAttribute('target', '_blank');

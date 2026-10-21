@@ -26,7 +26,11 @@ test.describe('Aba Gastos — cota parlamentar', () => {
     if (await tabela.count()) {
       await expect(tabela.getByRole('columnheader', { name: 'Fornecedor' })).toBeVisible();
       // Quando existe comprovante, o link abre em nova aba de forma segura.
-      const comprovante = tabela.locator('a[target="_blank"][rel="noopener noreferrer"]').first();
+      // A tabela tem variantes mobile e desktop; só uma está visível no
+      // viewport do teste (a outra vive num container com display:none).
+      const comprovante = tabela
+        .locator('a[target="_blank"][rel="noopener noreferrer"]:visible')
+        .first();
       if (await comprovante.count()) {
         await expect(comprovante).toBeVisible();
       }
