@@ -21,24 +21,27 @@ export default function HomePage() {
   return (
     <div className="min-h-dvh">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-primary-950 text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-primary-900" aria-hidden="true" />
+      <section className="relative overflow-hidden border-b border-border bg-background text-foreground dark:border-transparent dark:bg-primary-950 dark:text-white">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-sky-50 via-background to-sky-100 dark:from-primary-900 dark:via-primary-950 dark:to-primary-900"
+          aria-hidden="true"
+        />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
-          <div className="inline-flex items-center gap-3 mb-6 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-primary-100">
+          <div className="inline-flex items-center gap-3 mb-6 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm dark:border-white/15 dark:bg-white/5 dark:text-primary-100 dark:shadow-none">
             <LogoMark className="size-6" />
             <span>Dados oficiais da Câmara dos Deputados e do Senado Federal</span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance max-w-3xl">
-            Saiba <span className="text-sky-300">como</span> deputados e senadores votaram.
+            Saiba <span className="text-accent dark:text-sky-300">como</span> deputados e senadores votaram.
           </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-primary-100 max-w-2xl mt-6 leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground dark:text-primary-100 max-w-2xl mt-6 leading-relaxed">
             Transparência legislativa gratuita: votações nominais, discursos e proposições de cada parlamentar,
             cruzados com partido, estado e presença. Tudo com link para a fonte oficial.
           </p>
           <div className="flex flex-wrap gap-3 sm:gap-4 mt-8">
             <Link
               href="/parlamentares"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-sky-400 text-primary-950 font-semibold rounded-lg hover:bg-sky-300 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-lg hover:bg-accent/90 transition-colors dark:bg-sky-400 dark:text-primary-950 dark:hover:bg-sky-300"
             >
               Explorar parlamentares
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -47,7 +50,7 @@ export default function HomePage() {
             </Link>
             <Link
               href="/sobre"
-              className="inline-flex items-center px-6 py-3 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+              className="inline-flex items-center px-6 py-3 bg-card text-foreground font-medium rounded-lg hover:bg-muted transition-colors border border-border dark:bg-white/10 dark:text-white dark:border-white/20 dark:hover:bg-white/20"
             >
               Sobre o projeto
             </Link>

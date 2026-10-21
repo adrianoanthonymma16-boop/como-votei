@@ -73,19 +73,22 @@ export default function SobrePage() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-primary-950 text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-sky-950" aria-hidden="true" />
+      <section className="relative overflow-hidden border-b border-border bg-background text-foreground dark:border-transparent dark:bg-primary-950 dark:text-white">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-sky-50 via-background to-sky-100 dark:from-primary-900 dark:via-primary-950 dark:to-sky-950"
+          aria-hidden="true"
+        />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center">
           <div className="flex justify-center mb-6">
             <LogoMark className="size-14" />
           </div>
-          <p className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-primary-100 mb-5">
+          <p className="inline-flex items-center rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm mb-5 dark:border-white/15 dark:bg-white/5 dark:text-primary-100 dark:shadow-none">
             Ferramenta de transparência legislativa
           </p>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-balance">
-            Sobre o <span className="text-sky-300">Como Votei</span>
+            Sobre o <span className="text-accent dark:text-sky-300">Como Votei</span>
           </h1>
-          <p className="mt-6 text-lg text-primary-100 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-6 text-lg text-muted-foreground dark:text-primary-100 leading-relaxed max-w-2xl mx-auto">
             O Como Votei nasce de uma pergunta simples: como votou quem eu elegi? Reunimos em um só lugar
             as votações, os discursos e as proposições de deputados e senadores brasileiros, com dados
             oficiais e link para a fonte.
@@ -93,7 +96,7 @@ export default function SobrePage() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/parlamentares"
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-400 px-6 py-3 font-semibold text-primary-950 transition-colors hover:bg-sky-300"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-accent-foreground transition-colors hover:bg-accent/90 dark:bg-sky-400 dark:text-primary-950 dark:hover:bg-sky-300"
             >
               Explorar parlamentares
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -104,7 +107,7 @@ export default function SobrePage() {
               href="https://github.com/adrianoanthonymma16-boop/como-votei"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg border border-white/20 bg-white/10 px-6 py-3 font-medium text-white transition-colors hover:bg-white/20"
+              className="inline-flex items-center rounded-lg border border-border bg-card px-6 py-3 font-medium text-foreground transition-colors hover:bg-muted dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
             >
               Código aberto no GitHub
             </a>
@@ -248,16 +251,19 @@ export default function SobrePage() {
       </section>
 
       {/* CTA final */}
-      <section className="relative overflow-hidden bg-primary-950 text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-950 to-sky-950" aria-hidden="true" />
+      <section className="relative overflow-hidden border-t border-border bg-background text-foreground dark:border-transparent dark:bg-primary-950 dark:text-white">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-sky-50 via-background to-sky-100 dark:from-primary-900 dark:via-primary-950 dark:to-sky-950"
+          aria-hidden="true"
+        />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold">Acompanhe quem representa você</h2>
-          <p className="mt-3 text-primary-100">
+          <p className="mt-3 text-muted-foreground dark:text-primary-100">
             Comece pela busca e veja como deputados e senadores se comportam nas votações.
           </p>
           <Link
             href="/parlamentares"
-            className="mt-7 inline-flex items-center gap-2 rounded-lg bg-sky-400 px-6 py-3 font-semibold text-primary-950 transition-colors hover:bg-sky-300"
+            className="mt-7 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-accent-foreground transition-colors hover:bg-accent/90 dark:bg-sky-400 dark:text-primary-950 dark:hover:bg-sky-300"
           >
             Explorar parlamentares
             <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
